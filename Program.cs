@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -21,6 +22,7 @@ namespace SteamAppIdIdentifier
         [STAThread]
         public static void Main(string[] args)
         {
+            ServicePointManager.SecurityProtocol = (SecurityProtocolType)3072;
             try
             {
              

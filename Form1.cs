@@ -4,13 +4,16 @@ using System.Diagnostics;
 using System.Drawing;
 using System.IO;
 using System.Linq;
+using System.Net;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Forms;
 using CliWrap;
+using RestSharp;
 using SteamAppIdIdentifier;
+using static System.Windows.Forms.VisualStyles.VisualStyleElement;
 using Clipboard = System.Windows.Forms.Clipboard;
 using DataFormats = System.Windows.DataFormats;
 using DragDropEffects = System.Windows.Forms.DragDropEffects;
@@ -25,6 +28,8 @@ namespace APPID
         public static string APPDATA = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
         public SteamAppId()
         {
+            ServicePointManager.ServerCertificateValidationCallback =
+            (s, certificate, chain, sslPolicyErrors) => true;
             dataTableGeneration = new DataTableGeneration();
             Task.Run(async () => await dataTableGeneration.GetDataTableAsync(dataTableGeneration)).Wait();
             InitializeComponent();
@@ -58,9 +63,11 @@ namespace APPID
                 dllSelect.SelectedIndex = 1;
             }
             Tit("Checking for Internet... ");
+            ServicePointManager.ServerCertificateValidationCallback = delegate { return true; };
             bool check = Updater.CheckForNet();
             if (check)
             {
+                ServicePointManager.ServerCertificateValidationCallback = delegate { return true; };
                 Tit("Checking for Steamless update...");
                 await Updater.CheckGitHubNewerVersion("atom0s", "Steamless", "https://api.github.com/repos");
                 Tit("Checking for Goldberg update...");
@@ -217,8 +224,6 @@ namespace APPID
 
         private void label2_Click(object sender, EventArgs e)
         {
-            Process.Start("https://discord.gg/QvYwqvdgxc");
-            Process.Start("https://t.me/FFAMain");
         }
 
         private void dataGridView1_KeyDown(object sender, KeyEventArgs e)
@@ -301,15 +306,32 @@ namespace APPID
                     }
 
                 }
+                else if (e.KeyCode == Keys.F1)
+                {
+                    ManAppPanel.Visible = true;
+                    ManAppBox.Focus();
+                    ManAppPanel.BringToFront();
+                    ManAppBtn.Visible = true;
+            
+                }
+                else if (e.KeyCode == Keys.Control | e.KeyCode == Keys.I)
+                {
+                    ManAppPanel.Visible = true;
+                    ManAppBox.Focus();
+                    ManAppPanel.BringToFront();
+                    ManAppBtn.Visible = true;
+
+                }
             }
             catch { }
+                
         }
 
 
-        private void searchTextBox_KeyDown(object sender, KeyEventArgs e)
+        private async void searchTextBox_KeyDown(object sender, KeyEventArgs e)
         {
             try
-            {
+            {            
                 if (e.Modifiers == Keys.LShiftKey && e.KeyCode == Keys.Oem4)
                 {
                     searchTextBox.Text = $"${searchTextBox.Text}";
@@ -356,12 +378,27 @@ namespace APPID
                 {
                     BackPressed = true;
                 }
+                else if (e.KeyCode == Keys.Control && e.KeyCode == Keys.I)
+                {
+                    ManAppPanel.Visible = true;
+                    ManAppBox.Focus();
+                    ManAppPanel.BringToFront();
+                    ManAppBtn.Visible = true;
+                }
+                else if (e.KeyCode == Keys.F1)
+                {
+                    ManAppPanel.Visible = true;
+                    ManAppBox.Focus();
+                    ManAppPanel.BringToFront();
+                    ManAppBtn.Visible = true;
+                }
                 else
                 {
                     BackPressed = false;
                     SearchPause = false;
                     t1.Stop();
                 }
+          
             }
             catch { }
         }
@@ -374,16 +411,25 @@ namespace APPID
             t1.Stop();
         }
         public static Timer t1;
-        private void searchTextBox_TextChanged(object sender, EventArgs e)
+        async Task PutTaskDelay()
+        {
+            await Task.Delay(1000);
+        }
+        bool textChanged = false;
+        private async void searchTextBox_TextChanged(object sender, EventArgs e)
         {
             if (SearchPause && searchTextBox.Text.Length > 0)
             {
                 return;
             }
-
             try
             {
-
+                if (textChanged)
+                {
+                    await PutTaskDelay();
+                    return;
+                }
+                textChanged = true;
                 string Search = RemoveSpecialCharacters(searchTextBox.Text.ToLower()).Trim();
                 string SplitSearch = SplitCamelCase(RemoveSpecialCharacters(searchTextBox.Text)).Trim();
                 ((DataTable)dataGridView1.DataSource).DefaultView.RowFilter = String.Format("Name like '" + Search.Replace("_", "").Trim() + "'");
@@ -407,9 +453,7 @@ namespace APPID
                     }
                     else
                     {
-                        dataTableGeneration = new DataTableGeneration();
-                        Task.Run(async () => await dataTableGeneration.GetDataTableAsync(dataTableGeneration)).Wait();
-                        dataGridView1.DataSource = dataTableGeneration.DataTableToGenerate;
+
                         ((DataTable)dataGridView1.DataSource).DefaultView.RowFilter = String.Format("Name like '%" + SplitSearch.Replace("_", "").Replace(" ", "%' AND Name LIKE '%").Replace(" and ", " ").Replace(" the ", " ").Replace(":", "") + "%'").Trim();
                         if (dataGridView1.Rows.Count > 0)
                         {
@@ -417,9 +461,7 @@ namespace APPID
                         }
                         else
                         {
-                            dataTableGeneration = new DataTableGeneration();
-                            Task.Run(async () => await dataTableGeneration.GetDataTableAsync(dataTableGeneration)).Wait();
-                            dataGridView1.DataSource = dataTableGeneration.DataTableToGenerate;
+
 
 
                             Search = searchTextBox.Text.ToLower();
@@ -448,10 +490,13 @@ namespace APPID
                         }
 
                     }
+                
+
+
                 }
+                textChanged = false;
             }
             catch { }
-
         }
         private void dataGridView1_RowHeaderMouseClick(object sender, DataGridViewCellMouseEventArgs e)
         {
@@ -474,7 +519,7 @@ namespace APPID
 
         private void searchTextBox_Enter(object sender, EventArgs e)
         {
-
+            searchTextBox.Clear();
         }
 
         public void Crack()
@@ -654,11 +699,13 @@ namespace APPID
             IniProcess.StartInfo.CreateNoWindow = true;
             IniProcess.StartInfo.UseShellExecute = false;
             IniProcess.StartInfo.FileName = $"{Environment.CurrentDirectory}\\_bin\\ALI213\\inifile.exe";
+
             IniProcess.StartInfo.Arguments = args;
             IniProcess.Start();
             IniProcess.WaitForExit();
         }
 
+        
         private string parentOfSelection;
         private string gameDir;
         private string gameDirName;
@@ -676,8 +723,24 @@ namespace APPID
             {
                 if (folderSelectDialog.FileName.Contains("Program Files"))
                 {
-                    MessageBox.Show("It looks like you selected a Program Files directory, " +
-                        "this will often cause the autocrack to fail.");
+                    string warned = $"{Environment.CurrentDirectory}\\_bin\\warn";
+                    if (!File.Exists(warned))
+                    {
+                        DialogResult response = MessageBox.Show("It looks like you selected a Program Files directory, " +
+                      "this will often cause the autocrack to fail!!!\n\nIf you understand and DO NOT WANT TO SEE THIS WARNING AGAIN - SELECT YES!\nSelect NO to continue crack but keep warning enabled\nSelect CANCEL to cancel selection and try again!!", "PROGRAM FILES = BAD", MessageBoxButtons.YesNoCancel, MessageBoxIcon.Warning);
+                        if (DialogResult == DialogResult.Yes)
+                        {
+                            File.WriteAllText(warned, "WARNED");
+
+                        }
+                        else if (DialogResult == DialogResult.Cancel)
+                        {
+                            OpenDir.Visible = true;
+                            OpenDir.BringToFront();
+                            return;
+                        }
+                    }
+                 
                 }
                 gameDir = folderSelectDialog.FileName;
                 Tat(gameDir);
@@ -704,6 +767,7 @@ namespace APPID
                 Crack();
                 cracking = false;
                 Tit("Crack complete!");
+                Tat("Crack complete!");
                 OpenDir.BringToFront();
                 OpenDir.Visible = true;
                 donePic.Visible = true;
@@ -897,6 +961,74 @@ namespace APPID
         private void OpenDir_Click(object sender, EventArgs e)
         {
             Process.Start(gameDir);
+        }
+
+        private void ManAppBtn_Click(object sender, EventArgs e)
+        {
+            if (ManAppBox.Text.Length > 2 && isnumeric)
+            {
+                APPID = ManAppBox.Text;
+                searchTextBox.Clear();
+                ManAppBox.Clear();
+                ManAppPanel.Visible = false;
+                mainPanel.Visible = true;
+                startCrackPic.Visible = true;
+                resinstruccZip.Visible = false;
+            }
+            else
+            {
+                MessageBox.Show("Enter APPID or press ESC to cancel!", "No APPID entered!");
+            }
+        }
+
+        private void ManAppBox_TextChanged(object sender, EventArgs e)
+        {
+            double parsedValue;
+
+            if (!double.TryParse(ManAppBox.Text, out parsedValue))
+            {
+                ManAppBox.Text = "";
+                isnumeric= false;
+            }
+            if (ManAppBox.Text.Length > 0)
+            {
+                ManAppBtn.Enabled = true;
+                isnumeric= true;    
+            }
+            else
+            {
+                isnumeric= false;
+                ManAppBtn.Enabled = false;
+            }
+   
+        }
+        public bool isnumeric = false;
+
+      
+        private void ManAppBox_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.KeyCode == Keys.Enter) {
+                if (ManAppBox.Text.Length > 2 && isnumeric)
+                {
+                    APPID = ManAppBox.Text;
+                    searchTextBox.Clear();
+                    ManAppBox.Clear();
+                    ManAppPanel.Visible = false;
+                    mainPanel.Visible = true;
+                    startCrackPic.Visible = true;
+                    resinstruccZip.Visible = false;
+                }
+                else
+                {
+                    MessageBox.Show("Enter APPID or press ESC to cancel!");
+                }
+             
+            }
+            if (e.KeyCode == Keys.Escape) {
+                ManAppBox.Clear();
+                ManAppPanel.Visible = false;
+                searchTextBox.Focus();
+            }
         }
     }
 }

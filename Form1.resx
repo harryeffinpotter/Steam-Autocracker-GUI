@@ -122,14 +122,10 @@
     <value>Microsoft Sans Serif, 9.75pt, style=Bold</value>
   </data>
   <data name="searchTextBox.Location" type="System.Drawing.Point, System.Drawing">
-    <value>18, 14</value>
-  </data>
-  <assembly alias="System.Windows.Forms" name="System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" />
-  <data name="searchTextBox.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
-    <value>4, 5, 4, 5</value>
+    <value>12, 9</value>
   </data>
   <data name="searchTextBox.Size" type="System.Drawing.Size, System.Drawing">
-    <value>844, 30</value>
+    <value>564, 22</value>
   </data>
   <assembly alias="mscorlib" name="mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" />
   <data name="searchTextBox.TabIndex" type="System.Int32, mscorlib">
@@ -145,22 +141,19 @@
     <value>$this</value>
   </data>
   <data name="&gt;&gt;searchTextBox.ZOrder" xml:space="preserve">
-    <value>2</value>
+    <value>3</value>
   </data>
   <data name="dataGridView1.ColumnHeadersHeight" type="System.Int32, mscorlib">
     <value>29</value>
   </data>
   <data name="dataGridView1.Location" type="System.Drawing.Point, System.Drawing">
-    <value>18, 52</value>
-  </data>
-  <data name="dataGridView1.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
-    <value>4, 5, 4, 5</value>
+    <value>11, 38</value>
   </data>
   <data name="dataGridView1.RowHeadersWidth" type="System.Int32, mscorlib">
     <value>35</value>
   </data>
   <data name="dataGridView1.Size" type="System.Drawing.Size, System.Drawing">
-    <value>980, 362</value>
+    <value>653, 235</value>
   </data>
   <data name="dataGridView1.TabIndex" type="System.Int32, mscorlib">
     <value>1</value>
@@ -177,6 +170,7 @@
   <data name="&gt;&gt;dataGridView1.ZOrder" xml:space="preserve">
     <value>1</value>
   </data>
+  <assembly alias="System.Windows.Forms" name="System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" />
   <data name="btnSearch.FlatStyle" type="System.Windows.Forms.FlatStyle, System.Windows.Forms">
     <value>Flat</value>
   </data>
@@ -184,13 +178,10 @@
     <value>Microsoft Sans Serif, 8.25pt, style=Bold</value>
   </data>
   <data name="btnSearch.Location" type="System.Drawing.Point, System.Drawing">
-    <value>873, 14</value>
-  </data>
-  <data name="btnSearch.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
-    <value>4, 5, 4, 5</value>
+    <value>582, 9</value>
   </data>
   <data name="btnSearch.Size" type="System.Drawing.Size, System.Drawing">
-    <value>124, 34</value>
+    <value>83, 22</value>
   </data>
   <data name="btnSearch.TabIndex" type="System.Int32, mscorlib">
     <value>2</value>
@@ -208,7 +199,7 @@
     <value>$this</value>
   </data>
   <data name="&gt;&gt;btnSearch.ZOrder" xml:space="preserve">
-    <value>4</value>
+    <value>5</value>
   </data>
   <data name="resinstruccZip.AutoSize" type="System.Boolean, mscorlib">
     <value>True</value>
@@ -220,22 +211,19 @@
     <value>On</value>
   </data>
   <data name="resinstruccZip.Location" type="System.Drawing.Point, System.Drawing">
-    <value>14, 425</value>
-  </data>
-  <data name="resinstruccZip.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
-    <value>4, 0, 4, 0</value>
+    <value>9, 276</value>
   </data>
   <data name="resinstruccZip.Size" type="System.Drawing.Size, System.Drawing">
-    <value>669, 116</value>
+    <value>615, 54</value>
   </data>
   <data name="resinstruccZip.TabIndex" type="System.Int32, mscorlib">
     <value>0</value>
   </data>
   <data name="resinstruccZip.Text" xml:space="preserve">
-    <value>Fiind the correct APP then do one of the following to continue:
-- Click on the blue header to the left of the item.
-- Double click the the any cell in the correct item. 
-- Highlight correct item in list and press enter.</value>
+    <value>Double click/click header/press enter on correct result.
+No Results? Try manual search up top or  try renaming game folder to resemble store name.
+OR - Press CTRL+I or F1 to enter in the APPID manually.
+</value>
   </data>
   <data name="&gt;&gt;resinstruccZip.Name" xml:space="preserve">
     <value>resinstruccZip</value>
@@ -247,7 +235,7 @@
     <value>$this</value>
   </data>
   <data name="&gt;&gt;resinstruccZip.ZOrder" xml:space="preserve">
-    <value>3</value>
+    <value>4</value>
   </data>
   <data name="tgDisc.AutoSize" type="System.Boolean, mscorlib">
     <value>True</value>
@@ -259,17 +247,19 @@
     <value>MiddleRight</value>
   </data>
   <data name="tgDisc.Location" type="System.Drawing.Point, System.Drawing">
-    <value>698, 488</value>
+    <value>481, 334</value>
+  </data>
+  <data name="tgDisc.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>2, 0, 2, 0</value>
   </data>
   <data name="tgDisc.Size" type="System.Drawing.Size, System.Drawing">
-    <value>299, 44</value>
+    <value>191, 15</value>
   </data>
   <data name="tgDisc.TabIndex" type="System.Int32, mscorlib">
     <value>0</value>
   </data>
   <data name="tgDisc.Text" xml:space="preserve">
-    <value>by HFP/KillinMeSmalls of FFA
-Click here for our Telegram/Discord!</value>
+    <value>by HarryEffinPotter/Killinmesmalls</value>
   </data>
   <data name="tgDisc.TextAlign" type="System.Drawing.ContentAlignment, System.Drawing">
     <value>MiddleRight</value>
@@ -284,7 +274,7 @@ Click here for our Telegram/Discord!</value>
     <value>mainPanel</value>
   </data>
   <data name="&gt;&gt;tgDisc.ZOrder" xml:space="preserve">
-    <value>7</value>
+    <value>0</value>
   </data>
   <data name="gitHub.Image" type="System.Drawing.Bitmap, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
     <value>
@@ -518,13 +508,10 @@ Click here for our Telegram/Discord!</value>
     <value>On</value>
   </data>
   <data name="gitHub.Location" type="System.Drawing.Point, System.Drawing">
-    <value>934, 418</value>
-  </data>
-  <data name="gitHub.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
-    <value>4, 5, 4, 5</value>
+    <value>623, 294</value>
   </data>
   <data name="gitHub.Size" type="System.Drawing.Size, System.Drawing">
-    <value>66, 62</value>
+    <value>44, 40</value>
   </data>
   <data name="gitHub.SizeMode" type="System.Windows.Forms.PictureBoxSizeMode, System.Windows.Forms">
     <value>Zoom</value>
@@ -542,7 +529,7 @@ Click here for our Telegram/Discord!</value>
     <value>mainPanel</value>
   </data>
   <data name="&gt;&gt;gitHub.ZOrder" xml:space="preserve">
-    <value>6</value>
+    <value>1</value>
   </data>
   <data name="OpenDir.FlatStyle" type="System.Windows.Forms.FlatStyle, System.Windows.Forms">
     <value>Flat</value>
@@ -554,13 +541,10 @@ Click here for our Telegram/Discord!</value>
     <value>On</value>
   </data>
   <data name="OpenDir.Location" type="System.Drawing.Point, System.Drawing">
-    <value>443, 388</value>
-  </data>
-  <data name="OpenDir.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
-    <value>4, 5, 4, 5</value>
+    <value>7, 311</value>
   </data>
   <data name="OpenDir.Size" type="System.Drawing.Size, System.Drawing">
-    <value>124, 34</value>
+    <value>83, 22</value>
   </data>
   <data name="OpenDir.TabIndex" type="System.Int32, mscorlib">
     <value>9</value>
@@ -581,12 +565,12 @@ Click here for our Telegram/Discord!</value>
     <value>mainPanel</value>
   </data>
   <data name="&gt;&gt;OpenDir.ZOrder" xml:space="preserve">
-    <value>0</value>
+    <value>2</value>
   </data>
   <data name="pin.Image" type="System.Drawing.Bitmap, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
     <value>
         iVBORw0KGgoAAAANSUhEUgAAAagAAAGoCAYAAAATsnHAAAAABGdBTUEAALGPC/xhBQAAAAlwSFlzAAAL
-        EAAACxABrSO9dQAAGeFJREFUeF7t1Vt2G1mSRNEaco+oJ1SD6haolJIkDkAE4nHd3M/H5lpllSLd7iv+
+        DAAACwwBP0AiyAAAGeFJREFUeF7t1Vt2G1mSRNEaco+oJ1SD6haolJIkDkAE4nHd3M/H5lpllSLd7iv+
         8z//+19JOsL/QSa9DUNJ2uj2cfqD/n9pMwwlaYPPHyc/UjoMhpK0AX2gbui/lV6GoSS9iD5Mn9G/kV6C
         oSS9gD5IhP6t9CMMJekF9DF6hP699BSGkvQD+gj9hH6P9BCGkvQEfXxeRb9PQhhK0gP00dmKfq90B0NJ
         eoA+OO+g3y19gaEkAfrQ7EF/Q/oLQ0n6hj4wR6C/JX3AUJI+oQ/LkehvSn6gJP2IPipHo7+r4TCUpH/Q
@@ -703,13 +687,10 @@ Click here for our Telegram/Discord!</value>
     <value>On</value>
   </data>
   <data name="pin.Location" type="System.Drawing.Point, System.Drawing">
-    <value>6, 8</value>
-  </data>
-  <data name="pin.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
-    <value>4, 5, 4, 5</value>
+    <value>4, 5</value>
   </data>
   <data name="pin.Size" type="System.Drawing.Size, System.Drawing">
-    <value>51, 40</value>
+    <value>34, 26</value>
   </data>
   <data name="pin.SizeMode" type="System.Windows.Forms.PictureBoxSizeMode, System.Windows.Forms">
     <value>Zoom</value>
@@ -727,12 +708,12 @@ Click here for our Telegram/Discord!</value>
     <value>mainPanel</value>
   </data>
   <data name="&gt;&gt;pin.ZOrder" xml:space="preserve">
-    <value>1</value>
+    <value>3</value>
   </data>
   <data name="unPin.Image" type="System.Drawing.Bitmap, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
     <value>
         iVBORw0KGgoAAAANSUhEUgAAAagAAAGoCAYAAAATsnHAAAAABGdBTUEAALGPC/xhBQAAAAlwSFlzAAAL
-        DwAACw8BkvkDpQAAE89JREFUeF7t1Vt2G0mSRdEaco+oJ1SD6k6qKpWScEjiEYjwx/7YWCtvikCYu5nF
+        DAAACwwBP0AiyAAAE89JREFUeF7t1Vt2G0mSRdEaco+oJ1SD6k6qKpWScEjiEYjwx/7YWCtvikCYu5nF
         v/7nf/8NcIT/iwyeliHAgz5eTn+r/w8PyxDgAb++nLykOEyGAA+oF9SH+rdwtwwB7lQvpl/V38BdMgS4
         Q72QSv0tfCtDgDvUy+gz9ffwpQwBvlEvoe/U98CnMgT4Qr187lXfBylDgE/US+dR9b1wI0OAT9QL5xn1
         3fCbDAFCvWheUb8BP2UI8Id6wRyhfgt+yBDgF/ViOVL9JnhBAd+ql8rR6nfZXIYA/1Uvk3ep32djGQL8
@@ -824,13 +805,10 @@ Click here for our Telegram/Discord!</value>
     <value>On</value>
   </data>
   <data name="unPin.Location" type="System.Drawing.Point, System.Drawing">
-    <value>6, 8</value>
-  </data>
-  <data name="unPin.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
-    <value>4, 5, 4, 5</value>
+    <value>4, 5</value>
   </data>
   <data name="unPin.Size" type="System.Drawing.Size, System.Drawing">
-    <value>51, 40</value>
+    <value>34, 26</value>
   </data>
   <data name="unPin.SizeMode" type="System.Windows.Forms.PictureBoxSizeMode, System.Windows.Forms">
     <value>Zoom</value>
@@ -848,19 +826,16 @@ Click here for our Telegram/Discord!</value>
     <value>mainPanel</value>
   </data>
   <data name="&gt;&gt;unPin.ZOrder" xml:space="preserve">
-    <value>2</value>
+    <value>4</value>
   </data>
   <data name="currDIrText.Font" type="System.Drawing.Font, System.Drawing">
     <value>Microsoft Sans Serif, 8.25pt</value>
   </data>
   <data name="currDIrText.Location" type="System.Drawing.Point, System.Drawing">
-    <value>12, 520</value>
-  </data>
-  <data name="currDIrText.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
-    <value>4, 0, 4, 0</value>
+    <value>8, 338</value>
   </data>
   <data name="currDIrText.Size" type="System.Drawing.Size, System.Drawing">
-    <value>678, 31</value>
+    <value>452, 20</value>
   </data>
   <data name="currDIrText.TabIndex" type="System.Int32, mscorlib">
     <value>10</value>
@@ -875,7 +850,7 @@ Click here for our Telegram/Discord!</value>
     <value>mainPanel</value>
   </data>
   <data name="&gt;&gt;currDIrText.ZOrder" xml:space="preserve">
-    <value>3</value>
+    <value>5</value>
   </data>
   <data name="dllSelect.AutoCompleteCustomSource" xml:space="preserve">
     <value>Goldberg (Default)</value>
@@ -893,13 +868,10 @@ Click here for our Telegram/Discord!</value>
     <value>ALI213</value>
   </data>
   <data name="dllSelect.Location" type="System.Drawing.Point, System.Drawing">
-    <value>431, 351</value>
-  </data>
-  <data name="dllSelect.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
-    <value>4, 5, 4, 5</value>
+    <value>287, 228</value>
   </data>
   <data name="dllSelect.Size" type="System.Drawing.Size, System.Drawing">
-    <value>152, 28</value>
+    <value>103, 21</value>
   </data>
   <data name="dllSelect.TabIndex" type="System.Int32, mscorlib">
     <value>8</value>
@@ -914,7 +886,7 @@ Click here for our Telegram/Discord!</value>
     <value>mainPanel</value>
   </data>
   <data name="&gt;&gt;dllSelect.ZOrder" xml:space="preserve">
-    <value>4</value>
+    <value>6</value>
   </data>
   <data name="donePic.Image" type="System.Drawing.Bitmap, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
     <value>
@@ -1120,13 +1092,10 @@ Click here for our Telegram/Discord!</value>
     <value />
   </data>
   <data name="donePic.Location" type="System.Drawing.Point, System.Drawing">
-    <value>428, 208</value>
-  </data>
-  <data name="donePic.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
-    <value>4, 5, 4, 5</value>
+    <value>285, 135</value>
   </data>
   <data name="donePic.Size" type="System.Drawing.Size, System.Drawing">
-    <value>154, 134</value>
+    <value>103, 87</value>
   </data>
   <data name="donePic.SizeMode" type="System.Windows.Forms.PictureBoxSizeMode, System.Windows.Forms">
     <value>Zoom</value>
@@ -1147,7 +1116,7 @@ Click here for our Telegram/Discord!</value>
     <value>mainPanel</value>
   </data>
   <data name="&gt;&gt;donePic.ZOrder" xml:space="preserve">
-    <value>5</value>
+    <value>7</value>
   </data>
   <data name="startCrackPic.Image" type="System.Drawing.Bitmap, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
     <value>
@@ -3313,13 +3282,10 @@ Click here for our Telegram/Discord!</value>
 </value>
   </data>
   <data name="startCrackPic.Location" type="System.Drawing.Point, System.Drawing">
-    <value>429, 209</value>
-  </data>
-  <data name="startCrackPic.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
-    <value>4, 5, 4, 5</value>
+    <value>286, 136</value>
   </data>
   <data name="startCrackPic.Size" type="System.Drawing.Size, System.Drawing">
-    <value>154, 134</value>
+    <value>103, 87</value>
   </data>
   <data name="startCrackPic.SizeMode" type="System.Windows.Forms.PictureBoxSizeMode, System.Windows.Forms">
     <value>Zoom</value>
@@ -3504,13 +3470,10 @@ Click here for our Telegram/Discord!</value>
     <value />
   </data>
   <data name="selectDir.Location" type="System.Drawing.Point, System.Drawing">
-    <value>429, 209</value>
-  </data>
-  <data name="selectDir.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
-    <value>4, 5, 4, 5</value>
+    <value>286, 136</value>
   </data>
   <data name="selectDir.Size" type="System.Drawing.Size, System.Drawing">
-    <value>154, 134</value>
+    <value>103, 87</value>
   </data>
   <data name="selectDir.SizeMode" type="System.Windows.Forms.PictureBoxSizeMode, System.Windows.Forms">
     <value>Zoom</value>
@@ -3540,13 +3503,10 @@ Click here for our Telegram/Discord!</value>
     <value>On</value>
   </data>
   <data name="label5.Location" type="System.Drawing.Point, System.Drawing">
-    <value>94, 71</value>
-  </data>
-  <data name="label5.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
-    <value>4, 0, 4, 0</value>
+    <value>63, 46</value>
   </data>
   <data name="label5.Size" type="System.Drawing.Size, System.Drawing">
-    <value>822, 75</value>
+    <value>556, 48</value>
   </data>
   <data name="label5.TabIndex" type="System.Int32, mscorlib">
     <value>1</value>
@@ -3582,13 +3542,10 @@ Goldberg includes DLC + Achievements. Only use ALI if Goldberg doesn't work.
     <value>On</value>
   </data>
   <data name="selectDirLabel.Location" type="System.Drawing.Point, System.Drawing">
-    <value>100, 35</value>
-  </data>
-  <data name="selectDirLabel.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
-    <value>4, 0, 4, 0</value>
+    <value>67, 23</value>
   </data>
   <data name="selectDirLabel.Size" type="System.Drawing.Size, System.Drawing">
-    <value>810, 29</value>
+    <value>558, 20</value>
   </data>
   <data name="selectDirLabel.TabIndex" type="System.Int32, mscorlib">
     <value>1</value>
@@ -3621,13 +3578,10 @@ Goldberg includes DLC + Achievements. Only use ALI if Goldberg doesn't work.
     <value>On</value>
   </data>
   <data name="drgdropText.Location" type="System.Drawing.Point, System.Drawing">
-    <value>0, 8</value>
-  </data>
-  <data name="drgdropText.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
-    <value>4, 0, 4, 0</value>
+    <value>0, 6</value>
   </data>
   <data name="drgdropText.Size" type="System.Drawing.Size, System.Drawing">
-    <value>1011, 534</value>
+    <value>674, 347</value>
   </data>
   <data name="drgdropText.TabIndex" type="System.Int32, mscorlib">
     <value>9</value>
@@ -3655,13 +3609,10 @@ Goldberg includes DLC + Achievements. Only use ALI if Goldberg doesn't work.
     <value>12</value>
   </data>
   <data name="mainPanel.Location" type="System.Drawing.Point, System.Drawing">
-    <value>2, 0</value>
-  </data>
-  <data name="mainPanel.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
-    <value>4, 5, 4, 5</value>
+    <value>0, -3</value>
   </data>
   <data name="mainPanel.Size" type="System.Drawing.Size, System.Drawing">
-    <value>1011, 551</value>
+    <value>674, 358</value>
   </data>
   <data name="mainPanel.TabIndex" type="System.Int32, mscorlib">
     <value>8</value>
@@ -3678,14 +3629,140 @@ Goldberg includes DLC + Achievements. Only use ALI if Goldberg doesn't work.
   <data name="&gt;&gt;mainPanel.ZOrder" xml:space="preserve">
     <value>0</value>
   </data>
+  <data name="ManAppBox.Font" type="System.Drawing.Font, System.Drawing">
+    <value>Microsoft Sans Serif, 12pt, style=Bold</value>
+  </data>
+  <data name="ManAppBox.Location" type="System.Drawing.Point, System.Drawing">
+    <value>43, 45</value>
+  </data>
+  <data name="ManAppBox.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>2, 2, 2, 2</value>
+  </data>
+  <data name="ManAppBox.Size" type="System.Drawing.Size, System.Drawing">
+    <value>155, 26</value>
+  </data>
+  <data name="ManAppBox.TabIndex" type="System.Int32, mscorlib">
+    <value>2</value>
+  </data>
+  <data name="&gt;&gt;ManAppBox.Name" xml:space="preserve">
+    <value>ManAppBox</value>
+  </data>
+  <data name="&gt;&gt;ManAppBox.Type" xml:space="preserve">
+    <value>System.Windows.Forms.TextBox, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;ManAppBox.Parent" xml:space="preserve">
+    <value>ManAppPanel</value>
+  </data>
+  <data name="&gt;&gt;ManAppBox.ZOrder" xml:space="preserve">
+    <value>0</value>
+  </data>
+  <data name="ManAppBtn.FlatStyle" type="System.Windows.Forms.FlatStyle, System.Windows.Forms">
+    <value>Flat</value>
+  </data>
+  <data name="ManAppBtn.Font" type="System.Drawing.Font, System.Drawing">
+    <value>Microsoft Sans Serif, 9.75pt, style=Bold</value>
+  </data>
+  <data name="ManAppBtn.ImeMode" type="System.Windows.Forms.ImeMode, System.Windows.Forms">
+    <value>On</value>
+  </data>
+  <data name="ManAppBtn.Location" type="System.Drawing.Point, System.Drawing">
+    <value>133, 77</value>
+  </data>
+  <data name="ManAppBtn.Size" type="System.Drawing.Size, System.Drawing">
+    <value>64, 26</value>
+  </data>
+  <data name="ManAppBtn.TabIndex" type="System.Int32, mscorlib">
+    <value>9</value>
+  </data>
+  <data name="ManAppBtn.Text" xml:space="preserve">
+    <value>Submit</value>
+  </data>
+  <data name="ManAppBtn.Visible" type="System.Boolean, mscorlib">
+    <value>False</value>
+  </data>
+  <data name="&gt;&gt;ManAppBtn.Name" xml:space="preserve">
+    <value>ManAppBtn</value>
+  </data>
+  <data name="&gt;&gt;ManAppBtn.Type" xml:space="preserve">
+    <value>System.Windows.Forms.Button, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;ManAppBtn.Parent" xml:space="preserve">
+    <value>ManAppPanel</value>
+  </data>
+  <data name="&gt;&gt;ManAppBtn.ZOrder" xml:space="preserve">
+    <value>1</value>
+  </data>
+  <data name="ManAppLbl.AutoSize" type="System.Boolean, mscorlib">
+    <value>True</value>
+  </data>
+  <data name="ManAppLbl.Font" type="System.Drawing.Font, System.Drawing">
+    <value>Microsoft Sans Serif, 9.75pt, style=Bold</value>
+  </data>
+  <data name="ManAppLbl.ImeMode" type="System.Windows.Forms.ImeMode, System.Windows.Forms">
+    <value>On</value>
+  </data>
+  <data name="ManAppLbl.Location" type="System.Drawing.Point, System.Drawing">
+    <value>6, 13</value>
+  </data>
+  <data name="ManAppLbl.Size" type="System.Drawing.Size, System.Drawing">
+    <value>144, 16</value>
+  </data>
+  <data name="ManAppLbl.TabIndex" type="System.Int32, mscorlib">
+    <value>1</value>
+  </data>
+  <data name="ManAppLbl.Text" xml:space="preserve">
+    <value>Manual APPID entry</value>
+  </data>
+  <data name="ManAppLbl.TextAlign" type="System.Drawing.ContentAlignment, System.Drawing">
+    <value>TopCenter</value>
+  </data>
+  <data name="&gt;&gt;ManAppLbl.Name" xml:space="preserve">
+    <value>ManAppLbl</value>
+  </data>
+  <data name="&gt;&gt;ManAppLbl.Type" xml:space="preserve">
+    <value>System.Windows.Forms.Label, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;ManAppLbl.Parent" xml:space="preserve">
+    <value>ManAppPanel</value>
+  </data>
+  <data name="&gt;&gt;ManAppLbl.ZOrder" xml:space="preserve">
+    <value>2</value>
+  </data>
+  <data name="ManAppPanel.Location" type="System.Drawing.Point, System.Drawing">
+    <value>215, 113</value>
+  </data>
+  <data name="ManAppPanel.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>2, 2, 2, 2</value>
+  </data>
+  <data name="ManAppPanel.Size" type="System.Drawing.Size, System.Drawing">
+    <value>245, 127</value>
+  </data>
+  <data name="ManAppPanel.TabIndex" type="System.Int32, mscorlib">
+    <value>13</value>
+  </data>
+  <data name="ManAppPanel.Visible" type="System.Boolean, mscorlib">
+    <value>False</value>
+  </data>
+  <data name="&gt;&gt;ManAppPanel.Name" xml:space="preserve">
+    <value>ManAppPanel</value>
+  </data>
+  <data name="&gt;&gt;ManAppPanel.Type" xml:space="preserve">
+    <value>System.Windows.Forms.Panel, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;ManAppPanel.Parent" xml:space="preserve">
+    <value>$this</value>
+  </data>
+  <data name="&gt;&gt;ManAppPanel.ZOrder" xml:space="preserve">
+    <value>2</value>
+  </data>
   <metadata name="$this.Localizable" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
     <value>True</value>
   </metadata>
   <data name="$this.AutoScaleDimensions" type="System.Drawing.SizeF, System.Drawing">
-    <value>9, 20</value>
+    <value>6, 13</value>
   </data>
   <data name="$this.ClientSize" type="System.Drawing.Size, System.Drawing">
-    <value>1005, 526</value>
+    <value>674, 353</value>
   </data>
   <data name="$this.Icon" type="System.Drawing.Icon, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
     <value>
@@ -6176,14 +6253,11 @@ Goldberg includes DLC + Achievements. Only use ALI if Goldberg doesn't work.
   <data name="$this.ImeMode" type="System.Windows.Forms.ImeMode, System.Windows.Forms">
     <value>On</value>
   </data>
-  <data name="$this.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
-    <value>4, 5, 4, 5</value>
-  </data>
   <data name="$this.MaximumSize" type="System.Drawing.Size, System.Drawing">
-    <value>1027, 582</value>
+    <value>690, 392</value>
   </data>
   <data name="$this.MinimumSize" type="System.Drawing.Size, System.Drawing">
-    <value>1027, 582</value>
+    <value>690, 392</value>
   </data>
   <data name="$this.Text" xml:space="preserve">
     <value>SAC-GUI</value>

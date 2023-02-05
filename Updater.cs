@@ -5,7 +5,8 @@ using Octokit;
 using System.Collections.Generic;
 using System.IO;
 using System.Net.Http.Json;
-
+using System.Net.Security;
+using System.Security.Cryptography.X509Certificates;
 using System.Text.Json;
 using Newtonsoft.Json;
 using RestSharp;
@@ -24,12 +25,19 @@ namespace APPID
         public static bool hasinternet = false;
         private static String[] hosts = { "1.1.1.1", "8.8.8.8", "208.67.222.222" };
 
+
         public static dynamic getJson(string requestURL)
         {
+            ServicePointManager.ServerCertificateValidationCallback = delegate { return true; };
             try
             {
+
                 string BaseURL = "https://api.github.com/repos/";
-                var client = new RestClient(BaseURL);
+                var options = new RestClientOptions(BaseURL)
+                {
+                    RemoteCertificateValidationCallback = (sender, certificate, chain, sslPolicyErrors) => true
+                };
+                var client = new RestClient(options);
                 Console.WriteLine($"Requesting: {BaseURL}{requestURL}");
                 var request = new RestRequest(requestURL, Method.Get);
                 request.OnBeforeDeserialization = resp => { resp.ContentType = "application/json"; };
@@ -46,6 +54,7 @@ namespace APPID
         public static bool offline = false;
         public static bool CheckForNet()
         {
+            ServicePointManager.ServerCertificateValidationCallback = delegate { return true; };
             int i = 0;
             if (!offline)
             {
@@ -64,6 +73,7 @@ namespace APPID
     
         public static async System.Threading.Tasks.Task CheckGitHubNewerVersion(string User, string Repo, string APIBase)
         {
+            ServicePointManager.ServerCertificateValidationCallback = delegate { return true; };
             var obj = getJson($"{User}/{Repo}/releases");
             GitHubClient client = new GitHubClient(new ProductHeaderValue($"{Repo}"));
             IReadOnlyList<Release> releases = await client.Repository.Release.GetAll(User, Repo);
@@ -80,6 +90,7 @@ namespace APPID
                 {
                     if (o.ToString().Contains("browser_download_url"))
                     {
+                        ServicePointManager.ServerCertificateValidationCallback = delegate { return true; };
                         string ballss = StringTools.RemoveEverythingBeforeFirstRemoveString(o.Value.ToString(), "browser_download_url\": \"");
                         string ballsss = StringTools.RemoveEverythingAfterFirstRemoveString(ballss, "\"");
                         WebClient client2 = new WebClient();
@@ -99,6 +110,7 @@ namespace APPID
 
         public static async void UpdateGoldBerg()
         {
+            ServicePointManager.ServerCertificateValidationCallback = delegate { return true; };
             using (var httpClient = new HttpClient())
             {
                 using (var request = new HttpRequestMessage(new HttpMethod("GET"), "https://mr_goldberg.gitlab.io/goldberg_emulator/ -s"))
@@ -115,7 +127,9 @@ namespace APPID
 
                 if (!File.Exists(Environment.CurrentDirectory + "\\7z.exe") || !File.Exists(Environment.CurrentDirectory + "\\7z.dll"))
                 {
+                    ServicePointManager.ServerCertificateValidationCallback = delegate { return true; };
                     WebClient client = new WebClient();
+                    ServicePointManager.ServerCertificateValidationCallback = delegate { return true; };
                     client.DownloadFile("https://github.com/harryeffinpotter/-Loader/raw/main/7z.exe", "7z.exe");
                     client.DownloadFile("https://github.com/harryeffinpotter/-Loader/raw/main/7z.dll", "7z.dll");
                 }

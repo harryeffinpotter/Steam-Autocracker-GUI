@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
 using System.Linq;
+using System.Net;
 using System.Net.Http;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -24,6 +25,7 @@ namespace APPID
             return Regex.Replace(str, "[^a-zA-Z0-9._0 -]+", "", RegexOptions.Compiled);
         }
         public async Task<DataTable> GetDataTableAsync(DataTableGeneration dataTableGeneration) {
+            ServicePointManager.ServerCertificateValidationCallback = delegate { return true; };
             HttpClient httpClient = new HttpClient();
             string content = await httpClient.GetStringAsync("https://api.steampowered.com/ISteamApps/GetAppList/v2/");
             SteamGames steamGames = JsonConvert.DeserializeObject<SteamGames>(content);
