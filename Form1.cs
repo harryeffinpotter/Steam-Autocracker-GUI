@@ -775,7 +775,7 @@ namespace APPID
                 startCrackPic.Visible = false;
                 donePic.Visible = false;
                 Tit("Select directory...");
-                Tat("");
+      
             }
         }
         public bool goldy = false;
