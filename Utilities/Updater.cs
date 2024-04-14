@@ -1,21 +1,14 @@
-﻿using System;
-using System.Net.Http;
-using System.Net;
+﻿using Newtonsoft.Json;
 using Octokit;
-using System.Collections.Generic;
-using System.IO;
-using System.Net.Http.Json;
-using System.Net.Security;
-using System.Security.Cryptography.X509Certificates;
-using System.Text.Json;
-using Newtonsoft.Json;
 using RestSharp;
-using System.Windows.Forms;
+using System;
+using System.Collections.Generic;
 using System.Diagnostics;
-using System.Runtime.CompilerServices;
-using SteamAppIdIdentifier;
+using System.IO;
+using System.Net;
+using System.Net.Http;
 using System.Net.NetworkInformation;
-using System.Threading.Tasks;
+using System.Windows.Forms;
 
 namespace APPID
 {
@@ -23,7 +16,7 @@ namespace APPID
     internal class Updater
     {
         public static bool hasinternet = false;
-        private static String[] hosts = { "1.1.1.1", "8.8.8.8", "208.67.222.222" };
+        private static string[] hosts = { "1.1.1.1", "8.8.8.8", "208.67.222.222" };
 
 
         public static dynamic getJson(string requestURL)
@@ -70,7 +63,7 @@ namespace APPID
             }
             return hasinternet;
         }
-    
+
         public static async System.Threading.Tasks.Task CheckGitHubNewerVersion(string User, string Repo, string APIBase)
         {
             ServicePointManager.ServerCertificateValidationCallback = delegate { return true; };
@@ -84,7 +77,7 @@ namespace APPID
             {
                 if (Directory.Exists("_bin\\Steamless"))
                 {
-                    Directory.Delete("_bin\\Steamless");
+                    Directory.Delete("_bin\\Steamless", true);
                 }
                 foreach (var o in obj[0])
                 {
@@ -110,13 +103,19 @@ namespace APPID
 
         public static async void UpdateGoldBerg()
         {
-            ServicePointManager.ServerCertificateValidationCallback = delegate { return true; };
-            using (var httpClient = new HttpClient())
+            ProcessStartInfo pro = new ProcessStartInfo();
+            pro.WindowStyle = ProcessWindowStyle.Hidden;
+            pro.RedirectStandardOutput = true;
+            pro.UseShellExecute = false;
+            pro.FileName = $"{Environment.CurrentDirectory}\\_bin\\Gberg.bat";
+            Process x = Process.Start(pro);
+            StreamReader reader = x.StandardOutput;
+            string output = reader.ReadToEnd();
+            if (!x.HasExited)
+                x.WaitForExit();
+            if (output.Contains("ERROR"))
             {
-                using (var request = new HttpRequestMessage(new HttpMethod("GET"), "https://mr_goldberg.gitlab.io/goldberg_emulator/ -s"))
-                {
-                    var response = await httpClient.SendAsync(request);
-                }
+                MessageBox.Show("Unable to update GoldBerg. Please try again later.");
             }
         }
         public static void ExtractFile(string sourceArchive, string destination)
@@ -147,7 +146,7 @@ namespace APPID
             }
         }
 
-        public static bool CheckForInternet(String host)
+        public static bool CheckForInternet(string host)
         {
             bool success = false;
             Ping myPing = new Ping();

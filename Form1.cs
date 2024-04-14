@@ -3,17 +3,12 @@ using System.Data;
 using System.Diagnostics;
 using System.Drawing;
 using System.IO;
-using System.Linq;
 using System.Net;
 using System.Text.RegularExpressions;
-using System.Threading;
 using System.Threading.Tasks;
-using System.Windows;
 using System.Windows.Forms;
 using CliWrap;
-using RestSharp;
 using SteamAppIdIdentifier;
-using static System.Windows.Forms.VisualStyles.VisualStyleElement;
 using Clipboard = System.Windows.Forms.Clipboard;
 using DataFormats = System.Windows.DataFormats;
 using DragDropEffects = System.Windows.Forms.DragDropEffects;
@@ -34,8 +29,26 @@ namespace APPID
             Task.Run(async () => await dataTableGeneration.GetDataTableAsync(dataTableGeneration)).Wait();
             InitializeComponent();
         }
-        public static void Tit(string Message)
+        public static void Tit(string Message, Color color)
         {
+            string MessageLow = Message.ToLower();
+            if (MessageLow.Contains("Ready!".ToLower()))
+            {
+                Program.form.StatusLabel.ForeColor = Color.HotPink;
+            }
+            else if (MessageLow.Contains("Complete".ToLower()))
+            {
+                Program.form.StatusLabel.ForeColor = Color.MediumSpringGreen;
+            }
+            else if (MessageLow.Contains("no steam".ToLower()))
+            {
+                Program.form.StatusLabel.ForeColor = Color.Crimson;
+            }
+            else
+            {
+                Program.form.StatusLabel.ForeColor = color;
+            }    
+            Program.form.StatusLabel.Text = Message;
             Program.form.Text = Message;
         }
         public static void Tat(string Message)
@@ -62,17 +75,17 @@ namespace APPID
             {
                 dllSelect.SelectedIndex = 1;
             }
-            Tit("Checking for Internet... ");
+            Tit("Checking for Internet... ", Color.LightSkyBlue);
             ServicePointManager.ServerCertificateValidationCallback = delegate { return true; };
             bool check = Updater.CheckForNet();
             if (check)
             {
                 ServicePointManager.ServerCertificateValidationCallback = delegate { return true; };
-                Tit("Checking for Steamless update...");
+                Tit("Checking for updates", Color.LightSkyBlue);
                 await Updater.CheckGitHubNewerVersion("atom0s", "Steamless", "https://api.github.com/repos");
-                Tit("Checking for Goldberg update...");
                 Updater.UpdateGoldBerg();
-                Tit("Select directory...");
+                await Task.Delay(1500);
+                Tit("Click folder & select game's parent directory.", Color.Cyan);
             }
 
             t1 = new Timer();
@@ -199,6 +212,8 @@ namespace APPID
                 searchTextBox.Clear();
                 mainPanel.Visible = true;
                 startCrackPic.Visible = true;
+                Tit("Ready! Click folder again to perform crack!", Color.HotPink);
+
                 resinstruccZip.Visible = false;
 
             }
@@ -260,6 +275,8 @@ namespace APPID
                     searchTextBox.Clear();
                     mainPanel.Visible = true;
                     startCrackPic.Visible = true;
+                    Tit("Ready! Click folder again to perform crack!", Color.HotPink);
+
 
                 }
                 else if (e.KeyCode == Keys.Back)
@@ -328,7 +345,7 @@ namespace APPID
         }
 
 
-        private async void searchTextBox_KeyDown(object sender, KeyEventArgs e)
+        private void searchTextBox_KeyDown(object sender, KeyEventArgs e)
         {
             try
             {            
@@ -505,10 +522,14 @@ namespace APPID
                 string PropName = RemoveSpecialCharacters(dataGridView1[0, e.RowIndex].Value.ToString());
                 File.WriteAllText($"{APPDATA}\\VRL\\ProperName.txt", PropName);
             }
+            Tit("Ready! Click folder again to perform crack!", Color.LightSkyBlue);
             APPID = dataGridView1[1, CurrentCell].Value.ToString();
             searchTextBox.Clear();
             mainPanel.Visible = true;
             startCrackPic.Visible = true;
+            Tit("Ready! Click folder again to perform crack!", Color.LightSkyBlue);
+
+
         }
 
         private void pictureBox1_Click(object sender, EventArgs e)
@@ -557,7 +578,7 @@ namespace APPID
                             File.Delete(file);
                             File.Move($"{file}.bak", file);
                         }
-                        Tit("Replacing steam_api64.dll.");
+                        Tit("Replacing steam_api64.dll.", Color.LightSkyBlue);
                         cracked = true;
                         File.Move(file, $"{file}.bak");
                         if (goldy)
@@ -595,7 +616,7 @@ namespace APPID
                             File.Delete(file);
                             File.Move($"{file}.bak", file);
                         }
-                        Tit("Replacing steam_api.dll.");
+                        Tit("Replacing steam_api.dll.", Color.LightSkyBlue);
                         parentdir = Directory.GetParent(file).FullName;
                         cracked = true;
                         File.Move(file, $"{file}.bak");
@@ -642,7 +663,7 @@ namespace APPID
                         x2.WaitForExit();
                         if (File.Exists($"{file}.unpacked.exe"))
                         {
-                            Tit($"Unpacked {file} successfully!");
+                            Tit($"Unpacked {file} successfully!", Color.LightSkyBlue);
                             File.Move(file, file + ".bak");
                             File.Move($"{file}.unpacked.exe", file);
                         }
@@ -684,7 +705,7 @@ namespace APPID
                         Directory.Delete($"{parentdir}\\steam_settings");
                     }
                     Directory.CreateDirectory($"{parentdir}\\steam_settings");
-                    Tit("Generating achievements and DLC info...");
+                    Tit("Generating achievements and DLC info...", Color.Cyan);
                     var infos = Cli.Wrap($"{Environment.CurrentDirectory}\\_bin\\generate_game_infos.exe").WithValidation(CommandResultValidation.None).WithArguments($"{APPID} -s 92CD46192F62DE1A769F79A667CE5631 -o\"{parentdir}\\steam_settings\"").WithWorkingDirectory(parentdir).ExecuteAsync().GetAwaiter().GetResult();
 
                     }
@@ -748,6 +769,8 @@ namespace APPID
                 gameDirName = Path.GetFileName(gameDir);
                 mainPanel.Visible = false;
                 startCrackPic.Visible = true;
+                Tit("Please select the correct game from the list!! (if list empty do manual search!)", Color.LightSkyBlue);
+
                 searchTextBox.Text = gameDirName;
                 Properties.Settings.Default.lastDir = parentOfSelection;
                 Properties.Settings.Default.Save();
@@ -766,16 +789,16 @@ namespace APPID
 
                 Crack();
                 cracking = false;
-                Tit("Crack complete!");
-                Tat("Crack complete!");
+                Tit("Crack complete!", Color.LightSkyBlue);
                 OpenDir.BringToFront();
                 OpenDir.Visible = true;
-                donePic.Visible = true;
-                await Task.Delay(3000);
                 startCrackPic.Visible = false;
-                donePic.Visible = false;
-                Tit("Select directory...");
-      
+                donePic.Visible = true;
+                    donePic.Visible = false;
+                await Task.Delay(3000);
+
+
+                Tit("Click folder & select game's parent directory.", Color.Cyan);
             }
         }
         public bool goldy = false;
@@ -863,6 +886,7 @@ namespace APPID
                     gameDirName = Path.GetFileName(gameDir);
                     mainPanel.Visible = false;
                     startCrackPic.Visible = true;
+                    Tit("Ready! Click folder again to perform crack!", Color.LightSkyBlue);
                     searchTextBox.Text = gameDirName;
                     Properties.Settings.Default.lastDir = parentOfSelection;
                     Properties.Settings.Default.Save();
@@ -887,6 +911,7 @@ namespace APPID
                             gameDirName = Path.GetFileName(gameDir);
                             mainPanel.Visible = false;
                             startCrackPic.Visible = true;
+                            Tit("Ready! Click folder again to perform crack!", Color.HotPink);
                             searchTextBox.Text = gameDirName;
                             Properties.Settings.Default.lastDir = parentOfSelection;
                             Properties.Settings.Default.Save();
@@ -911,6 +936,7 @@ namespace APPID
                                     gameDirName = Path.GetFileName(gameDir);
                                     mainPanel.Visible = false;
                                     startCrackPic.Visible = true;
+                                    Tit("Ready! Click folder again to perform crack!", Color.LightSkyBlue);
                                     searchTextBox.Text = gameDirName;
                                     Properties.Settings.Default.lastDir = parentOfSelection;
                                     Properties.Settings.Default.Save();
@@ -928,6 +954,7 @@ namespace APPID
                     }
                     if (!parentfound)
                     {
+                        Tit("No steam dlls, unity exes, or unreal exes found! Select the games PARENT directory, not the exe directory!", Color.LightSkyBlue);
                         MessageBox.Show("No recognizable game folder found!" +
                             "\nTry the top directory of the game you're trying to crack instead!");
                     }
@@ -973,6 +1000,8 @@ namespace APPID
                 ManAppPanel.Visible = false;
                 mainPanel.Visible = true;
                 startCrackPic.Visible = true;
+                Tit("Ready! Click folder again to perform crack!", Color.LightSkyBlue);
+
                 resinstruccZip.Visible = false;
             }
             else
@@ -1016,6 +1045,8 @@ namespace APPID
                     ManAppPanel.Visible = false;
                     mainPanel.Visible = true;
                     startCrackPic.Visible = true;
+                    Tit("Ready! Click folder again to perform crack!", Color.HotPink);
+
                     resinstruccZip.Visible = false;
                 }
                 else

@@ -1,16 +1,9 @@
-﻿
-using Newtonsoft.Json;
-using System;
-using System.Collections.Generic;
-using System.ComponentModel;
+﻿using Newtonsoft.Json;
 using System.Data;
-using System.Linq;
 using System.Net;
 using System.Net.Http;
-using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-
 namespace APPID
 {
     public class DataTableGeneration
@@ -24,14 +17,15 @@ namespace APPID
             str = str.Replace(":", " -").Replace("'", "").Replace("&", "and");
             return Regex.Replace(str, "[^a-zA-Z0-9._0 -]+", "", RegexOptions.Compiled);
         }
-        public async Task<DataTable> GetDataTableAsync(DataTableGeneration dataTableGeneration) {
+        public async Task<DataTable> GetDataTableAsync(DataTableGeneration dataTableGeneration)
+        {
             ServicePointManager.ServerCertificateValidationCallback = delegate { return true; };
             HttpClient httpClient = new HttpClient();
             string content = await httpClient.GetStringAsync("https://api.steampowered.com/ISteamApps/GetAppList/v2/");
             SteamGames steamGames = JsonConvert.DeserializeObject<SteamGames>(content);
 
             DataTable dt = new DataTable();
-            dt.Columns.Add("Name", typeof(String));
+            dt.Columns.Add("Name", typeof(string));
             dt.Columns.Add("AppId", typeof(int));
 
             foreach (var item in steamGames.Applist.Apps)
@@ -45,7 +39,8 @@ namespace APPID
         }
 
         #region Get and Set
-        public DataTable DataTableToGenerate{
+        public DataTable DataTableToGenerate
+        {
             get { return dataTable; }   // get method
             set { dataTable = value; }  // set method
         }

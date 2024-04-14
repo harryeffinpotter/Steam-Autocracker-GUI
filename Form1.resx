@@ -122,10 +122,14 @@
     <value>Microsoft Sans Serif, 9.75pt, style=Bold</value>
   </data>
   <data name="searchTextBox.Location" type="System.Drawing.Point, System.Drawing">
-    <value>12, 9</value>
+    <value>18, 14</value>
+  </data>
+  <assembly alias="System.Windows.Forms" name="System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" />
+  <data name="searchTextBox.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>4, 5, 4, 5</value>
   </data>
   <data name="searchTextBox.Size" type="System.Drawing.Size, System.Drawing">
-    <value>564, 22</value>
+    <value>844, 30</value>
   </data>
   <assembly alias="mscorlib" name="mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" />
   <data name="searchTextBox.TabIndex" type="System.Int32, mscorlib">
@@ -147,13 +151,16 @@
     <value>29</value>
   </data>
   <data name="dataGridView1.Location" type="System.Drawing.Point, System.Drawing">
-    <value>11, 38</value>
+    <value>16, 58</value>
+  </data>
+  <data name="dataGridView1.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>4, 5, 4, 5</value>
   </data>
   <data name="dataGridView1.RowHeadersWidth" type="System.Int32, mscorlib">
     <value>35</value>
   </data>
   <data name="dataGridView1.Size" type="System.Drawing.Size, System.Drawing">
-    <value>653, 235</value>
+    <value>980, 362</value>
   </data>
   <data name="dataGridView1.TabIndex" type="System.Int32, mscorlib">
     <value>1</value>
@@ -170,7 +177,6 @@
   <data name="&gt;&gt;dataGridView1.ZOrder" xml:space="preserve">
     <value>1</value>
   </data>
-  <assembly alias="System.Windows.Forms" name="System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" />
   <data name="btnSearch.FlatStyle" type="System.Windows.Forms.FlatStyle, System.Windows.Forms">
     <value>Flat</value>
   </data>
@@ -178,10 +184,13 @@
     <value>Microsoft Sans Serif, 8.25pt, style=Bold</value>
   </data>
   <data name="btnSearch.Location" type="System.Drawing.Point, System.Drawing">
-    <value>582, 9</value>
+    <value>873, 14</value>
+  </data>
+  <data name="btnSearch.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>4, 5, 4, 5</value>
   </data>
   <data name="btnSearch.Size" type="System.Drawing.Size, System.Drawing">
-    <value>83, 22</value>
+    <value>124, 34</value>
   </data>
   <data name="btnSearch.TabIndex" type="System.Int32, mscorlib">
     <value>2</value>
@@ -211,10 +220,13 @@
     <value>On</value>
   </data>
   <data name="resinstruccZip.Location" type="System.Drawing.Point, System.Drawing">
-    <value>9, 276</value>
+    <value>14, 425</value>
+  </data>
+  <data name="resinstruccZip.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>4, 0, 4, 0</value>
   </data>
   <data name="resinstruccZip.Size" type="System.Drawing.Size, System.Drawing">
-    <value>615, 54</value>
+    <value>992, 87</value>
   </data>
   <data name="resinstruccZip.TabIndex" type="System.Int32, mscorlib">
     <value>0</value>
@@ -247,13 +259,10 @@ OR - Press CTRL+I or F1 to enter in the APPID manually.
     <value>MiddleRight</value>
   </data>
   <data name="tgDisc.Location" type="System.Drawing.Point, System.Drawing">
-    <value>481, 334</value>
-  </data>
-  <data name="tgDisc.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
-    <value>2, 0, 2, 0</value>
+    <value>722, 514</value>
   </data>
   <data name="tgDisc.Size" type="System.Drawing.Size, System.Drawing">
-    <value>191, 15</value>
+    <value>279, 22</value>
   </data>
   <data name="tgDisc.TabIndex" type="System.Int32, mscorlib">
     <value>0</value>
@@ -274,7 +283,7 @@ OR - Press CTRL+I or F1 to enter in the APPID manually.
     <value>mainPanel</value>
   </data>
   <data name="&gt;&gt;tgDisc.ZOrder" xml:space="preserve">
-    <value>0</value>
+    <value>1</value>
   </data>
   <data name="gitHub.Image" type="System.Drawing.Bitmap, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
     <value>
@@ -508,10 +517,13 @@ OR - Press CTRL+I or F1 to enter in the APPID manually.
     <value>On</value>
   </data>
   <data name="gitHub.Location" type="System.Drawing.Point, System.Drawing">
-    <value>623, 294</value>
+    <value>934, 452</value>
+  </data>
+  <data name="gitHub.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>4, 5, 4, 5</value>
   </data>
   <data name="gitHub.Size" type="System.Drawing.Size, System.Drawing">
-    <value>44, 40</value>
+    <value>66, 62</value>
   </data>
   <data name="gitHub.SizeMode" type="System.Windows.Forms.PictureBoxSizeMode, System.Windows.Forms">
     <value>Zoom</value>
@@ -529,7 +541,40 @@ OR - Press CTRL+I or F1 to enter in the APPID manually.
     <value>mainPanel</value>
   </data>
   <data name="&gt;&gt;gitHub.ZOrder" xml:space="preserve">
+    <value>2</value>
+  </data>
+  <data name="StatusLabel.Font" type="System.Drawing.Font, System.Drawing">
+    <value>Consolas, 12pt</value>
+  </data>
+  <data name="StatusLabel.ImeMode" type="System.Windows.Forms.ImeMode, System.Windows.Forms">
+    <value>On</value>
+  </data>
+  <data name="StatusLabel.Location" type="System.Drawing.Point, System.Drawing">
+    <value>100, 355</value>
+  </data>
+  <data name="StatusLabel.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>4, 0, 4, 0</value>
+  </data>
+  <data name="StatusLabel.Size" type="System.Drawing.Size, System.Drawing">
+    <value>810, 29</value>
+  </data>
+  <data name="StatusLabel.TabIndex" type="System.Int32, mscorlib">
     <value>1</value>
+  </data>
+  <data name="StatusLabel.TextAlign" type="System.Drawing.ContentAlignment, System.Drawing">
+    <value>MiddleCenter</value>
+  </data>
+  <data name="&gt;&gt;StatusLabel.Name" xml:space="preserve">
+    <value>StatusLabel</value>
+  </data>
+  <data name="&gt;&gt;StatusLabel.Type" xml:space="preserve">
+    <value>System.Windows.Forms.Label, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;StatusLabel.Parent" xml:space="preserve">
+    <value>mainPanel</value>
+  </data>
+  <data name="&gt;&gt;StatusLabel.ZOrder" xml:space="preserve">
+    <value>0</value>
   </data>
   <data name="OpenDir.FlatStyle" type="System.Windows.Forms.FlatStyle, System.Windows.Forms">
     <value>Flat</value>
@@ -541,10 +586,13 @@ OR - Press CTRL+I or F1 to enter in the APPID manually.
     <value>On</value>
   </data>
   <data name="OpenDir.Location" type="System.Drawing.Point, System.Drawing">
-    <value>7, 311</value>
+    <value>10, 478</value>
+  </data>
+  <data name="OpenDir.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>4, 5, 4, 5</value>
   </data>
   <data name="OpenDir.Size" type="System.Drawing.Size, System.Drawing">
-    <value>83, 22</value>
+    <value>124, 34</value>
   </data>
   <data name="OpenDir.TabIndex" type="System.Int32, mscorlib">
     <value>9</value>
@@ -565,7 +613,7 @@ OR - Press CTRL+I or F1 to enter in the APPID manually.
     <value>mainPanel</value>
   </data>
   <data name="&gt;&gt;OpenDir.ZOrder" xml:space="preserve">
-    <value>2</value>
+    <value>3</value>
   </data>
   <data name="pin.Image" type="System.Drawing.Bitmap, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
     <value>
@@ -687,10 +735,13 @@ OR - Press CTRL+I or F1 to enter in the APPID manually.
     <value>On</value>
   </data>
   <data name="pin.Location" type="System.Drawing.Point, System.Drawing">
-    <value>4, 5</value>
+    <value>6, 8</value>
+  </data>
+  <data name="pin.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>4, 5, 4, 5</value>
   </data>
   <data name="pin.Size" type="System.Drawing.Size, System.Drawing">
-    <value>34, 26</value>
+    <value>51, 40</value>
   </data>
   <data name="pin.SizeMode" type="System.Windows.Forms.PictureBoxSizeMode, System.Windows.Forms">
     <value>Zoom</value>
@@ -708,7 +759,7 @@ OR - Press CTRL+I or F1 to enter in the APPID manually.
     <value>mainPanel</value>
   </data>
   <data name="&gt;&gt;pin.ZOrder" xml:space="preserve">
-    <value>3</value>
+    <value>4</value>
   </data>
   <data name="unPin.Image" type="System.Drawing.Bitmap, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
     <value>
@@ -805,10 +856,13 @@ OR - Press CTRL+I or F1 to enter in the APPID manually.
     <value>On</value>
   </data>
   <data name="unPin.Location" type="System.Drawing.Point, System.Drawing">
-    <value>4, 5</value>
+    <value>6, 8</value>
+  </data>
+  <data name="unPin.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>4, 5, 4, 5</value>
   </data>
   <data name="unPin.Size" type="System.Drawing.Size, System.Drawing">
-    <value>34, 26</value>
+    <value>51, 40</value>
   </data>
   <data name="unPin.SizeMode" type="System.Windows.Forms.PictureBoxSizeMode, System.Windows.Forms">
     <value>Zoom</value>
@@ -826,16 +880,19 @@ OR - Press CTRL+I or F1 to enter in the APPID manually.
     <value>mainPanel</value>
   </data>
   <data name="&gt;&gt;unPin.ZOrder" xml:space="preserve">
-    <value>4</value>
+    <value>5</value>
   </data>
   <data name="currDIrText.Font" type="System.Drawing.Font, System.Drawing">
     <value>Microsoft Sans Serif, 8.25pt</value>
   </data>
   <data name="currDIrText.Location" type="System.Drawing.Point, System.Drawing">
-    <value>8, 338</value>
+    <value>12, 520</value>
+  </data>
+  <data name="currDIrText.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>4, 0, 4, 0</value>
   </data>
   <data name="currDIrText.Size" type="System.Drawing.Size, System.Drawing">
-    <value>452, 20</value>
+    <value>678, 31</value>
   </data>
   <data name="currDIrText.TabIndex" type="System.Int32, mscorlib">
     <value>10</value>
@@ -850,7 +907,7 @@ OR - Press CTRL+I or F1 to enter in the APPID manually.
     <value>mainPanel</value>
   </data>
   <data name="&gt;&gt;currDIrText.ZOrder" xml:space="preserve">
-    <value>5</value>
+    <value>6</value>
   </data>
   <data name="dllSelect.AutoCompleteCustomSource" xml:space="preserve">
     <value>Goldberg (Default)</value>
@@ -868,10 +925,13 @@ OR - Press CTRL+I or F1 to enter in the APPID manually.
     <value>ALI213</value>
   </data>
   <data name="dllSelect.Location" type="System.Drawing.Point, System.Drawing">
-    <value>287, 228</value>
+    <value>429, 296</value>
+  </data>
+  <data name="dllSelect.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>4, 5, 4, 5</value>
   </data>
   <data name="dllSelect.Size" type="System.Drawing.Size, System.Drawing">
-    <value>103, 21</value>
+    <value>152, 28</value>
   </data>
   <data name="dllSelect.TabIndex" type="System.Int32, mscorlib">
     <value>8</value>
@@ -886,7 +946,7 @@ OR - Press CTRL+I or F1 to enter in the APPID manually.
     <value>mainPanel</value>
   </data>
   <data name="&gt;&gt;dllSelect.ZOrder" xml:space="preserve">
-    <value>6</value>
+    <value>7</value>
   </data>
   <data name="donePic.Image" type="System.Drawing.Bitmap, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
     <value>
@@ -1092,10 +1152,13 @@ OR - Press CTRL+I or F1 to enter in the APPID manually.
     <value />
   </data>
   <data name="donePic.Location" type="System.Drawing.Point, System.Drawing">
-    <value>285, 135</value>
+    <value>428, 152</value>
+  </data>
+  <data name="donePic.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>4, 5, 4, 5</value>
   </data>
   <data name="donePic.Size" type="System.Drawing.Size, System.Drawing">
-    <value>103, 87</value>
+    <value>154, 134</value>
   </data>
   <data name="donePic.SizeMode" type="System.Windows.Forms.PictureBoxSizeMode, System.Windows.Forms">
     <value>Zoom</value>
@@ -1116,7 +1179,7 @@ OR - Press CTRL+I or F1 to enter in the APPID manually.
     <value>mainPanel</value>
   </data>
   <data name="&gt;&gt;donePic.ZOrder" xml:space="preserve">
-    <value>7</value>
+    <value>8</value>
   </data>
   <data name="startCrackPic.Image" type="System.Drawing.Bitmap, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
     <value>
@@ -3282,10 +3345,13 @@ OR - Press CTRL+I or F1 to enter in the APPID manually.
 </value>
   </data>
   <data name="startCrackPic.Location" type="System.Drawing.Point, System.Drawing">
-    <value>286, 136</value>
+    <value>429, 152</value>
+  </data>
+  <data name="startCrackPic.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>4, 5, 4, 5</value>
   </data>
   <data name="startCrackPic.Size" type="System.Drawing.Size, System.Drawing">
-    <value>103, 87</value>
+    <value>154, 134</value>
   </data>
   <data name="startCrackPic.SizeMode" type="System.Windows.Forms.PictureBoxSizeMode, System.Windows.Forms">
     <value>Zoom</value>
@@ -3306,7 +3372,7 @@ OR - Press CTRL+I or F1 to enter in the APPID manually.
     <value>mainPanel</value>
   </data>
   <data name="&gt;&gt;startCrackPic.ZOrder" xml:space="preserve">
-    <value>8</value>
+    <value>9</value>
   </data>
   <data name="selectDir.Image" type="System.Drawing.Bitmap, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
     <value>
@@ -3470,10 +3536,13 @@ OR - Press CTRL+I or F1 to enter in the APPID manually.
     <value />
   </data>
   <data name="selectDir.Location" type="System.Drawing.Point, System.Drawing">
-    <value>286, 136</value>
+    <value>429, 152</value>
+  </data>
+  <data name="selectDir.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>4, 5, 4, 5</value>
   </data>
   <data name="selectDir.Size" type="System.Drawing.Size, System.Drawing">
-    <value>103, 87</value>
+    <value>154, 134</value>
   </data>
   <data name="selectDir.SizeMode" type="System.Windows.Forms.PictureBoxSizeMode, System.Windows.Forms">
     <value>Zoom</value>
@@ -3491,7 +3560,7 @@ OR - Press CTRL+I or F1 to enter in the APPID manually.
     <value>mainPanel</value>
   </data>
   <data name="&gt;&gt;selectDir.ZOrder" xml:space="preserve">
-    <value>9</value>
+    <value>10</value>
   </data>
   <data name="label5.AutoSize" type="System.Boolean, mscorlib">
     <value>True</value>
@@ -3503,18 +3572,20 @@ OR - Press CTRL+I or F1 to enter in the APPID manually.
     <value>On</value>
   </data>
   <data name="label5.Location" type="System.Drawing.Point, System.Drawing">
-    <value>63, 46</value>
+    <value>155, 67</value>
+  </data>
+  <data name="label5.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>4, 0, 4, 0</value>
   </data>
   <data name="label5.Size" type="System.Drawing.Size, System.Drawing">
-    <value>556, 48</value>
+    <value>701, 50</value>
   </data>
   <data name="label5.TabIndex" type="System.Int32, mscorlib">
     <value>1</value>
   </data>
   <data name="label5.Text" xml:space="preserve">
-    <value>NOTE: Folders within a protected folder such as Program files/Program files (x86)/ won't work!
-You MUST copy it somewhere else first (aka a different drive, downloads directory, etc.)
-Goldberg includes DLC + Achievements. Only use ALI if Goldberg doesn't work.
+    <value>Goldberg includes DLC + Achievements. Only use ALI if Goldberg doesn't work.
+Games in either Program Files dir must be copied elsewhere first.
 </value>
   </data>
   <data name="label5.TextAlign" type="System.Drawing.ContentAlignment, System.Drawing">
@@ -3530,7 +3601,7 @@ Goldberg includes DLC + Achievements. Only use ALI if Goldberg doesn't work.
     <value>mainPanel</value>
   </data>
   <data name="&gt;&gt;label5.ZOrder" xml:space="preserve">
-    <value>10</value>
+    <value>11</value>
   </data>
   <data name="selectDirLabel.AutoSize" type="System.Boolean, mscorlib">
     <value>True</value>
@@ -3542,10 +3613,13 @@ Goldberg includes DLC + Achievements. Only use ALI if Goldberg doesn't work.
     <value>On</value>
   </data>
   <data name="selectDirLabel.Location" type="System.Drawing.Point, System.Drawing">
-    <value>67, 23</value>
+    <value>100, 35</value>
+  </data>
+  <data name="selectDirLabel.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>4, 0, 4, 0</value>
   </data>
   <data name="selectDirLabel.Size" type="System.Drawing.Size, System.Drawing">
-    <value>558, 20</value>
+    <value>810, 29</value>
   </data>
   <data name="selectDirLabel.TabIndex" type="System.Int32, mscorlib">
     <value>1</value>
@@ -3566,7 +3640,7 @@ Goldberg includes DLC + Achievements. Only use ALI if Goldberg doesn't work.
     <value>mainPanel</value>
   </data>
   <data name="&gt;&gt;selectDirLabel.ZOrder" xml:space="preserve">
-    <value>11</value>
+    <value>12</value>
   </data>
   <data name="drgdropText.Font" type="System.Drawing.Font, System.Drawing">
     <value>Microsoft Sans Serif, 26pt</value>
@@ -3578,10 +3652,13 @@ Goldberg includes DLC + Achievements. Only use ALI if Goldberg doesn't work.
     <value>On</value>
   </data>
   <data name="drgdropText.Location" type="System.Drawing.Point, System.Drawing">
-    <value>0, 6</value>
+    <value>5, 19</value>
+  </data>
+  <data name="drgdropText.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>4, 0, 4, 0</value>
   </data>
   <data name="drgdropText.Size" type="System.Drawing.Size, System.Drawing">
-    <value>674, 347</value>
+    <value>1000, 485</value>
   </data>
   <data name="drgdropText.TabIndex" type="System.Int32, mscorlib">
     <value>9</value>
@@ -3606,13 +3683,16 @@ Goldberg includes DLC + Achievements. Only use ALI if Goldberg doesn't work.
     <value>mainPanel</value>
   </data>
   <data name="&gt;&gt;drgdropText.ZOrder" xml:space="preserve">
-    <value>12</value>
+    <value>13</value>
   </data>
   <data name="mainPanel.Location" type="System.Drawing.Point, System.Drawing">
-    <value>0, -3</value>
+    <value>0, -5</value>
+  </data>
+  <data name="mainPanel.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>4, 5, 4, 5</value>
   </data>
   <data name="mainPanel.Size" type="System.Drawing.Size, System.Drawing">
-    <value>674, 358</value>
+    <value>1011, 551</value>
   </data>
   <data name="mainPanel.TabIndex" type="System.Int32, mscorlib">
     <value>8</value>
@@ -3629,17 +3709,74 @@ Goldberg includes DLC + Achievements. Only use ALI if Goldberg doesn't work.
   <data name="&gt;&gt;mainPanel.ZOrder" xml:space="preserve">
     <value>0</value>
   </data>
+  <data name="&gt;&gt;ManAppBox.Name" xml:space="preserve">
+    <value>ManAppBox</value>
+  </data>
+  <data name="&gt;&gt;ManAppBox.Type" xml:space="preserve">
+    <value>System.Windows.Forms.TextBox, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;ManAppBox.Parent" xml:space="preserve">
+    <value>ManAppPanel</value>
+  </data>
+  <data name="&gt;&gt;ManAppBox.ZOrder" xml:space="preserve">
+    <value>0</value>
+  </data>
+  <data name="&gt;&gt;ManAppBtn.Name" xml:space="preserve">
+    <value>ManAppBtn</value>
+  </data>
+  <data name="&gt;&gt;ManAppBtn.Type" xml:space="preserve">
+    <value>System.Windows.Forms.Button, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;ManAppBtn.Parent" xml:space="preserve">
+    <value>ManAppPanel</value>
+  </data>
+  <data name="&gt;&gt;ManAppBtn.ZOrder" xml:space="preserve">
+    <value>1</value>
+  </data>
+  <data name="&gt;&gt;ManAppLbl.Name" xml:space="preserve">
+    <value>ManAppLbl</value>
+  </data>
+  <data name="&gt;&gt;ManAppLbl.Type" xml:space="preserve">
+    <value>System.Windows.Forms.Label, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;ManAppLbl.Parent" xml:space="preserve">
+    <value>ManAppPanel</value>
+  </data>
+  <data name="&gt;&gt;ManAppLbl.ZOrder" xml:space="preserve">
+    <value>2</value>
+  </data>
+  <data name="ManAppPanel.Location" type="System.Drawing.Point, System.Drawing">
+    <value>322, 174</value>
+  </data>
+  <data name="ManAppPanel.Size" type="System.Drawing.Size, System.Drawing">
+    <value>366, 193</value>
+  </data>
+  <data name="ManAppPanel.TabIndex" type="System.Int32, mscorlib">
+    <value>13</value>
+  </data>
+  <data name="ManAppPanel.Visible" type="System.Boolean, mscorlib">
+    <value>False</value>
+  </data>
+  <data name="&gt;&gt;ManAppPanel.Name" xml:space="preserve">
+    <value>ManAppPanel</value>
+  </data>
+  <data name="&gt;&gt;ManAppPanel.Type" xml:space="preserve">
+    <value>System.Windows.Forms.Panel, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;ManAppPanel.Parent" xml:space="preserve">
+    <value>$this</value>
+  </data>
+  <data name="&gt;&gt;ManAppPanel.ZOrder" xml:space="preserve">
+    <value>2</value>
+  </data>
   <data name="ManAppBox.Font" type="System.Drawing.Font, System.Drawing">
     <value>Microsoft Sans Serif, 12pt, style=Bold</value>
   </data>
   <data name="ManAppBox.Location" type="System.Drawing.Point, System.Drawing">
-    <value>43, 45</value>
-  </data>
-  <data name="ManAppBox.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
-    <value>2, 2, 2, 2</value>
+    <value>64, 69</value>
   </data>
   <data name="ManAppBox.Size" type="System.Drawing.Size, System.Drawing">
-    <value>155, 26</value>
+    <value>230, 35</value>
   </data>
   <data name="ManAppBox.TabIndex" type="System.Int32, mscorlib">
     <value>2</value>
@@ -3666,10 +3803,13 @@ Goldberg includes DLC + Achievements. Only use ALI if Goldberg doesn't work.
     <value>On</value>
   </data>
   <data name="ManAppBtn.Location" type="System.Drawing.Point, System.Drawing">
-    <value>133, 77</value>
+    <value>200, 118</value>
+  </data>
+  <data name="ManAppBtn.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>4, 5, 4, 5</value>
   </data>
   <data name="ManAppBtn.Size" type="System.Drawing.Size, System.Drawing">
-    <value>64, 26</value>
+    <value>96, 40</value>
   </data>
   <data name="ManAppBtn.TabIndex" type="System.Int32, mscorlib">
     <value>9</value>
@@ -3702,10 +3842,13 @@ Goldberg includes DLC + Achievements. Only use ALI if Goldberg doesn't work.
     <value>On</value>
   </data>
   <data name="ManAppLbl.Location" type="System.Drawing.Point, System.Drawing">
-    <value>6, 13</value>
+    <value>9, 20</value>
+  </data>
+  <data name="ManAppLbl.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>4, 0, 4, 0</value>
   </data>
   <data name="ManAppLbl.Size" type="System.Drawing.Size, System.Drawing">
-    <value>144, 16</value>
+    <value>207, 25</value>
   </data>
   <data name="ManAppLbl.TabIndex" type="System.Int32, mscorlib">
     <value>1</value>
@@ -3728,41 +3871,14 @@ Goldberg includes DLC + Achievements. Only use ALI if Goldberg doesn't work.
   <data name="&gt;&gt;ManAppLbl.ZOrder" xml:space="preserve">
     <value>2</value>
   </data>
-  <data name="ManAppPanel.Location" type="System.Drawing.Point, System.Drawing">
-    <value>215, 113</value>
-  </data>
-  <data name="ManAppPanel.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
-    <value>2, 2, 2, 2</value>
-  </data>
-  <data name="ManAppPanel.Size" type="System.Drawing.Size, System.Drawing">
-    <value>245, 127</value>
-  </data>
-  <data name="ManAppPanel.TabIndex" type="System.Int32, mscorlib">
-    <value>13</value>
-  </data>
-  <data name="ManAppPanel.Visible" type="System.Boolean, mscorlib">
-    <value>False</value>
-  </data>
-  <data name="&gt;&gt;ManAppPanel.Name" xml:space="preserve">
-    <value>ManAppPanel</value>
-  </data>
-  <data name="&gt;&gt;ManAppPanel.Type" xml:space="preserve">
-    <value>System.Windows.Forms.Panel, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
-  </data>
-  <data name="&gt;&gt;ManAppPanel.Parent" xml:space="preserve">
-    <value>$this</value>
-  </data>
-  <data name="&gt;&gt;ManAppPanel.ZOrder" xml:space="preserve">
-    <value>2</value>
-  </data>
   <metadata name="$this.Localizable" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
     <value>True</value>
   </metadata>
   <data name="$this.AutoScaleDimensions" type="System.Drawing.SizeF, System.Drawing">
-    <value>6, 13</value>
+    <value>9, 20</value>
   </data>
   <data name="$this.ClientSize" type="System.Drawing.Size, System.Drawing">
-    <value>674, 353</value>
+    <value>1002, 517</value>
   </data>
   <data name="$this.Icon" type="System.Drawing.Icon, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
     <value>
@@ -6253,11 +6369,14 @@ Goldberg includes DLC + Achievements. Only use ALI if Goldberg doesn't work.
   <data name="$this.ImeMode" type="System.Windows.Forms.ImeMode, System.Windows.Forms">
     <value>On</value>
   </data>
+  <data name="$this.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>4, 5, 4, 5</value>
+  </data>
   <data name="$this.MaximumSize" type="System.Drawing.Size, System.Drawing">
-    <value>690, 392</value>
+    <value>1024, 573</value>
   </data>
   <data name="$this.MinimumSize" type="System.Drawing.Size, System.Drawing">
-    <value>690, 392</value>
+    <value>1024, 573</value>
   </data>
   <data name="$this.Text" xml:space="preserve">
     <value>SAC-GUI</value>

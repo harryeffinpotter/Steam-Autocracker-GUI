@@ -1,13 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using APPID;
+using System;
 using System.Diagnostics;
 using System.IO;
-using System.Linq;
 using System.Net;
 using System.Threading;
-using System.Threading.Tasks;
 using System.Windows.Forms;
-using APPID;
 
 namespace SteamAppIdIdentifier
 {
@@ -25,7 +22,7 @@ namespace SteamAppIdIdentifier
             ServicePointManager.SecurityProtocol = (SecurityProtocolType)3072;
             try
             {
-             
+
                 bool mutexCreated = false;
                 mutex = new System.Threading.Mutex(false, "APPID.exe", out mutexCreated);
 
