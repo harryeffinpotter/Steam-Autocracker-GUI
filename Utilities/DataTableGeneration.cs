@@ -1,9 +1,13 @@
 ﻿using Newtonsoft.Json;
+using System;
+using System.Collections.Generic;
 using System.Data;
 using System.Net;
 using System.Net.Http;
+using System.Security.Cryptography;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using System.Windows.Forms;
 namespace APPID
 {
     public class DataTableGeneration
@@ -17,25 +21,45 @@ namespace APPID
             str = str.Replace(":", " -").Replace("'", "").Replace("&", "and");
             return Regex.Replace(str, "[^a-zA-Z0-9._0 -]+", "", RegexOptions.Compiled);
         }
-        public async Task<DataTable> GetDataTableAsync(DataTableGeneration dataTableGeneration)
+
+        private void Fuzzy(string searchTerms)
         {
-            ServicePointManager.ServerCertificateValidationCallback = delegate { return true; };
-            HttpClient httpClient = new HttpClient();
-            string content = await httpClient.GetStringAsync("https://api.steampowered.com/ISteamApps/GetAppList/v2/");
-            SteamGames steamGames = JsonConvert.DeserializeObject<SteamGames>(content);
+
+
+        }
+        public async Task<DataTable> GetDataTableAsync(DataTableGeneration dataTableGeneration, string searchTerms, Dictionary<string, long> steam_dict)
+        {
 
             DataTable dt = new DataTable();
             dt.Columns.Add("Name", typeof(string));
             dt.Columns.Add("AppId", typeof(int));
-
-            foreach (var item in steamGames.Applist.Apps)
+            var rows_added = false;
+            var split_search_length = 0;
+            var search_list = new List<string>();
+            foreach (var word in searchTerms.Split(' '))
             {
-                string ItemWithoutTroubles = RemoveSpecialCharacters(item.Name);
-                dt.Rows.Add(ItemWithoutTroubles, item.Appid);
+                if (word.Length > 0)
+                {
+                    split_search_length++;
+                    search_list.Add(word);
+                }
             }
+            foreach (var steam_app in steam_dict)
+            {
+                if (searchTerms.ToLower().Trim() == steam_app.Key.ToLower().Trim())
+                {
+                    rows_added = true;
+                    dt.Rows.Add(steam_app.Key, steam_app.Value);
+                }
+            }
+            
+            if (rows_added)
+            {
+                dataTableGeneration.DataTableToGenerate = dt;
+                return dt;
+            }
+            return null;
 
-            dataTableGeneration.DataTableToGenerate = dt;
-            return dt;
         }
 
         #region Get and Set

@@ -101,22 +101,16 @@ namespace APPID
             }
         }
 
-        public static async void UpdateGoldBerg()
-        {
+        public static void UpdateGoldBerg()
+        {// Stop the process from opening a new window
             ProcessStartInfo pro = new ProcessStartInfo();
+            pro.CreateNoWindow = true;
             pro.WindowStyle = ProcessWindowStyle.Hidden;
-            pro.RedirectStandardOutput = true;
             pro.UseShellExecute = false;
+            pro.WorkingDirectory = $"{Environment.CurrentDirectory}\\_bin";
             pro.FileName = $"{Environment.CurrentDirectory}\\_bin\\Gberg.bat";
             Process x = Process.Start(pro);
-            StreamReader reader = x.StandardOutput;
-            string output = reader.ReadToEnd();
-            if (!x.HasExited)
-                x.WaitForExit();
-            if (output.Contains("ERROR"))
-            {
-                MessageBox.Show("Unable to update GoldBerg. Please try again later.");
-            }
+            x.WaitForExit();
         }
         public static void ExtractFile(string sourceArchive, string destination)
         {

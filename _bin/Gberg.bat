@@ -17,7 +17,7 @@ echo Goldberg Emulator Already Updated to Latest Version.
 goto :Menu
 )
 echo Downloading update...
-set URL=https://gitlab.com/Mr_Goldberg/goldberg_emulator/-/archive/master/goldberg_emulator-master.zip
+set URL=https://gitlab.com/Mr_Goldberg/goldberg_emulator/-/jobs/!JobID!/artifacts/download
 "curl\curl.exe" -L "!URL!" --output "TEMP\Goldberg.zip"
 echo Download Complete. Extracting files......
 "%~dp07z\7za.exe" -o"TEMP\Goldberg" x "TEMP\Goldberg.zip"
@@ -28,7 +28,6 @@ echo !JobID!> "Goldberg\job_id"
 echo Update completed.
 del /f /s /q "Temp\Goldberg"
 rd /s /q "Temp\Goldberg"
-rd /s /q "Temp"
 echo.
 ENDLOCAL
 :Menu

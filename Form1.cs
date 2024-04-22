@@ -1,18 +1,21 @@
 ﻿using System;
-using System.Data;
 using System.Diagnostics;
-using System.Drawing;
 using System.IO;
 using System.Net;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows.Forms;
-using CliWrap;
+using System.Drawing;
 using SteamAppIdIdentifier;
 using Clipboard = System.Windows.Forms.Clipboard;
-using DataFormats = System.Windows.DataFormats;
 using DragDropEffects = System.Windows.Forms.DragDropEffects;
 using Timer = System.Windows.Forms.Timer;
+using System.Data;
+using CliWrap;
+using Newtonsoft.Json;
+using static APPID.DataTableGeneration;
+using System.Collections.Generic;
+using System.Net.Http;
 
 namespace APPID
 {
@@ -20,14 +23,20 @@ namespace APPID
     {
         protected DataTableGeneration dataTableGeneration;
         public static int CurrentCell = 0;
+        private Dictionary<string, long> steam_api_list = new Dictionary<string, long>();
         public static string APPDATA = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
         public SteamAppId()
         {
+
             ServicePointManager.ServerCertificateValidationCallback =
             (s, certificate, chain, sslPolicyErrors) => true;
-            dataTableGeneration = new DataTableGeneration();
-            Task.Run(async () => await dataTableGeneration.GetDataTableAsync(dataTableGeneration)).Wait();
             InitializeComponent();
+        }
+
+        public void GenerateTables(string searchTerms)
+        {
+            dataTableGeneration = new DataTableGeneration();
+            Task.Run(async () => await dataTableGeneration.GetDataTableAsync(dataTableGeneration, searchTerms, steam_api_list)).Wait();
         }
         public static void Tit(string Message, Color color)
         {
@@ -47,7 +56,7 @@ namespace APPID
             else
             {
                 Program.form.StatusLabel.ForeColor = color;
-            }    
+            }
             Program.form.StatusLabel.Text = Message;
             Program.form.Text = Message;
         }
@@ -60,6 +69,24 @@ namespace APPID
         {
             return Regex.Replace(str, "[^a-zA-Z0-9._0-]+", " ", RegexOptions.Compiled);
         }
+
+        public async Task<Dictionary<string, long>> GetSteamAppsList()
+        {
+            ServicePointManager.ServerCertificateValidationCallback = delegate { return true; };
+            HttpClient httpClient = new HttpClient();
+            httpClient.MaxResponseContentBufferSize = 2147483647;
+            httpClient.DefaultRequestHeaders.Accept.Clear();
+            string content = await httpClient.GetStringAsync("https://api.steampowered.com/ISteamApps/GetAppList/v2/");
+            SteamGames steamGames = JsonConvert.DeserializeObject<SteamGames>(content);
+
+            var steam_games_dict = new Dictionary<string, long>();
+            foreach (var item in steamGames.Applist.Apps)
+            {
+                steam_games_dict[item.Name] = item.Appid;
+            }
+            return steam_games_dict;
+        }
+
         public async void SteamAppId_Load(object sender, EventArgs e)
         {
             if (Properties.Settings.Default.Pinned)
@@ -85,7 +112,9 @@ namespace APPID
                 await Updater.CheckGitHubNewerVersion("atom0s", "Steamless", "https://api.github.com/repos");
                 Updater.UpdateGoldBerg();
                 await Task.Delay(1500);
-                Tit("Click folder & select game's parent directory.", Color.Cyan);
+                Tit("Getting latest apps list from steam...", Color.LightCyan);
+                steam_api_list = await GetSteamAppsList();
+                Tit("Click folder && select game's parent directory.", Color.Cyan);
             }
 
             t1 = new Timer();
@@ -97,9 +126,23 @@ namespace APPID
             }
             this.TopMost = true;
             string args3;
-            dataGridView1.DataSource = dataTableGeneration.DataTableToGenerate;
+
             dataGridView1.MultiSelect = false;
             string args2 = "";
+            dataGridView1 = new DataGridView();
+            var Column1 = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            var Column2 = new System.Windows.Forms.DataGridViewTextBoxColumn();
+
+            dataGridView1.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
+        Column1,
+        Column2});
+
+            Column1.HeaderText = "App Name";
+            Column1.Name = "appname";
+
+            Column2.HeaderText = "App ID";
+            Column2.Name = "appid";
+
             dataGridView1.Columns[0].Width = 540;
 
 
@@ -115,54 +158,16 @@ namespace APPID
                 try
                 {
                     string Search = RemoveSpecialCharacters(args2.ToLower()).Trim();
-                    string SplitSearch = SplitCamelCase(RemoveSpecialCharacters(args2)).Trim();
-                    ((DataTable)dataGridView1.DataSource).DefaultView.RowFilter = String.Format("Name like '" + Search.Replace("_", "").Trim() + "'");
+                    dataTableGeneration = new DataTableGeneration();
+                    Task.Run(async () => await dataTableGeneration.GetDataTableAsync(dataTableGeneration, Search, steam_api_list)).Wait();
+                    dataGridView1.DataSource = dataTableGeneration.DataTableToGenerate;
 
-                    if (dataGridView1.Rows.Count == 0)
-                        ((DataTable)dataGridView1.DataSource).DefaultView.RowFilter = String.Format("Name like '" + SplitSearch.Replace("_", "").Trim() + "'");
 
-                    if (dataGridView1.Rows.Count == 0)
-                        ((DataTable)dataGridView1.DataSource).DefaultView.RowFilter = String.Format("Name like '" + SplitSearch.ToLower().Replace("_", "").Replace("vr", "").Replace("vrs", "").Trim() + "'");
-
-                    if (dataGridView1.Rows.Count == 0)
-                        ((DataTable)dataGridView1.DataSource).DefaultView.RowFilter = String.Format("Name like '" + SplitSearch.ToLower().Replace("'", "").Replace("-", "").Replace(";", "").Trim() + "'");
-
-                    if (dataGridView1.Rows.Count == 0)
-                    {
-
-                        ((DataTable)dataGridView1.DataSource).DefaultView.RowFilter = String.Format("Name like '%" + Search.Replace("_", "").Replace(" ", "%' AND Name LIKE '%").Replace(" and ", " ").Replace(" the ", " ").Replace(":", "") + "%'");
-                        if (dataGridView1.Rows.Count > 0)
-                        {
-                            Clipboard.SetText($"{dataGridView1.Rows[0].Cells[1].Value.ToString()}");
-                        }
-                        else
-                        {
-                            dataTableGeneration = new DataTableGeneration();
-                            Task.Run(async () => await dataTableGeneration.GetDataTableAsync(dataTableGeneration)).Wait();
-                            dataGridView1.DataSource = dataTableGeneration.DataTableToGenerate;
-                            ((DataTable)dataGridView1.DataSource).DefaultView.RowFilter = String.Format("Name like '%" + SplitSearch.Replace("_", "").Replace(" ", "%' AND Name LIKE '%").Replace(" and ", " ").Replace(" the ", " ").Replace(":", "") + "%'").Trim();
-                            if (dataGridView1.Rows.Count > 0)
-                            {
-                                Clipboard.SetText($"{dataGridView1.Rows[0].Cells[1].Value.ToString()}");
-                            }
-                            else
-                            {
-                                dataTableGeneration = new DataTableGeneration();
-                                Task.Run(async () => await dataTableGeneration.GetDataTableAsync(dataTableGeneration)).Wait();
-                                dataGridView1.DataSource = dataTableGeneration.DataTableToGenerate;
-
-                            }
-
-                        }
-                    }
                 }
-                catch { }
-                searchTextBox.Text = "";
-
+                catch (Exception ex) { }
             }
             dataGridView1.Columns[0].SortMode = DataGridViewColumnSortMode.NotSortable;
             dataGridView1.Columns[1].SortMode = DataGridViewColumnSortMode.NotSortable;
-            dataGridView1.ClearSelection();
             dataGridView1.DefaultCellStyle.SelectionBackColor = dataGridView1.DefaultCellStyle.BackColor;
             dataGridView1.DefaultCellStyle.SelectionForeColor = dataGridView1.DefaultCellStyle.ForeColor;
         }
@@ -329,7 +334,7 @@ namespace APPID
                     ManAppBox.Focus();
                     ManAppPanel.BringToFront();
                     ManAppBtn.Visible = true;
-            
+
                 }
                 else if (e.KeyCode == Keys.Control | e.KeyCode == Keys.I)
                 {
@@ -341,83 +346,13 @@ namespace APPID
                 }
             }
             catch { }
-                
+
         }
 
 
         private void searchTextBox_KeyDown(object sender, KeyEventArgs e)
         {
-            try
-            {            
-                if (e.Modifiers == Keys.LShiftKey && e.KeyCode == Keys.Oem4)
-                {
-                    searchTextBox.Text = $"${searchTextBox.Text}";
-                    searchTextBox.SelectionStart = searchTextBox.Text.Length + 1;
-                }
-                if (e.Modifiers == Keys.Control && e.KeyCode == Keys.A)
-                {
-                    searchTextBox.SelectAll();
-                    e.SuppressKeyPress = true;
-                }
-                if (dataGridView1.Rows.Count == 0)
-                {
-                    return;
-                }
-                if (e.KeyCode == Keys.Down)
-                {
-                    dataGridView1.Focus();
-                    dataGridView1.Rows[0].Selected = true;
-                    dataGridView1.SelectedCells[0].Selected = true;
 
-                    e.SuppressKeyPress = true;
-                }
-                else if (e.KeyCode == Keys.Tab)
-                {
-                    dataGridView1.Focus();
-                    dataGridView1.Rows[0].Selected = true;
-                    dataGridView1.SelectedCells[0].Selected = true;
-                    e.SuppressKeyPress = true;
-                }
-                else if (e.KeyCode == Keys.Enter)
-                {
-                    dataGridView1.Focus();
-                    dataGridView1.Rows[0].Selected = true;
-                    dataGridView1.SelectedCells[0].Selected = true;
-                    e.SuppressKeyPress = true;
-                }
-                else if (e.KeyCode == Keys.Escape)
-                {
-                    searchTextBox.Clear();
-                    searchTextBox.Focus();
-                    e.SuppressKeyPress = true;
-                }
-                else if (e.KeyCode == Keys.Back)
-                {
-                    BackPressed = true;
-                }
-                else if (e.KeyCode == Keys.Control && e.KeyCode == Keys.I)
-                {
-                    ManAppPanel.Visible = true;
-                    ManAppBox.Focus();
-                    ManAppPanel.BringToFront();
-                    ManAppBtn.Visible = true;
-                }
-                else if (e.KeyCode == Keys.F1)
-                {
-                    ManAppPanel.Visible = true;
-                    ManAppBox.Focus();
-                    ManAppPanel.BringToFront();
-                    ManAppBtn.Visible = true;
-                }
-                else
-                {
-                    BackPressed = false;
-                    SearchPause = false;
-                    t1.Stop();
-                }
-          
-            }
-            catch { }
         }
         public static bool SearchPause = false;
         public static bool BackPressed = false;
@@ -439,6 +374,11 @@ namespace APPID
             {
                 return;
             }
+            if (SearchPause && searchTextBox.Text.Length == 0)
+            {
+                SearchPause = false;
+                return;
+            }
             try
             {
                 if (textChanged)
@@ -449,68 +389,28 @@ namespace APPID
                 textChanged = true;
                 string Search = RemoveSpecialCharacters(searchTextBox.Text.ToLower()).Trim();
                 string SplitSearch = SplitCamelCase(RemoveSpecialCharacters(searchTextBox.Text)).Trim();
-                ((DataTable)dataGridView1.DataSource).DefaultView.RowFilter = String.Format("Name like '" + Search.Replace("_", "").Trim() + "'");
-
-                if (dataGridView1.Rows.Count == 0)
-                    ((DataTable)dataGridView1.DataSource).DefaultView.RowFilter = String.Format("Name like '" + SplitSearch.Replace("_", "").Trim() + "'");
-
-                if (dataGridView1.Rows.Count == 0)
-                    ((DataTable)dataGridView1.DataSource).DefaultView.RowFilter = String.Format("Name like '" + SplitSearch.ToLower().Replace("_", "").Replace("vr", "").Replace("vrs", "").Trim() + "'");
-
-                if (dataGridView1.Rows.Count == 0)
-                    ((DataTable)dataGridView1.DataSource).DefaultView.RowFilter = String.Format("Name like '" + SplitSearch.ToLower().Replace("'", "").Replace("-", "").Replace(";", "").Trim() + "'");
-
-                if (dataGridView1.Rows.Count == 0)
+                dataTableGeneration = new DataTableGeneration();
+                Task.Run(async () => await dataTableGeneration.GetDataTableAsync(dataTableGeneration, SplitSearch, steam_api_list)).Wait();
+                dataGridView1.DataSource = dataTableGeneration.DataTableToGenerate;
+                dataGridView1.Columns[0].SortMode = DataGridViewColumnSortMode.NotSortable;
+                dataGridView1.Columns[1].SortMode = DataGridViewColumnSortMode.NotSortable;
+                if (BackPressed)
                 {
-
-                    ((DataTable)dataGridView1.DataSource).DefaultView.RowFilter = String.Format("Name like '%" + Search.Replace("_", "").Replace(" ", "%' AND Name LIKE '%").Replace(" and ", " ").Replace(" the ", " ").Replace(":", "") + "%'");
-                    if (dataGridView1.Rows.Count > 0)
-                    {
-                        Clipboard.SetText($"{dataGridView1.Rows[0].Cells[1].Value.ToString()}");
-                    }
-                    else
-                    {
-
-                        ((DataTable)dataGridView1.DataSource).DefaultView.RowFilter = String.Format("Name like '%" + SplitSearch.Replace("_", "").Replace(" ", "%' AND Name LIKE '%").Replace(" and ", " ").Replace(" the ", " ").Replace(":", "") + "%'").Trim();
-                        if (dataGridView1.Rows.Count > 0)
-                        {
-                            Clipboard.SetText($"{dataGridView1.Rows[0].Cells[1].Value.ToString()}");
-                        }
-                        else
-                        {
-
-
-
-                            Search = searchTextBox.Text.ToLower();
-                            if (Search.StartsWith("$"))
-                            {
-                                ((DataTable)dataGridView1.DataSource).DefaultView.RowFilter = String.Format("Name like '" + Search.Replace("$", "").Replace("&", "and").Replace(":", " -") + "'");
-                            }
-                            else
-                            {
-                                Search = RemoveSpecialCharacters(searchTextBox.Text.ToLower());
-                                ((DataTable)dataGridView1.DataSource).DefaultView.RowFilter = String.Format("Name like '%" + Search.Replace(" ", "%' AND Name LIKE '%").Replace(" and ", "").Replace(" & ", "").Replace(":", "") + "%'");
-                            }
-
-                            dataGridView1.Columns[0].SortMode = DataGridViewColumnSortMode.NotSortable;
-                            dataGridView1.Columns[1].SortMode = DataGridViewColumnSortMode.NotSortable;
-                            if (BackPressed)
-                            {
-                                SearchPause = true;
-                                t1.Start();
-                            }
-
-                            dataGridView1.ClearSelection();
-                            dataGridView1.DefaultCellStyle.SelectionBackColor = dataGridView1.DefaultCellStyle.BackColor;
-                            dataGridView1.DefaultCellStyle.SelectionForeColor = dataGridView1.DefaultCellStyle.ForeColor;
-
-                        }
-
-                    }
-                
-
-
+                    SearchPause = true;
+                    t1.Start();
                 }
+
+                dataGridView1.ClearSelection();
+                dataGridView1.DefaultCellStyle.SelectionBackColor = dataGridView1.DefaultCellStyle.BackColor;
+                dataGridView1.DefaultCellStyle.SelectionForeColor = dataGridView1.DefaultCellStyle.ForeColor;
+
+
+
+
+
+
+
+
                 textChanged = false;
             }
             catch { }
@@ -560,7 +460,7 @@ namespace APPID
                 {
                     if (file.EndsWith("steam_api64.dll"))
                     {
-                        
+
                         steam64count++;
                         parentdir = Directory.GetParent(file).FullName;
                         string steam = $"{parentdir}\\steam_settings";
@@ -700,18 +600,18 @@ namespace APPID
                 {
                     if (goldy)
                     {
-                    if (Directory.Exists($"{parentdir}\\steam_settings"))
-                    {
-                        Directory.Delete($"{parentdir}\\steam_settings");
-                    }
-                    Directory.CreateDirectory($"{parentdir}\\steam_settings");
-                    Tit("Generating achievements and DLC info...", Color.Cyan);
-                    var infos = Cli.Wrap($"{Environment.CurrentDirectory}\\_bin\\generate_game_infos.exe").WithValidation(CommandResultValidation.None).WithArguments($"{APPID} -s 92CD46192F62DE1A769F79A667CE5631 -o\"{parentdir}\\steam_settings\"").WithWorkingDirectory(parentdir).ExecuteAsync().GetAwaiter().GetResult();
+                        if (Directory.Exists($"{parentdir}\\steam_settings"))
+                        {
+                            Directory.Delete($"{parentdir}\\steam_settings");
+                        }
+                        Directory.CreateDirectory($"{parentdir}\\steam_settings");
+                        Tit("Generating achievements and DLC info...", Color.Cyan);
+                        var infos = Cli.Wrap($"{Environment.CurrentDirectory}\\_bin\\generate_game_infos.exe").WithValidation(CommandResultValidation.None).WithArguments($"{APPID} -s 92CD46192F62DE1A769F79A667CE5631 -o\"{parentdir}\\steam_settings\"").WithWorkingDirectory(parentdir).ExecuteAsync().GetAwaiter().GetResult();
 
                     }
                 }
             }
-            catch (Exception ex){ File.WriteAllText("_CRASHlog.txt", ex.StackTrace + "\n" + ex.Message); }
+            catch (Exception ex) { File.WriteAllText("_CRASHlog.txt", ex.StackTrace + "\n" + ex.Message); }
         }
 
         public void IniFileEdit(string args)
@@ -726,7 +626,7 @@ namespace APPID
             IniProcess.WaitForExit();
         }
 
-        
+
         private string parentOfSelection;
         private string gameDir;
         private string gameDirName;
@@ -761,11 +661,15 @@ namespace APPID
                             return;
                         }
                     }
-                 
+
                 }
                 gameDir = folderSelectDialog.FileName;
-                Tat(gameDir);
+
                 parentOfSelection = Directory.GetParent(gameDir).FullName;
+                Properties.Settings.Default.lastDir = parentOfSelection;
+                Properties.Settings.Default.Save();
+
+                Tat(gameDir);
                 gameDirName = Path.GetFileName(gameDir);
                 mainPanel.Visible = false;
                 startCrackPic.Visible = true;
@@ -776,14 +680,14 @@ namespace APPID
                 Properties.Settings.Default.Save();
             }
             else
-            { 
-                MessageBox.Show("You must select a folder to continue..."); 
+            {
+                MessageBox.Show("You must select a folder to continue...");
             }
         }
         public bool cracking;
         private async void startCrackPic_Click(object sender, EventArgs e)
         {
-           if (!cracking)
+            if (!cracking)
             {
                 cracking = true;
 
@@ -794,7 +698,7 @@ namespace APPID
                 OpenDir.Visible = true;
                 startCrackPic.Visible = false;
                 donePic.Visible = true;
-                    donePic.Visible = false;
+                donePic.Visible = false;
                 await Task.Delay(3000);
 
 
@@ -870,7 +774,7 @@ namespace APPID
 
         private void mainPanel_DragDrop(object sender, System.Windows.Forms.DragEventArgs e)
         {
-   
+
             string[] drops = (string[])e.Data.GetData(DataFormats.FileDrop);
             foreach (string d in drops)
             {
@@ -943,9 +847,9 @@ namespace APPID
                                 }
                             }
                         }
-                        catch(Exception Ex)
+                        catch (Exception Ex)
                         {
-                        if (!Ex.Message.ToLower().Contains("object"))
+                            if (!Ex.Message.ToLower().Contains("object"))
                             {
                                 MessageBox.Show(Ex.Message);
                             }
@@ -1017,26 +921,27 @@ namespace APPID
             if (!double.TryParse(ManAppBox.Text, out parsedValue))
             {
                 ManAppBox.Text = "";
-                isnumeric= false;
+                isnumeric = false;
             }
             if (ManAppBox.Text.Length > 0)
             {
                 ManAppBtn.Enabled = true;
-                isnumeric= true;    
+                isnumeric = true;
             }
             else
             {
-                isnumeric= false;
+                isnumeric = false;
                 ManAppBtn.Enabled = false;
             }
-   
+
         }
         public bool isnumeric = false;
 
-      
+
         private void ManAppBox_KeyDown(object sender, KeyEventArgs e)
         {
-            if (e.KeyCode == Keys.Enter) {
+            if (e.KeyCode == Keys.Enter)
+            {
                 if (ManAppBox.Text.Length > 2 && isnumeric)
                 {
                     APPID = ManAppBox.Text;
@@ -1053,13 +958,20 @@ namespace APPID
                 {
                     MessageBox.Show("Enter APPID or press ESC to cancel!");
                 }
-             
+
             }
-            if (e.KeyCode == Keys.Escape) {
+            if (e.KeyCode == Keys.Escape)
+            {
                 ManAppBox.Clear();
                 ManAppPanel.Visible = false;
                 searchTextBox.Focus();
             }
+        }
+
+        private void clearCacheButton_Click(object sender, EventArgs e)
+        {
+            SearchPause = true;
+
         }
     }
 }
