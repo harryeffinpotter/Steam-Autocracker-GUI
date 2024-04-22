@@ -36,6 +36,7 @@ namespace SteamAppIdIdentifier
 
 
                 // Application.EnableVisualStyles();
+                Application.EnableVisualStyles();
                 Application.SetCompatibleTextRenderingDefault(false);
                 form = new SteamAppId();
                 args2 = args;

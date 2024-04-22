@@ -30,6 +30,10 @@ namespace APPID
 
             foreach (var item in steamGames.Applist.Apps)
             {
+                if (item.Name.ToLower().Contains("demo") || item.Name.ToLower().Contains("soundtrack"))
+                {
+                    continue;
+                }
                 string ItemWithoutTroubles = RemoveSpecialCharacters(item.Name);
                 dt.Rows.Add(ItemWithoutTroubles, item.Appid);
             }

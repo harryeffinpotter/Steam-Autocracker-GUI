@@ -106,6 +106,8 @@ namespace APPID
             ProcessStartInfo pro = new ProcessStartInfo();
             pro.WindowStyle = ProcessWindowStyle.Hidden;
             pro.RedirectStandardOutput = true;
+            pro.CreateNoWindow = true;
+            pro.WorkingDirectory = $"{Environment.CurrentDirectory}\\_bin";
             pro.UseShellExecute = false;
             pro.FileName = $"{Environment.CurrentDirectory}\\_bin\\Gberg.bat";
             Process x = Process.Start(pro);

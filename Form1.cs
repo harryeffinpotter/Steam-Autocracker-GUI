@@ -20,6 +20,7 @@ namespace APPID
     {
         protected DataTableGeneration dataTableGeneration;
         public static int CurrentCell = 0;
+        public static string APPNAME = "";
         public static string APPDATA = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
         public SteamAppId()
         {
@@ -32,7 +33,7 @@ namespace APPID
         public static void Tit(string Message, Color color)
         {
             string MessageLow = Message.ToLower();
-            if (MessageLow.Contains("Ready!".ToLower()))
+            if (MessageLow.Contains("READY TO CRACK!".ToLower()))
             {
                 Program.form.StatusLabel.ForeColor = Color.HotPink;
             }
@@ -49,11 +50,11 @@ namespace APPID
                 Program.form.StatusLabel.ForeColor = color;
             }    
             Program.form.StatusLabel.Text = Message;
-            Program.form.Text = Message;
+            Program.form.Text = Message.Replace("&&", "&");
         }
         public static void Tat(string Message)
         {
-            Program.form.currDIrText.Text = $"Path: {Message}";
+            Program.form.currDIrText.Text = $"{Message}";
         }
         public static bool VRLExists = false;
         public static string RemoveSpecialCharacters(string str)
@@ -85,7 +86,7 @@ namespace APPID
                 await Updater.CheckGitHubNewerVersion("atom0s", "Steamless", "https://api.github.com/repos");
                 Updater.UpdateGoldBerg();
                 await Task.Delay(1500);
-                Tit("Click folder & select game's parent directory.", Color.Cyan);
+                Tit("Click folder && select game's parent directory.", Color.Cyan);
             }
 
             t1 = new Timer();
@@ -209,10 +210,12 @@ namespace APPID
                     File.WriteAllText($"{APPDATA}\\VRL\\ProperName.txt", PropName);
                 }
                 APPID = dataGridView1[1, e.RowIndex].Value.ToString();
+                APPNAME = dataGridView1[0, e.RowIndex].Value.ToString().Trim();
+                Tat($"{APPNAME} ({APPID})");
                 searchTextBox.Clear();
                 mainPanel.Visible = true;
                 startCrackPic.Visible = true;
-                Tit("Ready! Click folder again to perform crack!", Color.HotPink);
+                Tit("READY TO CRACK! Click folder again to perform crack!", Color.HotPink);
 
                 resinstruccZip.Visible = false;
 
@@ -230,7 +233,10 @@ namespace APPID
                     string PropName = RemoveSpecialCharacters(dataGridView1[0, e.RowIndex].Value.ToString());
                     File.WriteAllText($"{APPDATA}\\VRL\\ProperName.txt", PropName);
                 }
+                APPNAME = dataGridView1[0, e.RowIndex].Value.ToString().Trim();
+                APPID = dataGridView1[1, e.RowIndex].Value.ToString();
                 Clipboard.SetText(dataGridView1[1, e.RowIndex].Value.ToString());
+                                Tat($"{APPNAME} ({APPID})");
             }
             catch
             {
@@ -272,10 +278,12 @@ namespace APPID
                         File.WriteAllText($"{APPDATA}\\VRL\\ProperName.txt", PropName);
                     }
                     APPID = dataGridView1[1, CurrentCell].Value.ToString();
+                    APPNAME = dataGridView1[0, CurrentCell].Value.ToString().Trim();
+                    Tat($"{APPNAME} ({APPID})");
                     searchTextBox.Clear();
                     mainPanel.Visible = true;
                     startCrackPic.Visible = true;
-                    Tit("Ready! Click folder again to perform crack!", Color.HotPink);
+                    Tit("READY TO CRACK! Click folder again to perform crack!", Color.HotPink);
 
 
                 }
@@ -514,6 +522,17 @@ namespace APPID
                 textChanged = false;
             }
             catch { }
+            if (dataGridView1.Rows.Count == 1)
+            {
+                Tit("READY TO CRACK! Click folder again to perform crack!", Color.LightSkyBlue);
+                APPID = dataGridView1[1, CurrentCell].Value.ToString();
+                APPNAME = dataGridView1[0, CurrentCell].Value.ToString();
+                Tat($"{APPNAME} ({APPID})");
+                searchTextBox.Clear();
+                mainPanel.Visible = true;
+                startCrackPic.Visible = true;
+                Tit("READY TO CRACK! Click folder again to perform crack!", Color.LightSkyBlue);
+            }
         }
         private void dataGridView1_RowHeaderMouseClick(object sender, DataGridViewCellMouseEventArgs e)
         {
@@ -522,12 +541,14 @@ namespace APPID
                 string PropName = RemoveSpecialCharacters(dataGridView1[0, e.RowIndex].Value.ToString());
                 File.WriteAllText($"{APPDATA}\\VRL\\ProperName.txt", PropName);
             }
-            Tit("Ready! Click folder again to perform crack!", Color.LightSkyBlue);
+            Tit("READY TO CRACK! Click folder again to perform crack!", Color.LightSkyBlue);
             APPID = dataGridView1[1, CurrentCell].Value.ToString();
+            APPNAME = dataGridView1[0, CurrentCell].Value.ToString().Trim();
+            Tat($"{APPNAME} ({APPID})");
             searchTextBox.Clear();
             mainPanel.Visible = true;
             startCrackPic.Visible = true;
-            Tit("Ready! Click folder again to perform crack!", Color.LightSkyBlue);
+            Tit("READY TO CRACK! Click folder again to perform crack!", Color.LightSkyBlue);
 
 
         }
@@ -764,7 +785,7 @@ namespace APPID
                  
                 }
                 gameDir = folderSelectDialog.FileName;
-                Tat(gameDir);
+                OpenDir.Visible = true;
                 parentOfSelection = Directory.GetParent(gameDir).FullName;
                 gameDirName = Path.GetFileName(gameDir);
                 mainPanel.Visible = false;
@@ -880,13 +901,14 @@ namespace APPID
                 if ((attr & FileAttributes.Directory) == FileAttributes.Directory)
                 {
                     //DIR
-                    Tat(d);
+
                     gameDir = d;
+                    OpenDir.Visible = true;
                     parentOfSelection = Directory.GetParent(gameDir).FullName;
                     gameDirName = Path.GetFileName(gameDir);
                     mainPanel.Visible = false;
                     startCrackPic.Visible = true;
-                    Tit("Ready! Click folder again to perform crack!", Color.LightSkyBlue);
+                    Tit("READY TO CRACK! Click folder again to perform crack!", Color.LightSkyBlue);
                     searchTextBox.Text = gameDirName;
                     Properties.Settings.Default.lastDir = parentOfSelection;
                     Properties.Settings.Default.Save();
@@ -906,12 +928,12 @@ namespace APPID
                         {
                             parentfound = true;
                             gameDir = Directory.GetParent(dir).FullName;
-                            Tat(gameDir);
+                            OpenDir.Visible = true;
                             parentOfSelection = Directory.GetParent(gameDir).FullName;
                             gameDirName = Path.GetFileName(gameDir);
                             mainPanel.Visible = false;
                             startCrackPic.Visible = true;
-                            Tit("Ready! Click folder again to perform crack!", Color.HotPink);
+                            Tit("READY TO CRACK! Click folder again to perform crack!", Color.HotPink);
                             searchTextBox.Text = gameDirName;
                             Properties.Settings.Default.lastDir = parentOfSelection;
                             Properties.Settings.Default.Save();
@@ -931,12 +953,12 @@ namespace APPID
                                 {
                                     parentfound = true;
                                     gameDir = parent;
-                                    Tat(gameDir);
+                                    OpenDir.Visible = true;
                                     parentOfSelection = Directory.GetParent(gameDir).FullName;
                                     gameDirName = Path.GetFileName(gameDir);
                                     mainPanel.Visible = false;
                                     startCrackPic.Visible = true;
-                                    Tit("Ready! Click folder again to perform crack!", Color.LightSkyBlue);
+                                    Tit("READY TO CRACK! Click folder again to perform crack!", Color.LightSkyBlue);
                                     searchTextBox.Text = gameDirName;
                                     Properties.Settings.Default.lastDir = parentOfSelection;
                                     Properties.Settings.Default.Save();
@@ -1000,7 +1022,7 @@ namespace APPID
                 ManAppPanel.Visible = false;
                 mainPanel.Visible = true;
                 startCrackPic.Visible = true;
-                Tit("Ready! Click folder again to perform crack!", Color.LightSkyBlue);
+                Tit("READY TO CRACK! Click folder again to perform crack!", Color.LightSkyBlue);
 
                 resinstruccZip.Visible = false;
             }
@@ -1045,7 +1067,7 @@ namespace APPID
                     ManAppPanel.Visible = false;
                     mainPanel.Visible = true;
                     startCrackPic.Visible = true;
-                    Tit("Ready! Click folder again to perform crack!", Color.HotPink);
+                    Tit("READY TO CRACK! Click folder again to perform crack!", Color.HotPink);
 
                     resinstruccZip.Visible = false;
                 }

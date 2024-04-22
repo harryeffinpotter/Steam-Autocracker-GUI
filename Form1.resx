@@ -122,14 +122,10 @@
     <value>Microsoft Sans Serif, 9.75pt, style=Bold</value>
   </data>
   <data name="searchTextBox.Location" type="System.Drawing.Point, System.Drawing">
-    <value>18, 14</value>
-  </data>
-  <assembly alias="System.Windows.Forms" name="System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" />
-  <data name="searchTextBox.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
-    <value>4, 5, 4, 5</value>
+    <value>12, 9</value>
   </data>
   <data name="searchTextBox.Size" type="System.Drawing.Size, System.Drawing">
-    <value>844, 30</value>
+    <value>564, 22</value>
   </data>
   <assembly alias="mscorlib" name="mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" />
   <data name="searchTextBox.TabIndex" type="System.Int32, mscorlib">
@@ -151,16 +147,13 @@
     <value>29</value>
   </data>
   <data name="dataGridView1.Location" type="System.Drawing.Point, System.Drawing">
-    <value>16, 58</value>
-  </data>
-  <data name="dataGridView1.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
-    <value>4, 5, 4, 5</value>
+    <value>11, 38</value>
   </data>
   <data name="dataGridView1.RowHeadersWidth" type="System.Int32, mscorlib">
     <value>35</value>
   </data>
   <data name="dataGridView1.Size" type="System.Drawing.Size, System.Drawing">
-    <value>980, 362</value>
+    <value>653, 235</value>
   </data>
   <data name="dataGridView1.TabIndex" type="System.Int32, mscorlib">
     <value>1</value>
@@ -177,6 +170,7 @@
   <data name="&gt;&gt;dataGridView1.ZOrder" xml:space="preserve">
     <value>1</value>
   </data>
+  <assembly alias="System.Windows.Forms" name="System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" />
   <data name="btnSearch.FlatStyle" type="System.Windows.Forms.FlatStyle, System.Windows.Forms">
     <value>Flat</value>
   </data>
@@ -184,13 +178,10 @@
     <value>Microsoft Sans Serif, 8.25pt, style=Bold</value>
   </data>
   <data name="btnSearch.Location" type="System.Drawing.Point, System.Drawing">
-    <value>873, 14</value>
-  </data>
-  <data name="btnSearch.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
-    <value>4, 5, 4, 5</value>
+    <value>582, 9</value>
   </data>
   <data name="btnSearch.Size" type="System.Drawing.Size, System.Drawing">
-    <value>124, 34</value>
+    <value>83, 22</value>
   </data>
   <data name="btnSearch.TabIndex" type="System.Int32, mscorlib">
     <value>2</value>
@@ -220,13 +211,10 @@
     <value>On</value>
   </data>
   <data name="resinstruccZip.Location" type="System.Drawing.Point, System.Drawing">
-    <value>14, 425</value>
-  </data>
-  <data name="resinstruccZip.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
-    <value>4, 0, 4, 0</value>
+    <value>9, 276</value>
   </data>
   <data name="resinstruccZip.Size" type="System.Drawing.Size, System.Drawing">
-    <value>992, 87</value>
+    <value>615, 54</value>
   </data>
   <data name="resinstruccZip.TabIndex" type="System.Int32, mscorlib">
     <value>0</value>
@@ -259,10 +247,13 @@ OR - Press CTRL+I or F1 to enter in the APPID manually.
     <value>MiddleRight</value>
   </data>
   <data name="tgDisc.Location" type="System.Drawing.Point, System.Drawing">
-    <value>722, 514</value>
+    <value>481, 334</value>
+  </data>
+  <data name="tgDisc.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>2, 0, 2, 0</value>
   </data>
   <data name="tgDisc.Size" type="System.Drawing.Size, System.Drawing">
-    <value>279, 22</value>
+    <value>191, 15</value>
   </data>
   <data name="tgDisc.TabIndex" type="System.Int32, mscorlib">
     <value>0</value>
@@ -517,13 +508,10 @@ OR - Press CTRL+I or F1 to enter in the APPID manually.
     <value>On</value>
   </data>
   <data name="gitHub.Location" type="System.Drawing.Point, System.Drawing">
-    <value>934, 452</value>
-  </data>
-  <data name="gitHub.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
-    <value>4, 5, 4, 5</value>
+    <value>623, 294</value>
   </data>
   <data name="gitHub.Size" type="System.Drawing.Size, System.Drawing">
-    <value>66, 62</value>
+    <value>44, 40</value>
   </data>
   <data name="gitHub.SizeMode" type="System.Windows.Forms.PictureBoxSizeMode, System.Windows.Forms">
     <value>Zoom</value>
@@ -550,13 +538,10 @@ OR - Press CTRL+I or F1 to enter in the APPID manually.
     <value>On</value>
   </data>
   <data name="StatusLabel.Location" type="System.Drawing.Point, System.Drawing">
-    <value>100, 355</value>
-  </data>
-  <data name="StatusLabel.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
-    <value>4, 0, 4, 0</value>
+    <value>67, 215</value>
   </data>
   <data name="StatusLabel.Size" type="System.Drawing.Size, System.Drawing">
-    <value>810, 29</value>
+    <value>540, 19</value>
   </data>
   <data name="StatusLabel.TabIndex" type="System.Int32, mscorlib">
     <value>1</value>
@@ -586,13 +571,10 @@ OR - Press CTRL+I or F1 to enter in the APPID manually.
     <value>On</value>
   </data>
   <data name="OpenDir.Location" type="System.Drawing.Point, System.Drawing">
-    <value>10, 478</value>
-  </data>
-  <data name="OpenDir.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
-    <value>4, 5, 4, 5</value>
+    <value>4, 325</value>
   </data>
   <data name="OpenDir.Size" type="System.Drawing.Size, System.Drawing">
-    <value>124, 34</value>
+    <value>83, 22</value>
   </data>
   <data name="OpenDir.TabIndex" type="System.Int32, mscorlib">
     <value>9</value>
@@ -735,13 +717,10 @@ OR - Press CTRL+I or F1 to enter in the APPID manually.
     <value>On</value>
   </data>
   <data name="pin.Location" type="System.Drawing.Point, System.Drawing">
-    <value>6, 8</value>
-  </data>
-  <data name="pin.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
-    <value>4, 5, 4, 5</value>
+    <value>0, 5</value>
   </data>
   <data name="pin.Size" type="System.Drawing.Size, System.Drawing">
-    <value>51, 40</value>
+    <value>34, 26</value>
   </data>
   <data name="pin.SizeMode" type="System.Windows.Forms.PictureBoxSizeMode, System.Windows.Forms">
     <value>Zoom</value>
@@ -856,13 +835,10 @@ OR - Press CTRL+I or F1 to enter in the APPID manually.
     <value>On</value>
   </data>
   <data name="unPin.Location" type="System.Drawing.Point, System.Drawing">
-    <value>6, 8</value>
-  </data>
-  <data name="unPin.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
-    <value>4, 5, 4, 5</value>
+    <value>4, 5</value>
   </data>
   <data name="unPin.Size" type="System.Drawing.Size, System.Drawing">
-    <value>51, 40</value>
+    <value>34, 26</value>
   </data>
   <data name="unPin.SizeMode" type="System.Windows.Forms.PictureBoxSizeMode, System.Windows.Forms">
     <value>Zoom</value>
@@ -886,13 +862,10 @@ OR - Press CTRL+I or F1 to enter in the APPID manually.
     <value>Microsoft Sans Serif, 8.25pt</value>
   </data>
   <data name="currDIrText.Location" type="System.Drawing.Point, System.Drawing">
-    <value>12, 520</value>
-  </data>
-  <data name="currDIrText.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
-    <value>4, 0, 4, 0</value>
+    <value>93, 330</value>
   </data>
   <data name="currDIrText.Size" type="System.Drawing.Size, System.Drawing">
-    <value>678, 31</value>
+    <value>383, 18</value>
   </data>
   <data name="currDIrText.TabIndex" type="System.Int32, mscorlib">
     <value>10</value>
@@ -925,13 +898,10 @@ OR - Press CTRL+I or F1 to enter in the APPID manually.
     <value>ALI213</value>
   </data>
   <data name="dllSelect.Location" type="System.Drawing.Point, System.Drawing">
-    <value>429, 296</value>
-  </data>
-  <data name="dllSelect.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
-    <value>4, 5, 4, 5</value>
+    <value>286, 183</value>
   </data>
   <data name="dllSelect.Size" type="System.Drawing.Size, System.Drawing">
-    <value>152, 28</value>
+    <value>103, 21</value>
   </data>
   <data name="dllSelect.TabIndex" type="System.Int32, mscorlib">
     <value>8</value>
@@ -1152,13 +1122,10 @@ OR - Press CTRL+I or F1 to enter in the APPID manually.
     <value />
   </data>
   <data name="donePic.Location" type="System.Drawing.Point, System.Drawing">
-    <value>428, 152</value>
-  </data>
-  <data name="donePic.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
-    <value>4, 5, 4, 5</value>
+    <value>286, 93</value>
   </data>
   <data name="donePic.Size" type="System.Drawing.Size, System.Drawing">
-    <value>154, 134</value>
+    <value>103, 87</value>
   </data>
   <data name="donePic.SizeMode" type="System.Windows.Forms.PictureBoxSizeMode, System.Windows.Forms">
     <value>Zoom</value>
@@ -3345,13 +3312,10 @@ OR - Press CTRL+I or F1 to enter in the APPID manually.
 </value>
   </data>
   <data name="startCrackPic.Location" type="System.Drawing.Point, System.Drawing">
-    <value>429, 152</value>
-  </data>
-  <data name="startCrackPic.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
-    <value>4, 5, 4, 5</value>
+    <value>286, 93</value>
   </data>
   <data name="startCrackPic.Size" type="System.Drawing.Size, System.Drawing">
-    <value>154, 134</value>
+    <value>103, 87</value>
   </data>
   <data name="startCrackPic.SizeMode" type="System.Windows.Forms.PictureBoxSizeMode, System.Windows.Forms">
     <value>Zoom</value>
@@ -3536,13 +3500,10 @@ OR - Press CTRL+I or F1 to enter in the APPID manually.
     <value />
   </data>
   <data name="selectDir.Location" type="System.Drawing.Point, System.Drawing">
-    <value>429, 152</value>
-  </data>
-  <data name="selectDir.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
-    <value>4, 5, 4, 5</value>
+    <value>286, 93</value>
   </data>
   <data name="selectDir.Size" type="System.Drawing.Size, System.Drawing">
-    <value>154, 134</value>
+    <value>103, 87</value>
   </data>
   <data name="selectDir.SizeMode" type="System.Windows.Forms.PictureBoxSizeMode, System.Windows.Forms">
     <value>Zoom</value>
@@ -3572,13 +3533,10 @@ OR - Press CTRL+I or F1 to enter in the APPID manually.
     <value>On</value>
   </data>
   <data name="label5.Location" type="System.Drawing.Point, System.Drawing">
-    <value>155, 67</value>
-  </data>
-  <data name="label5.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
-    <value>4, 0, 4, 0</value>
+    <value>100, 33</value>
   </data>
   <data name="label5.Size" type="System.Drawing.Size, System.Drawing">
-    <value>701, 50</value>
+    <value>474, 32</value>
   </data>
   <data name="label5.TabIndex" type="System.Int32, mscorlib">
     <value>1</value>
@@ -3613,13 +3571,10 @@ Games in either Program Files dir must be copied elsewhere first.
     <value>On</value>
   </data>
   <data name="selectDirLabel.Location" type="System.Drawing.Point, System.Drawing">
-    <value>100, 35</value>
-  </data>
-  <data name="selectDirLabel.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
-    <value>4, 0, 4, 0</value>
+    <value>58, 8</value>
   </data>
   <data name="selectDirLabel.Size" type="System.Drawing.Size, System.Drawing">
-    <value>810, 29</value>
+    <value>558, 20</value>
   </data>
   <data name="selectDirLabel.TabIndex" type="System.Int32, mscorlib">
     <value>1</value>
@@ -3652,13 +3607,10 @@ Games in either Program Files dir must be copied elsewhere first.
     <value>On</value>
   </data>
   <data name="drgdropText.Location" type="System.Drawing.Point, System.Drawing">
-    <value>5, 19</value>
-  </data>
-  <data name="drgdropText.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
-    <value>4, 0, 4, 0</value>
+    <value>4, 12</value>
   </data>
   <data name="drgdropText.Size" type="System.Drawing.Size, System.Drawing">
-    <value>1000, 485</value>
+    <value>667, 315</value>
   </data>
   <data name="drgdropText.TabIndex" type="System.Int32, mscorlib">
     <value>9</value>
@@ -3686,13 +3638,10 @@ Games in either Program Files dir must be copied elsewhere first.
     <value>13</value>
   </data>
   <data name="mainPanel.Location" type="System.Drawing.Point, System.Drawing">
-    <value>0, -5</value>
-  </data>
-  <data name="mainPanel.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
-    <value>4, 5, 4, 5</value>
+    <value>0, -3</value>
   </data>
   <data name="mainPanel.Size" type="System.Drawing.Size, System.Drawing">
-    <value>1011, 551</value>
+    <value>674, 358</value>
   </data>
   <data name="mainPanel.TabIndex" type="System.Int32, mscorlib">
     <value>8</value>
@@ -3746,10 +3695,13 @@ Games in either Program Files dir must be copied elsewhere first.
     <value>2</value>
   </data>
   <data name="ManAppPanel.Location" type="System.Drawing.Point, System.Drawing">
-    <value>322, 174</value>
+    <value>215, 113</value>
+  </data>
+  <data name="ManAppPanel.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>2, 2, 2, 2</value>
   </data>
   <data name="ManAppPanel.Size" type="System.Drawing.Size, System.Drawing">
-    <value>366, 193</value>
+    <value>245, 127</value>
   </data>
   <data name="ManAppPanel.TabIndex" type="System.Int32, mscorlib">
     <value>13</value>
@@ -3773,10 +3725,13 @@ Games in either Program Files dir must be copied elsewhere first.
     <value>Microsoft Sans Serif, 12pt, style=Bold</value>
   </data>
   <data name="ManAppBox.Location" type="System.Drawing.Point, System.Drawing">
-    <value>64, 69</value>
+    <value>43, 45</value>
+  </data>
+  <data name="ManAppBox.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>2, 2, 2, 2</value>
   </data>
   <data name="ManAppBox.Size" type="System.Drawing.Size, System.Drawing">
-    <value>230, 35</value>
+    <value>155, 26</value>
   </data>
   <data name="ManAppBox.TabIndex" type="System.Int32, mscorlib">
     <value>2</value>
@@ -3803,13 +3758,10 @@ Games in either Program Files dir must be copied elsewhere first.
     <value>On</value>
   </data>
   <data name="ManAppBtn.Location" type="System.Drawing.Point, System.Drawing">
-    <value>200, 118</value>
-  </data>
-  <data name="ManAppBtn.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
-    <value>4, 5, 4, 5</value>
+    <value>133, 77</value>
   </data>
   <data name="ManAppBtn.Size" type="System.Drawing.Size, System.Drawing">
-    <value>96, 40</value>
+    <value>64, 26</value>
   </data>
   <data name="ManAppBtn.TabIndex" type="System.Int32, mscorlib">
     <value>9</value>
@@ -3842,13 +3794,10 @@ Games in either Program Files dir must be copied elsewhere first.
     <value>On</value>
   </data>
   <data name="ManAppLbl.Location" type="System.Drawing.Point, System.Drawing">
-    <value>9, 20</value>
-  </data>
-  <data name="ManAppLbl.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
-    <value>4, 0, 4, 0</value>
+    <value>6, 13</value>
   </data>
   <data name="ManAppLbl.Size" type="System.Drawing.Size, System.Drawing">
-    <value>207, 25</value>
+    <value>144, 16</value>
   </data>
   <data name="ManAppLbl.TabIndex" type="System.Int32, mscorlib">
     <value>1</value>
@@ -3875,10 +3824,10 @@ Games in either Program Files dir must be copied elsewhere first.
     <value>True</value>
   </metadata>
   <data name="$this.AutoScaleDimensions" type="System.Drawing.SizeF, System.Drawing">
-    <value>9, 20</value>
+    <value>6, 13</value>
   </data>
   <data name="$this.ClientSize" type="System.Drawing.Size, System.Drawing">
-    <value>1002, 517</value>
+    <value>672, 347</value>
   </data>
   <data name="$this.Icon" type="System.Drawing.Icon, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
     <value>
@@ -6369,14 +6318,11 @@ Games in either Program Files dir must be copied elsewhere first.
   <data name="$this.ImeMode" type="System.Windows.Forms.ImeMode, System.Windows.Forms">
     <value>On</value>
   </data>
-  <data name="$this.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
-    <value>4, 5, 4, 5</value>
-  </data>
   <data name="$this.MaximumSize" type="System.Drawing.Size, System.Drawing">
-    <value>1024, 573</value>
+    <value>688, 386</value>
   </data>
   <data name="$this.MinimumSize" type="System.Drawing.Size, System.Drawing">
-    <value>1024, 573</value>
+    <value>688, 386</value>
   </data>
   <data name="$this.Text" xml:space="preserve">
     <value>SAC-GUI</value>
