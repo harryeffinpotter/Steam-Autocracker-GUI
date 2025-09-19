@@ -930,6 +930,12 @@ namespace APPID
 
         public async Task<bool> CrackAsync()  // Return true if something was cracked
         {
+            // Run the cracking process on a background thread to prevent UI freeze
+            return await Task.Run(() => CrackCoreAsync());
+        }
+
+        private async Task<bool> CrackCoreAsync()  // Core cracking logic moved to separate method
+        {
             int execount = -20;
             int steam64count = -1;
             int steamcount = -1;
@@ -1099,11 +1105,13 @@ namespace APPID
                         // Check if user wants LAN multiplayer support (from checkbox)
                         if (enableLanMultiplayer)
                         {
-                            // Create custom_broadcasts.txt for LAN discovery
-                            // This enables local network discovery
-                            File.WriteAllText($"{parentdir}\\steam_settings\\custom_broadcasts.txt",
+                            // Create custom_broadcasts.txt for multiplayer discovery
+                            // Just a simple list of IPs, one per line
+                            string broadcastContent =
                                 "255.255.255.255\n" +  // Broadcast to local network
-                                "127.0.0.1\n");         // Localhost for testing
+                                "127.0.0.1\n";         // Localhost
+
+                            File.WriteAllText($"{parentdir}\\steam_settings\\custom_broadcasts.txt", broadcastContent);
 
                             // Copy lobby_connect tool to game directory for easy access
                             string lobbyConnectSource = "";
@@ -1120,14 +1128,16 @@ namespace APPID
 
                             if (!string.IsNullOrEmpty(lobbyConnectSource))
                             {
-                                // Copy lobby_connect tool to game directory, keeping the architecture suffix
+                                // Copy lobby_connect tool to GAME directory (not crack directory)
                                 string lobbyConnectFileName = Path.GetFileName(lobbyConnectSource); // e.g. lobby_connect_x64.exe
-                                string lobbyConnectDest = $"{gameDir}\\_{lobbyConnectFileName}"; // e.g. _lobby_connect_x64.exe
+                                string lobbyConnectDest = Path.Combine(gameDir, $"_{lobbyConnectFileName}"); // e.g. _lobby_connect_x64.exe
+
+                                Tit($"Copying lobby_connect to game folder: {gameDir}", Color.Yellow);
                                 File.Copy(lobbyConnectSource, lobbyConnectDest, true);
 
-                                // Find the main game executable
+                                // Find the main game executable IN THE GAME DIRECTORY
                                 string gameExe = "";
-                                var exeFiles = Directory.GetFiles(parentdir, "*.exe", SearchOption.TopDirectoryOnly)
+                                var exeFiles = Directory.GetFiles(gameDir, "*.exe", SearchOption.TopDirectoryOnly)
                                     .Where(f => !f.Contains("lobby_connect") &&
                                                !f.Contains("UnityCrashHandler") &&
                                                !f.Contains("unins") &&
@@ -1149,11 +1159,15 @@ namespace APPID
                                 // Create a config file for lobby_connect to remember the game exe
                                 if (!string.IsNullOrEmpty(gameExe))
                                 {
+                                    Tit($"Found game exe: {Path.GetFileName(gameExe)}", Color.Yellow);
+
                                     // Save the game exe path for lobby_connect
                                     string lobbyConfigFile = Path.GetFileNameWithoutExtension(lobbyConnectSource) + ".txt";
-                                    File.WriteAllText($"{gameDir}\\{lobbyConfigFile}", gameExe);
+                                    File.WriteAllText(Path.Combine(gameDir, lobbyConfigFile), gameExe);
 
-                                    // Create batch files for joining and hosting
+                                    // Create batch files in steam_settings folder (tucked away)
+                                    string steamSettingsPath = Path.Combine(parentdir, "steam_settings");
+
                                     // Join batch - automatically connects and launches the game
                                     string lobbyExeName = "_" + Path.GetFileName(lobbyConnectSource); // e.g. _lobby_connect_x64.exe
                                     string joinBatchContent = $@"@echo off
@@ -1171,57 +1185,97 @@ exit";
 cd /d ""{gameDir}""
 start """" ""{Path.GetFileName(gameExe)}""
 exit";
-                                    string joinBatchPath = $"{gameDir}\\_JoinLAN.bat";
-                                    string hostBatchPath = $"{gameDir}\\_HostLAN.bat";
+
+                                    // Edit broadcasts batch - opens custom_broadcasts.txt in notepad
+                                    string editBroadcastsContent = $@"@echo off
+echo Opening custom_broadcasts.txt for editing...
+echo Add your friends' public IPs to play over the internet!
+notepad ""{Path.Combine(steamSettingsPath, "custom_broadcasts.txt")}""
+exit";
+
+                                    // Create batch files in steam_settings folder
+                                    string joinBatchPath = Path.Combine(steamSettingsPath, "_JoinLAN.bat");
+                                    string hostBatchPath = Path.Combine(steamSettingsPath, "_HostLAN.bat");
+                                    string editBroadcastsPath = Path.Combine(steamSettingsPath, "_EditMultiplayerIPs.bat");
+
+                                    Tit($"Creating batch files in steam_settings folder", Color.Cyan);
+
                                     File.WriteAllText(joinBatchPath, joinBatchContent);
                                     File.WriteAllText(hostBatchPath, hostBatchContent);
+                                    File.WriteAllText(editBroadcastsPath, editBroadcastsContent);
 
-                                    // Create a proper Windows shortcut with the game's icon
+                                    // Verify batch files were created
+                                    if (!File.Exists(joinBatchPath) || !File.Exists(hostBatchPath))
+                                    {
+                                        Tit($"ERROR: Failed to create batch files!", Color.Red);
+                                    }
+                                    else
+                                    {
+                                        Tit($"Batch files created successfully", Color.Lime);
+                                    }
+
+                                    // Create Windows shortcuts in game folder pointing to batch files in steam_settings
                                     try
                                     {
                                         string gameName = Path.GetFileNameWithoutExtension(gameExe);
-                                        string joinShortcutPath = $"{gameDir}\\_[Join LAN] {gameName}.lnk";
 
-                                        // Use VBScript to create join shortcut with proper icon
+                                        // Shortcuts in game folder
+                                        string joinShortcutPath = Path.Combine(gameDir, $"_[Join LAN] {gameName}.lnk");
+                                        string hostShortcutPath = Path.Combine(gameDir, $"_[Host LAN] {gameName}.lnk");
+                                        string editIPsShortcutPath = Path.Combine(gameDir, $"_[Edit Multiplayer IPs].lnk");
+
+                                        Tit($"Creating shortcuts in game folder for {gameName}", Color.Yellow);
+
+                                        // Use VBScript to create shortcuts pointing to batch files in steam_settings
                                         string vbsScript = $@"
 Set oWS = WScript.CreateObject(""WScript.Shell"")
-Set oLink = oWS.CreateShortcut(""{joinShortcutPath}"")
-oLink.TargetPath = ""{joinBatchPath}""
-oLink.WorkingDirectory = ""{gameDir}""
-oLink.Description = ""Search and join LAN games for {gameName}""
-oLink.IconLocation = ""{gameExe}""
-oLink.WindowStyle = 7
-oLink.Save";
+
+' Join LAN shortcut
+Set oLink = oWS.CreateShortcut(""{joinShortcutPath.Replace("\\", "\\\\").Replace("\"", "\"\"")}"")
+oLink.TargetPath = ""{joinBatchPath.Replace("\\", "\\\\").Replace("\"", "\"\"")}""
+oLink.WorkingDirectory = ""{gameDir.Replace("\\", "\\\\").Replace("\"", "\"\"")}""
+oLink.Description = ""Search and join LAN/Internet games for {gameName.Replace("\"", "\"\"")}""
+oLink.IconLocation = ""{gameExe.Replace("\\", "\\\\").Replace("\"", "\\\\")},0""
+oLink.Save
+
+' Host LAN shortcut
+Set oLink2 = oWS.CreateShortcut(""{hostShortcutPath.Replace("\\", "\\\\").Replace("\"", "\"\"")}"")
+oLink2.TargetPath = ""{hostBatchPath.Replace("\\", "\\\\").Replace("\"", "\"\"")}""
+oLink2.WorkingDirectory = ""{gameDir.Replace("\\", "\\\\").Replace("\"", "\"\"")}""
+oLink2.Description = ""Host a LAN/Internet game for {gameName.Replace("\"", "\"\"")}""
+oLink2.IconLocation = ""{gameExe.Replace("\\", "\\\\").Replace("\"", "\\\\")},0""
+oLink2.Save
+
+' Edit Multiplayer IPs shortcut
+Set oLink3 = oWS.CreateShortcut(""{editIPsShortcutPath.Replace("\\", "\\\\").Replace("\"", "\"\"")}"")
+oLink3.TargetPath = ""{editBroadcastsPath.Replace("\\", "\\\\").Replace("\"", "\"\"")}""
+oLink3.WorkingDirectory = ""{steamSettingsPath.Replace("\\", "\\\\").Replace("\"", "\"\"")}""
+oLink3.Description = ""Edit custom_broadcasts.txt to add friend IPs for internet play""
+oLink3.IconLocation = ""notepad.exe,0""
+oLink3.Save";
 
                                         string tempVbs = Path.GetTempFileName() + ".vbs";
                                         File.WriteAllText(tempVbs, vbsScript);
                                         Process vbsProcess = Process.Start("wscript.exe", $"\"{tempVbs}\"");
                                         vbsProcess.WaitForExit();
-                                        File.Delete(tempVbs);
 
-                                        // Also create a "Host LAN" shortcut for clarity
-                                        string hostShortcutPath = $"{gameDir}\\_[Host LAN] {gameName}.lnk";
-                                        string hostVbsScript = $@"
-Set oWS = WScript.CreateObject(""WScript.Shell"")
-Set oLink = oWS.CreateShortcut(""{hostShortcutPath}"")
-oLink.TargetPath = ""{hostBatchPath}""
-oLink.WorkingDirectory = ""{gameDir}""
-oLink.Description = ""Host a LAN game for {gameName}""
-oLink.IconLocation = ""{gameExe}""
-oLink.Save";
+                                        try { File.Delete(tempVbs); } catch { }
 
-                                        string tempHostVbs = Path.GetTempFileName() + ".vbs";
-                                        File.WriteAllText(tempHostVbs, hostVbsScript);
-                                        Process hostVbsProcess = Process.Start("wscript.exe", $"\"{tempHostVbs}\"");
-                                        hostVbsProcess.WaitForExit();
-                                        File.Delete(tempHostVbs);
-
-                                        Tit("LAN shortcuts created!", Color.MediumSpringGreen);
+                                        // Check if at least the main shortcuts were created
+                                        if (File.Exists(joinShortcutPath) || File.Exists(hostShortcutPath))
+                                        {
+                                            Tit("Multiplayer shortcuts created in game folder!", Color.MediumSpringGreen);
+                                            Tit("Batch files stored in steam_settings folder", Color.Lime);
+                                        }
+                                        else
+                                        {
+                                            Tit("Shortcuts failed, but batch files are ready in steam_settings!", Color.Yellow);
+                                        }
                                     }
-                                    catch
+                                    catch (Exception ex)
                                     {
-                                        // If shortcut creation fails, the batch file will still work
-                                        Tit("LAN multiplayer batch created!", Color.MediumSpringGreen);
+                                        Tit($"Shortcut error: {ex.Message}", Color.Yellow);
+                                        Tit("Batch files ready in steam_settings folder!", Color.MediumSpringGreen);
                                     }
                                 }
                             }
