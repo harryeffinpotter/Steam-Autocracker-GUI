@@ -58,5 +58,17 @@ namespace APPID.Properties {
                 this["Pinned"] = value;
             }
         }
+
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool AutoCrack {
+            get {
+                return ((bool)(this["AutoCrack"]));
+            }
+            set {
+                this["AutoCrack"] = value;
+            }
+        }
     }
 }
