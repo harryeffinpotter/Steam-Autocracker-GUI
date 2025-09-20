@@ -70,5 +70,9 @@ namespace APPID.Properties {
                 this["AutoCrack"] = value;
             }
         }
+
+        public bool ZipDontAsk { get; internal set; }
+        public string ZipFormat { get; internal set; }
+        public string ZipLevel { get; internal set; }
     }
 }

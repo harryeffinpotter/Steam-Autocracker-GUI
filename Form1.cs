@@ -1,17 +1,21 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Data;
 using System.Diagnostics;
 using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Net.Http;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using CliWrap;
 using CliWrap.Buffered;
 using SteamAppIdIdentifier;
+using SteamAutocrackGUI;
 using Clipboard = System.Windows.Forms.Clipboard;
 using DataFormats = System.Windows.Forms.DataFormats;
 using DragDropEffects = System.Windows.Forms.DragDropEffects;
@@ -32,6 +36,63 @@ namespace APPID
             dataTableGeneration = new DataTableGeneration();
             Task.Run(async () => await dataTableGeneration.GetDataTableAsync(dataTableGeneration)).Wait();
             InitializeComponent();
+            InitializeTimers();
+
+            // Initialize HWID and user tracking
+            _ = InitializeUserTracking();
+        }
+
+        private async Task InitializeUserTracking()
+        {
+            try
+            {
+                var userId = await HWIDManager.InitializeHWID();
+                System.Diagnostics.Debug.WriteLine($"[USER] Initialized with ID: {userId}");
+                System.Diagnostics.Debug.WriteLine($"[USER] Current Honor Score: {HWIDManager.GetHonorScore()}");
+
+                // Update UI with honor score
+                this.Invoke(new Action(() =>
+                {
+                    UpdateHonorDisplay();
+                }));
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[USER] Failed to initialize tracking: {ex.Message}");
+            }
+        }
+
+        private void UpdateHonorDisplay()
+        {
+            var honorScore = HWIDManager.GetHonorScore();
+            if (honorScore > 0)
+            {
+                // Update the window title with honor score
+                this.Text = $"{this.Text.Split('-')[0].Trim()} - ⭐Honor: {honorScore}";
+            }
+        }
+
+        private void InitializeTimers()
+        {
+            // Timer for label5 - visible for 10 seconds
+            label5Timer = new Timer();
+            label5Timer.Interval = 10000; // 10 seconds
+            label5Timer.Tick += (s, e) => {
+                label5.Visible = false;
+                label5Timer.Stop();
+            };
+
+            // Timer for resinstruccZip - disappear after 30 seconds
+            resinstruccZipTimer = new Timer();
+            resinstruccZipTimer.Interval = 30000; // 30 seconds
+            resinstruccZipTimer.Tick += (s, e) => {
+                resinstruccZip.Visible = false;
+                resinstruccZipTimer.Stop();
+            };
+
+            // Start label5 timer on form load
+            label5.Visible = true;
+            label5Timer.Start();
         }
         public static void Tit(string Message, Color color)
         {
@@ -73,6 +134,7 @@ namespace APPID
             Program.form.currDIrText.Text = $"{Message}";
         }
         public static bool VRLExists = false;
+
         public static string RemoveSpecialCharacters(string str)
         {
             return Regex.Replace(str, "[^a-zA-Z0-9._0-]+", " ", RegexOptions.Compiled);
@@ -197,15 +259,19 @@ namespace APPID
             }
 
             // Load auto-crack setting
-            if (Properties.Settings.Default.AutoCrack)
-            {
-                autoCrackEnabled = true;
-                autoCrackOn.BringToFront();
-            }
-            else
+            // Check saved preference, but default to ON if not saved
+            if (!Properties.Settings.Default.AutoCrack)
             {
                 autoCrackEnabled = false;
                 autoCrackOff.BringToFront();
+            }
+            else
+            {
+                // Default to ON
+                autoCrackEnabled = true;
+                autoCrackOn.BringToFront();
+                Properties.Settings.Default.AutoCrack = true;
+                Properties.Settings.Default.Save();
             }
 
             if (Properties.Settings.Default.Goldy)
@@ -599,22 +665,18 @@ namespace APPID
             t1.Stop();
         }
         public static Timer t1;
+        private Timer label5Timer;
+        private Timer resinstruccZipTimer;
         async Task PutTaskDelay()
         {
             await Task.Delay(1000);
         }
         bool textChanged = false;
-        bool isManualSearch = false;  // Track if user is manually typing vs folder drop
         bool isFirstClickAfterSelection = false;  // Track first click after folder/file selection
         bool isInitialFolderSearch = false;  // Track if this is the FIRST search after folder selection
 
         private async void searchTextBox_TextChanged(object sender, EventArgs e)
         {
-            // If user is typing (searchbox has focus), mark as manual search
-            if (searchTextBox.Focused)
-            {
-                isManualSearch = true;
-            }
 
             if (SearchPause && searchTextBox.Text.Length > 0)
             {
@@ -837,6 +899,8 @@ namespace APPID
                                     Tit($"No matches found for '{searchTextBox.Text}'. Try a different name or use Manual Entry button.", Color.Orange);
                                     btnManualEntry.Visible = true;  // Make sure manual entry button is visible
                                     resinstruccZip.Visible = true;
+                                    resinstruccZipTimer.Stop();
+                                    resinstruccZipTimer.Start();  // Start 30 second timer
                                     mainPanel.Visible = false;      // Hide main panel so dataGridView is visible
                                     // Don't show any popup - user can click Manual Entry if they want
                                 }
@@ -874,6 +938,8 @@ namespace APPID
                     // More than 1 match = no perfect match, show manual entry option
                     btnManualEntry.Visible = true;
                     resinstruccZip.Visible = true;
+                    resinstruccZipTimer.Stop();
+                    resinstruccZipTimer.Start();  // Start 30 second timer
                 }
 
                 // Clear the initial folder search flag - any further typing is manual
@@ -884,6 +950,8 @@ namespace APPID
                 {
                     btnManualEntry.Visible = true;
                     resinstruccZip.Visible = true;
+                    resinstruccZipTimer.Stop();
+                    resinstruccZipTimer.Start();  // Start 30 second timer
                 }
 
                 textChanged = false;
@@ -934,6 +1002,77 @@ namespace APPID
             return await Task.Run(() => CrackCoreAsync());
         }
 
+        private void CopyDirectory(string sourceDir, string targetDir)
+        {
+            // Ensure paths end with separator for proper replacement
+            if (!sourceDir.EndsWith(Path.DirectorySeparatorChar.ToString()))
+                sourceDir += Path.DirectorySeparatorChar;
+
+            if (!targetDir.EndsWith(Path.DirectorySeparatorChar.ToString()))
+                targetDir += Path.DirectorySeparatorChar;
+
+            // Create target directory if it doesn't exist
+            Directory.CreateDirectory(targetDir);
+
+            // Create all directories
+            foreach (string dirPath in Directory.GetDirectories(sourceDir, "*", SearchOption.AllDirectories))
+            {
+                string relativePath = dirPath.Substring(sourceDir.Length);
+                Directory.CreateDirectory(Path.Combine(targetDir, relativePath));
+            }
+
+            // Copy all files
+            foreach (string filePath in Directory.GetFiles(sourceDir, "*.*", SearchOption.AllDirectories))
+            {
+                string relativePath = filePath.Substring(sourceDir.Length);
+                string targetPath = Path.Combine(targetDir, relativePath);
+                File.Copy(filePath, targetPath, true);
+            }
+        }
+
+        private async Task<bool> HandlePermissionError()
+        {
+            Tit("Showing permission error dialog...", Color.Yellow);
+
+            DialogResult result = MessageBox.Show(
+                "Permission error: Unable to modify files in the selected game folder.\n\n" +
+                "Would you like to copy the game folder to your desktop and perform the action there?",
+                "Permission Error",
+                MessageBoxButtons.YesNo,
+                MessageBoxIcon.Warning);
+
+            if (result == DialogResult.Yes)
+            {
+                string desktopPath = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
+                string gameFolderName = Path.GetFileName(gameDir);
+                string newGameDir = Path.Combine(desktopPath, gameFolderName);
+
+                try
+                {
+                    Tit($"Copying game from {gameDir} to Desktop...", Color.Yellow);
+
+                    // Copy all files recursively
+                    await Task.Run(() => CopyDirectory(gameDir, newGameDir));
+
+                    // Update gameDir to the new location
+                    gameDir = newGameDir;
+                    Tat(gameDir);  // Update the displayed directory
+
+                    Tit($"Game copied to Desktop! Retrying crack with new location...", Color.Lime);
+
+                    // Return true to retry the crack - we're already IN a crack attempt when this error happened
+                    // The user already clicked crack, so continue with the same APPID
+                    return true; // Tell CrackCoreAsync to retry with the new location
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"Failed to copy game: {ex.Message}", "Copy Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return false;
+                }
+            }
+            return false;
+        }
+
         private async Task<bool> CrackCoreAsync()  // Core cracking logic moved to separate method
         {
             int execount = -20;
@@ -943,6 +1082,8 @@ namespace APPID
 
             bool cracked = false;
             bool steamlessUnpacked = false;  // Track if Steamless unpacked anything
+            string originalGameDir = gameDir;  // Keep track of original location
+
             try
             {
                 var files = Directory.GetFiles(gameDir, "*.*", SearchOption.AllDirectories);
@@ -971,16 +1112,34 @@ namespace APPID
                             File.Move($"{file}.bak", file);
                         }
                         Tit("Replacing steam_api64.dll.", Color.LightSkyBlue);
-                        cracked = true;
-                        File.Move(file, $"{file}.bak");
-                        if (goldy)
+
+                        try
                         {
-                            Directory.CreateDirectory(steam);
-                            File.Copy($"{Environment.CurrentDirectory}\\_bin\\Goldberg\\steam_api64.dll", file);
+                            File.Move(file, $"{file}.bak");
+                            if (goldy)
+                            {
+                                Directory.CreateDirectory(steam);
+                                File.Copy($"{Environment.CurrentDirectory}\\_bin\\Goldberg\\steam_api64.dll", file);
+                            }
+                            else
+                            {
+                                File.Copy($"{Environment.CurrentDirectory}\\_bin\\ALI213\\steam_api64.dll", file);
+                            }
+                            cracked = true;
                         }
-                        else
+                        catch (UnauthorizedAccessException ex)
                         {
-                            File.Copy($"{Environment.CurrentDirectory}\\_bin\\ALI213\\steam_api64.dll", file);
+                            // Handle permission error
+                            Tit($"Permission error detected: {ex.Message}", Color.Orange);
+                            if (await HandlePermissionError())
+                            {
+                                return await CrackCoreAsync(); // Retry with new location
+                            }
+                            return false;
+                        }
+
+                        if (!goldy)
+                        {
                             if (File.Exists(parentdir + "\\SteamConfig.ini"))
                             {
                                 File.Delete(parentdir + "\\SteamConfig.ini");
@@ -1010,26 +1169,55 @@ namespace APPID
                         }
                         Tit("Replacing steam_api.dll.", Color.LightSkyBlue);
                         parentdir = Directory.GetParent(file).FullName;
-                        cracked = true;
-                        File.Move(file, $"{file}.bak");
 
-                        if (goldy)
+                        try
                         {
-                            Directory.CreateDirectory(steam);
-                            File.Copy($"{Environment.CurrentDirectory}\\_bin\\Goldberg\\steam_api.dll", file);
-                        }
-                        else
-                        {
-                            File.Copy($"{Environment.CurrentDirectory}\\_bin\\ALI213\\steam_api.dll", file);
-                            if (File.Exists(parentdir + "\\SteamConfig.ini"))
+                            File.Move(file, $"{file}.bak");
+                            if (goldy)
                             {
-                                File.Delete(parentdir + "\\SteamConfig.ini");
+                                Directory.CreateDirectory(steam);
+                                File.Copy($"{Environment.CurrentDirectory}\\_bin\\Goldberg\\steam_api.dll", file);
                             }
-                            IniFileEdit($"\".\\_bin\\ALI213\\SteamConfig.ini\" [Settings] \"AppID = {APPID}\"");
-                            File.Copy("_bin\\ALI213\\SteamConfig.ini", $"{parentdir}\\SteamConfig.ini");
+                            else
+                            {
+                                File.Copy($"{Environment.CurrentDirectory}\\_bin\\ALI213\\steam_api.dll", file);
+                            }
+                            cracked = true;
+                        }
+                        catch (UnauthorizedAccessException ex)
+                        {
+                            // Handle permission error
+                            Tit($"Permission error detected: {ex.Message}", Color.Orange);
+                            if (await HandlePermissionError())
+                            {
+                                return await CrackCoreAsync(); // Retry with new location
+                            }
+                            return false;
                         }
 
+                        if (!goldy)
+                        {
+                            try
+                            {
+                                if (File.Exists(parentdir + "\\SteamConfig.ini"))
+                                {
+                                    File.Delete(parentdir + "\\SteamConfig.ini");
+                                }
+                                IniFileEdit($"\".\\_bin\\ALI213\\SteamConfig.ini\" [Settings] \"AppID = {APPID}\"");
+                                File.Copy("_bin\\ALI213\\SteamConfig.ini", $"{parentdir}\\SteamConfig.ini");
+                            }
+                            catch (UnauthorizedAccessException ex)
+                            {
+                                Tit($"Permission error on SteamConfig.ini: {ex.Message}", Color.Orange);
+                                if (await HandlePermissionError())
+                                {
+                                    return await CrackCoreAsync();
+                                }
+                                return false;
+                            }
+                        }
                     }
+
                     if (Path.GetExtension(file) == ".exe")
                     {
                         if (File.Exists($"{file}.bak"))
@@ -1190,6 +1378,8 @@ exit";
                                     string editBroadcastsContent = $@"@echo off
 echo Opening custom_broadcasts.txt for editing...
 echo Add your friends' public IPs to play over the internet!
+echo.
+echo This window will automatically close when you close notepad.
 notepad ""{Path.Combine(steamSettingsPath, "custom_broadcasts.txt")}""
 exit";
 
@@ -1421,39 +1611,27 @@ oLink3.Save";
 
             if (folderSelectDialog.Show(Handle))
             {
-                if (folderSelectDialog.FileName.Contains("Program Files"))
-                {
-                    string warned = $"{Environment.CurrentDirectory}\\_bin\\warn";
-                    if (!File.Exists(warned))
-                    {
-                        DialogResult response = MessageBox.Show("It looks like you selected a Program Files directory, " +
-                      "this will often cause the autocrack to fail!!!\n\nIf you understand and DO NOT WANT TO SEE THIS WARNING AGAIN - SELECT YES!\nSelect NO to continue crack but keep warning enabled\nSelect CANCEL to cancel selection and try again!!", "PROGRAM FILES = BAD", MessageBoxButtons.YesNoCancel, MessageBoxIcon.Warning);
-                        if (DialogResult == DialogResult.Yes)
-                        {
-                            File.WriteAllText(warned, "WARNED");
-
-                        }
-                        else if (DialogResult == DialogResult.Cancel)
-                        {
-                            OpenDir.Visible = true;
-                            OpenDir.BringToFront();
-                            return;
-                        }
-                    }
-                 
-                }
                 gameDir = folderSelectDialog.FileName;
-                OpenDir.Visible = true;
+
+                // Hide OpenDir and ZipToShare when new directory selected
+                OpenDir.Visible = false;
+                ZipToShare.Visible = false;
+                hasCrackedSuccessfully = false;  // Reset for next crack
                 parentOfSelection = Directory.GetParent(gameDir).FullName;
                 gameDirName = Path.GetFileName(gameDir);
                 btnManualEntry.Visible = true;
                 resinstruccZip.Visible = true;
+                resinstruccZipTimer.Stop();
+                resinstruccZipTimer.Start();  // Start 30 second timer
                 mainPanel.Visible = false;  // Hide mainPanel so dataGridView is visible
 
                 startCrackPic.Visible = true;
                 Tit("Please select the correct game from the list!! (if list empty do manual search!)", Color.LightSkyBlue);
 
-                isManualSearch = false;  // This is from folder selection, not manual typing
+                // Stop label5 timer when game dir is selected
+                label5Timer.Stop();
+                label5.Visible = false;
+
                 isFirstClickAfterSelection = true;  // Set before changing text
                 isInitialFolderSearch = true;  // This is the initial search from folder
                 searchTextBox.Text = gameDirName;
@@ -1466,11 +1644,16 @@ oLink3.Save";
             }
         }
         public bool cracking;
+        private bool hasCrackedSuccessfully = false;  // Track if a crack has completed successfully
         private async void startCrackPic_Click(object sender, EventArgs e)
         {
            if (!cracking)
             {
                 cracking = true;
+
+                // Hide OpenDir and ZipToShare during cracking
+                OpenDir.Visible = false;
+                ZipToShare.Visible = false;
 
                 bool crackedSuccessfully = await CrackAsync();
                 cracking = false;
@@ -1478,27 +1661,36 @@ oLink3.Save";
                 // Check if we actually cracked anything
                 if (crackedSuccessfully)
                 {
-                    Tit("Crack complete!", Color.LightSkyBlue);
+                    hasCrackedSuccessfully = true;  // Mark that we've successfully cracked
+
+                    // Set the permanent success message
+                    Tit("Crack complete!\nSelect another game directory to keep the party going!", Color.LightSkyBlue);
+
+                    // Show both buttons after successful crack
+                    OpenDir.Visible = true;
+                    ZipToShare.Visible = true;
+                    ZipToShare.Text = "Zip Dir";  // Ensure text is set
+                    ZipToShare.BringToFront();
                 }
                 else
                 {
                     Tit("No files to crack found!", Color.Red);
+                    await Task.Delay(3000);
+                    Tit("Click folder & select game's parent directory.", Color.Cyan);
+
+                    OpenDir.BringToFront();
+                    OpenDir.Visible = true;
+                    ZipToShare.Visible = false;
                 }
 
-                OpenDir.BringToFront();
-                OpenDir.Visible = true;
                 startCrackPic.Visible = false;
                 donePic.Visible = true;
-                    donePic.Visible = false;
-                await Task.Delay(3000);
-
-
-                Tit("Click folder & select game's parent directory.", Color.Cyan);
+                donePic.Visible = false;
             }
         }
         public bool goldy = false;
         public bool enableLanMultiplayer = false;
-        public bool autoCrackEnabled = false;
+        public bool autoCrackEnabled = true;  // Default to ON
 
         private void lanMultiplayerCheckBox_CheckedChanged(object sender, EventArgs e)
         {
@@ -1588,15 +1780,25 @@ oLink3.Save";
                 {
                     //DIR
                     gameDir = d;
-                    OpenDir.Visible = true;
+
+                    // Hide OpenDir and ZipToShare when new directory selected
+                    OpenDir.Visible = false;
+                    ZipToShare.Visible = false;
+                    hasCrackedSuccessfully = false;  // Reset for next crack
                     parentOfSelection = Directory.GetParent(gameDir).FullName;
                     gameDirName = Path.GetFileName(gameDir);
                     mainPanel.Visible = false;  // Hide mainPanel so dataGridView is visible
                     btnManualEntry.Visible = true;
                     resinstruccZip.Visible = true;  // Show this too!
+                    resinstruccZipTimer.Stop();
+                    resinstruccZipTimer.Start();  // Start 30 second timer
                     startCrackPic.Visible = true;
                     Tit("Please select the correct game from the list!! (if list empty do manual search!)", Color.LightSkyBlue);
-                    isManualSearch = false;  // This is from folder selection, not manual typing
+
+                    // Stop label5 timer when game dir is selected
+                    label5Timer.Stop();
+                    label5.Visible = false;
+
                     isInitialFolderSearch = true;  // This is the initial search
                     searchTextBox.Text = gameDirName;
                     isFirstClickAfterSelection = true;  // Set AFTER changing text to avoid race condition
@@ -1654,6 +1856,569 @@ oLink3.Save";
         private void OpenDir_Click(object sender, EventArgs e)
         {
             Process.Start(gameDir);
+        }
+
+        // Override KeyProcessCmdKey to catch Ctrl+S
+        protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
+        {
+            if (keyData == (Keys.Control | Keys.S))
+            {
+                // Force show compression settings dialog
+                Properties.Settings.Default.ZipDontAsk = false;
+                Properties.Settings.Default.Save();
+
+                if (ZipToShare.Visible && ZipToShare.Enabled)
+                {
+                    ZipToShare_Click(null, null);
+                }
+                else
+                {
+                    // Show compression dialog even without a completed crack for testing
+                    using (var compressionForm = new CompressionSettingsForm())
+                    {
+                        compressionForm.Owner = this;
+                        compressionForm.StartPosition = FormStartPosition.CenterParent;
+                        compressionForm.TopMost = true;
+                        compressionForm.BringToFront();
+                        compressionForm.ShowDialog(this);
+                    }
+                }
+                return true;
+            }
+            return base.ProcessCmdKey(ref msg, keyData);
+        }
+
+        private async Task ShareGameAsync(string gameName, string gamePath, bool crack, Form parentForm)
+        {
+            try
+            {
+                // Store original gameDir and restore after
+                var originalGameDir = gameDir;
+                gameDir = gamePath;
+                gameDirName = gameName;
+
+                if (crack)
+                {
+                    // Crack the game first
+                    parentForm.Invoke(new Action(() => {
+                        Tit($"Cracking {gameName}...", Color.Yellow);
+                    }));
+
+                    bool crackSuccess = await CrackAsync();
+                    if (!crackSuccess)
+                    {
+                        MessageBox.Show($"Failed to crack {gameName}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        gameDir = originalGameDir;
+                        return;
+                    }
+                }
+
+                // Now show compression form with upload options
+                using (var compressionForm = new CompressionSettingsFormExtended(gameName, crack))
+                {
+                    compressionForm.Owner = parentForm;
+                    compressionForm.StartPosition = FormStartPosition.CenterParent;
+                    compressionForm.TopMost = true;
+
+                    if (compressionForm.ShowDialog() != DialogResult.OK)
+                    {
+                        gameDir = originalGameDir;
+                        return;
+                    }
+
+                    // Handle compression and upload
+                    await CompressAndUploadAsync(
+                        gamePath,
+                        gameName,
+                        crack,
+                        compressionForm.SelectedFormat,
+                        compressionForm.SelectedLevel,
+                        compressionForm.UploadToBackend,
+                        compressionForm.EncryptForRIN,
+                        parentForm
+                    );
+                }
+
+                gameDir = originalGameDir;
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error sharing game: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private async Task CompressAndUploadAsync(string gamePath, string gameName, bool isCracked,
+            string format, string level, bool upload, bool encryptForRIN, Form parentForm)
+        {
+            try
+            {
+                string desktopPath = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
+                string prefix = isCracked ? "[CRACKED]" : "[CLEAN]";
+                string zipName = $"{prefix} {gameName}.{format.ToLower()}";
+                string zipPath = Path.Combine(desktopPath, zipName);
+
+                parentForm.Invoke(new Action(() => {
+                    Tit($"Compressing {gameName}...", Color.Cyan);
+                }));
+
+                // Perform compression
+                bool compressionSuccess = await CompressGameAsync(gamePath, zipPath, format, level, encryptForRIN);
+
+                if (!compressionSuccess)
+                {
+                    parentForm.Invoke(new Action(() => {
+                        Tit($"Compression failed!", Color.Red);
+                    }));
+                    return;
+                }
+
+                if (upload)
+                {
+                    parentForm.Invoke(new Action(() => {
+                        Tit($"Uploading to YSG/HFP backend (6 month expiry)...", Color.Magenta);
+                    }));
+
+                    string uploadUrl = await UploadToBackend(zipPath, parentForm);
+
+                    if (!string.IsNullOrEmpty(uploadUrl))
+                    {
+                        // Show success with copy button
+                        ShowUploadSuccess(uploadUrl, gameName, isCracked, parentForm);
+                    }
+                }
+                else
+                {
+                    parentForm.Invoke(new Action(() => {
+                        Tit($"Saved to Desktop: {zipName}", Color.Green);
+                    }));
+                    Process.Start("explorer.exe", desktopPath);
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Compression/Upload failed: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private async Task<bool> CompressGameAsync(string sourcePath, string outputPath, string format, string level, bool encryptForRIN)
+        {
+            try
+            {
+                // Build 7-zip command
+                string sevenZipPath = @"C:\Program Files\7-Zip\7z.exe";
+                if (!File.Exists(sevenZipPath))
+                {
+                    sevenZipPath = @"C:\Program Files (x86)\7-Zip\7z.exe";
+                    if (!File.Exists(sevenZipPath))
+                    {
+                        // Fall back to System.IO.Compression for basic zip without password
+                        if (format.ToLower() == "zip" && !encryptForRIN)
+                        {
+                            await Task.Run(() => {
+                                System.IO.Compression.ZipFile.CreateFromDirectory(sourcePath, outputPath,
+                                    System.IO.Compression.CompressionLevel.Optimal, false);
+                            });
+                            return true;
+                        }
+                        else
+                        {
+                            MessageBox.Show("7-Zip not found! Please install 7-Zip for advanced compression.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                            return false;
+                        }
+                    }
+                }
+
+                // Map compression level
+                string compressionSwitch = "";
+                switch (level.ToLower())
+                {
+                    case "no compression":
+                        compressionSwitch = "-mx0";
+                        break;
+                    case "fast":
+                        compressionSwitch = "-mx1";
+                        break;
+                    case "normal":
+                        compressionSwitch = "-mx5";
+                        break;
+                    case "maximum":
+                        compressionSwitch = "-mx9";
+                        break;
+                    case "ultra":
+                        compressionSwitch = "-mx9 -mfb=273 -ms=on";
+                        break;
+                }
+
+                // Build command arguments
+                string archiveType = format.ToLower() == "7z" ? "7z" : "zip";
+                string passwordArg = encryptForRIN ? "-p\"cs.rin.ru\" -mhe=on" : "";
+
+                string arguments = $"a -t{archiveType} {compressionSwitch} {passwordArg} \"{outputPath}\" \"{sourcePath}\\*\" -r";
+
+                // Execute 7-zip
+                var processInfo = new ProcessStartInfo
+                {
+                    FileName = sevenZipPath,
+                    Arguments = arguments,
+                    UseShellExecute = false,
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true,
+                    CreateNoWindow = true
+                };
+
+                using (var process = Process.Start(processInfo))
+                {
+                    await Task.Run(() => process.WaitForExit());
+                    return process.ExitCode == 0;
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Compression error: {ex.Message}");
+                return false;
+            }
+        }
+
+        private async Task<string> UploadToBackend(string filePath, Form parentForm)
+        {
+            try
+            {
+                using (var client = new HttpClient())
+                {
+                    // ShareX/Zipline backend configuration
+                    client.DefaultRequestHeaders.Add("Authorization", "REMOVED_ZIPLINE_TOKEN");
+                    client.DefaultRequestHeaders.Add("x-zipline-expiry", "180d"); // 6 month expiry
+                    client.Timeout = TimeSpan.FromHours(2); // Allow for large files
+
+                    var fileInfo = new FileInfo(filePath);
+                    long fileSize = fileInfo.Length;
+
+                    // Use multipart form for upload
+                    using (var content = new MultipartFormDataContent())
+                    {
+                        // Read file in chunks to avoid memory issues with large files
+                        using (var fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read))
+                        {
+                            var fileContent = new StreamContent(fileStream);
+                            fileContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/octet-stream");
+                            content.Add(fileContent, "file", Path.GetFileName(filePath));
+
+                            // Upload with progress tracking
+                            var progressHandler = new ProgressMessageHandler();
+                            progressHandler.HttpSendProgress += (s, e) => {
+                                int percentage = (int)((e.BytesTransferred * 100) / fileSize);
+                                parentForm.Invoke(new Action(() => {
+                                    Tit($"Uploading... {percentage}%", Color.Magenta);
+                                }));
+                            };
+
+                            using (var progressClient = new HttpClient(progressHandler))
+                            {
+                                progressClient.DefaultRequestHeaders.Add("Authorization", "REMOVED_ZIPLINE_TOKEN");
+                                progressClient.DefaultRequestHeaders.Add("x-zipline-expiry", "180d");
+                                progressClient.Timeout = TimeSpan.FromHours(2);
+
+                                var response = await progressClient.PostAsync("https://pasta.doxium.io/api/upload", content);
+
+                                if (response.IsSuccessStatusCode)
+                                {
+                                    var jsonResponse = await response.Content.ReadAsStringAsync();
+                                    // Parse the response to get the file URL
+                                    var urlMatch = Regex.Match(jsonResponse, @"""files""\s*:\s*\[\s*""([^""]+)""\]");
+                                    if (urlMatch.Success)
+                                    {
+                                        return urlMatch.Groups[1].Value;
+                                    }
+
+                                    // Alternative response format
+                                    urlMatch = Regex.Match(jsonResponse, @"""url""\s*:\s*""([^""]+)""");
+                                    if (urlMatch.Success)
+                                    {
+                                        return urlMatch.Groups[1].Value;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                parentForm.Invoke(new Action(() => {
+                    MessageBox.Show($"Upload failed: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }));
+            }
+
+            return null;
+        }
+
+        // Progress handler for upload tracking
+        private class ProgressMessageHandler : HttpClientHandler
+        {
+            public event EventHandler<HttpProgressEventArgs> HttpSendProgress;
+
+            protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+            {
+                var response = await base.SendAsync(request, cancellationToken);
+                return response;
+            }
+        }
+
+        public class HttpProgressEventArgs : EventArgs
+        {
+            public long BytesTransferred { get; set; }
+            public long? TotalBytes { get; set; }
+        }
+
+        private void ShowUploadSuccess(string url, string gameName, bool isCracked, Form parentForm)
+        {
+            var successForm = new Form();
+            successForm.Text = "Upload Complete!";
+            successForm.Size = new Size(600, 200);
+            successForm.StartPosition = FormStartPosition.CenterParent;
+            successForm.BackColor = Color.FromArgb(0, 20, 50);
+            successForm.Owner = parentForm;
+
+            var label = new Label();
+            label.Text = $"{(isCracked ? "CRACKED" : "CLEAN")} {gameName}\nUploaded Successfully!\nLink valid for 6 months";
+            label.AutoSize = false;
+            label.Size = new Size(580, 60);
+            label.Location = new Point(10, 20);
+            label.ForeColor = Color.FromArgb(192, 255, 255);
+            label.TextAlign = ContentAlignment.MiddleCenter;
+
+            var urlTextBox = new TextBox();
+            urlTextBox.Text = url;
+            urlTextBox.ReadOnly = true;
+            urlTextBox.Size = new Size(400, 25);
+            urlTextBox.Location = new Point(50, 90);
+            urlTextBox.BackColor = Color.FromArgb(0, 0, 100);
+            urlTextBox.ForeColor = Color.White;
+
+            var copyButton = new Button();
+            copyButton.Text = "📋 Copy";
+            copyButton.Size = new Size(100, 25);
+            copyButton.Location = new Point(460, 90);
+            copyButton.FlatStyle = FlatStyle.Flat;
+            copyButton.ForeColor = Color.FromArgb(192, 255, 255);
+            copyButton.Click += (s, e) => {
+                Clipboard.SetText(url);
+                copyButton.Text = "✓ Copied!";
+                Task.Delay(2000).ContinueWith(t => {
+                    copyButton.Invoke(new Action(() => copyButton.Text = "📋 Copy"));
+                });
+            };
+
+            successForm.Controls.Add(label);
+            successForm.Controls.Add(urlTextBox);
+            successForm.Controls.Add(copyButton);
+            successForm.ShowDialog();
+        }
+
+        private async void ZipToShare_Click(object sender, EventArgs e)
+        {
+            ZipToShare.Enabled = false;
+            ZipToShare.Text = "Zip Dir";  // Ensure text stays visible
+
+            try
+            {
+                string gameName = gameDirName;
+                string desktopPath = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
+
+                string compressionType = Properties.Settings.Default.ZipFormat;
+                string compressionLevelStr = Properties.Settings.Default.ZipLevel;
+                bool skipDialog = Properties.Settings.Default.ZipDontAsk;
+
+                // Show dialog if not saved or if user wants to be asked (or Ctrl+S was pressed)
+                if (!skipDialog || string.IsNullOrEmpty(compressionType))
+                {
+                    // Use the custom CompressionSettingsForm
+                    using (var compressionForm = new CompressionSettingsForm())
+                    {
+                        compressionForm.Owner = this;
+                        compressionForm.StartPosition = FormStartPosition.CenterParent;
+                        compressionForm.TopMost = true;
+                        compressionForm.BringToFront();
+                        if (compressionForm.ShowDialog(this) != DialogResult.OK)
+                        {
+                            ZipToShare.Enabled = true;
+                            ZipToShare.Text = "Zip Dir";  // Ensure text stays visible
+                            // Keep both buttons visible if user cancels
+                            ZipToShare.Visible = true;
+                            OpenDir.Visible = true;
+                            return;
+                        }
+
+                        compressionType = compressionForm.SelectedFormat;
+                        compressionLevelStr = compressionForm.SelectedLevel;
+
+                        // Save preferences if requested
+                        if (compressionForm.RememberChoice)
+                    {
+                            Properties.Settings.Default.ZipFormat = compressionType;
+                            Properties.Settings.Default.ZipLevel = compressionLevelStr;
+                            Properties.Settings.Default.ZipDontAsk = true;
+                            Properties.Settings.Default.Save();
+                        }
+                    }
+                }
+
+                bool use7z = compressionType.StartsWith("7Z");
+                System.IO.Compression.CompressionLevel compressionLevel;
+
+                // Parse compression level from string
+                int levelNum = 0;
+                if (!string.IsNullOrEmpty(compressionLevelStr))
+                {
+                    // Try to parse the number from the string
+                    var match = System.Text.RegularExpressions.Regex.Match(compressionLevelStr, @"\d+");
+                    if (match.Success)
+                    {
+                        int.TryParse(match.Value, out levelNum);
+                    }
+                }
+
+                // Map the level number to compression levels
+                if (levelNum == 0)
+                    compressionLevel = System.IO.Compression.CompressionLevel.NoCompression;
+                else if (levelNum <= 3)
+                    compressionLevel = System.IO.Compression.CompressionLevel.Fastest;
+                else if (levelNum >= 7)
+                    compressionLevel = System.IO.Compression.CompressionLevel.Optimal;
+                else
+                    compressionLevel = System.IO.Compression.CompressionLevel.Fastest; // Medium
+
+                string zipName = use7z ? $"[SACGUI] {gameName}.7z" : $"[SACGUI] {gameName}.zip";
+                string zipPath = Path.Combine(desktopPath, zipName);
+
+                // RGB color array - pastel and neon colors
+                Color[] rgbColors = new Color[]
+                {
+                    Color.FromArgb(255, 182, 193),  // Light Pink
+                    Color.FromArgb(255, 255, 153),  // Light Yellow
+                    Color.FromArgb(255, 153, 153),  // Light Red
+                    Color.FromArgb(153, 255, 153),  // Light Green
+                    Color.FromArgb(153, 204, 255),  // Light Blue
+                    Color.FromArgb(221, 160, 221),  // Plum
+                    Color.FromArgb(255, 218, 185),  // Peach
+                    Color.FromArgb(230, 230, 250),  // Lavender
+                    Color.FromArgb(152, 255, 152),  // Pale Green
+                    Color.FromArgb(255, 192, 203),  // Pink
+                    Color.FromArgb(255, 160, 122),  // Light Salmon
+                    Color.FromArgb(176, 224, 230),  // Powder Blue
+                    Color.FromArgb(255, 228, 181),  // Moccasin
+                    Color.FromArgb(216, 191, 216),  // Thistle
+                    Color.FromArgb(127, 255, 212),  // Aquamarine
+                };
+
+                if (use7z)
+                {
+                    // Use 7zip for ultra compression
+                    await Task.Run(async () =>
+                    {
+                        int colorIndex = 0;
+
+                        // Use 7za.exe from _bin folder
+                        string sevenZipPath = $"{Environment.CurrentDirectory}\\_bin\\7z\\7za.exe";
+
+                        // Build 7z command - mx9 for maximum compression
+                        string args = $"a -mx9 -t7z \"{zipPath}\" \"{gameDir}\\*\" -r";
+
+                        ProcessStartInfo psi = new ProcessStartInfo
+                        {
+                            FileName = sevenZipPath,
+                            Arguments = args,
+                            UseShellExecute = false,
+                            RedirectStandardOutput = true,
+                            CreateNoWindow = true
+                        };
+
+                        using (Process p = Process.Start(psi))
+                        {
+                            string line;
+                            while ((line = p.StandardOutput.ReadLine()) != null)
+                            {
+                                // RGB cycling while 7z works
+                                Color currentColor = rgbColors[colorIndex % rgbColors.Length];
+                                colorIndex++;
+
+                                this.Invoke(new Action(() =>
+                                {
+                                    Tit($"Ultra compressing with 7z...", currentColor);
+                                }));
+
+                                await Task.Delay(100);
+                            }
+                            p.WaitForExit();
+                        }
+                    });
+                }
+                else
+                {
+                    // Use standard .NET zip
+                    await Task.Run(async () =>
+                    {
+                        var allFiles = Directory.GetFiles(gameDir, "*", SearchOption.AllDirectories);
+                        int totalFiles = allFiles.Length;
+                        int currentFile = 0;
+                        int colorIndex = 0;
+
+                        using (var archive = System.IO.Compression.ZipFile.Open(zipPath, System.IO.Compression.ZipArchiveMode.Create))
+                        {
+                            foreach (string file in allFiles)
+                            {
+                                currentFile++;
+                                int percentage = (currentFile * 100) / totalFiles;
+
+                                // Cycle through RGB colors
+                                Color currentColor = rgbColors[colorIndex % rgbColors.Length];
+                                colorIndex++;
+
+                                this.Invoke(new Action(() =>
+                                {
+                                    string compressionText = compressionLevel == System.IO.Compression.CompressionLevel.NoCompression ? "Zipping (fast)..." : "Compressing...";
+                                    Tit($"{compressionText} {percentage}%", currentColor);
+                                }));
+
+                                string relativePath = file.Replace(gameDir + Path.DirectorySeparatorChar, "");
+                                var entry = archive.CreateEntry(Path.Combine(gameName, relativePath), compressionLevel);
+                                using (var entryStream = entry.Open())
+                                using (var fileStream = File.OpenRead(file))
+                                {
+                                    fileStream.CopyTo(entryStream);
+                                }
+
+                                // Update color every 500ms or every 10 files, whichever comes first
+                                if (currentFile % 10 == 0)
+                                {
+                                    await Task.Delay(50);
+                                }
+                            }
+                        }
+                    });
+                }
+
+                // Final RGB flash
+                for (int i = 0; i < 10; i++)
+                {
+                    Tit($"Saved to Desktop: {zipName}", rgbColors[i % rgbColors.Length]);
+                    await Task.Delay(100);
+                }
+
+                Process.Start("explorer.exe", desktopPath);
+            }
+            catch (Exception ex)
+            {
+                Tit($"Zip failed: {ex.Message}", Color.Red);
+            }
+            finally
+            {
+                ZipToShare.Enabled = true;
+                ZipToShare.Text = "Zip Dir";  // Ensure text stays visible
+                // Keep both buttons visible after zipping
+                ZipToShare.Visible = true;
+                OpenDir.Visible = true;
+            }
         }
 
         private void ManAppBtn_Click(object sender, EventArgs e)
@@ -1807,7 +2572,847 @@ oLink3.Save";
                 searchTextBox.Clear();
                 isFirstClickAfterSelection = false;  // Reset flag
             }
-            isManualSearch = true;  // User clicked in search box - manual mode
+        }
+
+        private void ShareButton_Click(object sender, EventArgs e)
+        {
+            var shareForm = new UnifiedShareRequestForm(this);
+            shareForm.Show();
+        }
+
+        private void ShowSteamGamesForm()
+        {
+            // Create new form for Steam games list
+            var gamesForm = new Form();
+            gamesForm.Text = "Your Steam Library - Share with Friends!";
+            gamesForm.Size = new Size(900, 600);
+            gamesForm.StartPosition = FormStartPosition.CenterParent;
+            gamesForm.BackColor = Color.FromArgb(0, 20, 50);
+            gamesForm.ForeColor = Color.FromArgb(192, 255, 255);
+            gamesForm.Owner = this;  // Set owner so it appears above main form
+
+            // Create DataGridView
+            var gamesGrid = new DataGridView();
+            gamesGrid.Dock = DockStyle.Fill;
+            gamesGrid.BackgroundColor = Color.FromArgb(0, 2, 10);
+            gamesGrid.ForeColor = Color.FromArgb(192, 255, 255);
+            gamesGrid.GridColor = Color.FromArgb(0, 50, 100);
+            gamesGrid.BorderStyle = BorderStyle.None;
+            gamesGrid.AllowUserToAddRows = false;
+            gamesGrid.AllowUserToDeleteRows = false;
+            gamesGrid.ReadOnly = true;
+            gamesGrid.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
+            gamesGrid.RowHeadersVisible = false;
+            gamesGrid.DefaultCellStyle.BackColor = Color.FromArgb(0, 2, 10);
+            gamesGrid.DefaultCellStyle.ForeColor = Color.FromArgb(192, 255, 255);
+            gamesGrid.DefaultCellStyle.SelectionBackColor = Color.FromArgb(0, 50, 100);
+            gamesGrid.DefaultCellStyle.SelectionForeColor = Color.White;
+            gamesGrid.ColumnHeadersDefaultCellStyle.BackColor = Color.FromArgb(0, 30, 60);
+            gamesGrid.ColumnHeadersDefaultCellStyle.ForeColor = Color.FromArgb(220, 255, 255);
+            gamesGrid.EnableHeadersVisualStyles = false;
+
+            // Add columns - simplified view with build info
+            var gameNameColumn = new DataGridViewTextBoxColumn();
+            gameNameColumn.Name = "GameName";
+            gameNameColumn.HeaderText = "Game Title";
+            gameNameColumn.Width = 350;
+            gamesGrid.Columns.Add(gameNameColumn);
+
+            var buildIdColumn = new DataGridViewTextBoxColumn();
+            buildIdColumn.Name = "BuildID";
+            buildIdColumn.HeaderText = "Build ID";
+            buildIdColumn.Width = 100;
+            buildIdColumn.DefaultCellStyle.ForeColor = Color.FromArgb(150, 200, 255);
+            gamesGrid.Columns.Add(buildIdColumn);
+
+            var statusColumn = new DataGridViewTextBoxColumn();
+            statusColumn.Name = "RINStatus";
+            statusColumn.HeaderText = "RIN Status";
+            statusColumn.Width = 120;
+            gamesGrid.Columns.Add(statusColumn);
+
+            // Hidden columns for data
+            var appIdColumn = new DataGridViewTextBoxColumn();
+            appIdColumn.Name = "AppID";
+            appIdColumn.Visible = false;
+            gamesGrid.Columns.Add(appIdColumn);
+
+            var pathColumn = new DataGridViewTextBoxColumn();
+            pathColumn.Name = "InstallPath";
+            pathColumn.Visible = false;
+            gamesGrid.Columns.Add(pathColumn);
+
+            // Add button columns
+            var searchRinColumn = new DataGridViewButtonColumn();
+            searchRinColumn.Name = "SearchRIN";
+            searchRinColumn.HeaderText = "Search RIN";
+            searchRinColumn.Text = "🔍 RIN";
+            searchRinColumn.UseColumnTextForButtonValue = true;
+            searchRinColumn.Width = 90;
+            searchRinColumn.FlatStyle = FlatStyle.Flat;
+            searchRinColumn.DefaultCellStyle.BackColor = Color.FromArgb(50, 50, 100);
+            searchRinColumn.DefaultCellStyle.ForeColor = Color.FromArgb(150, 200, 255);
+            gamesGrid.Columns.Add(searchRinColumn);
+
+            var cleanShareColumn = new DataGridViewButtonColumn();
+            cleanShareColumn.Name = "CleanShare";
+            cleanShareColumn.HeaderText = "Zip Clean";
+            cleanShareColumn.Text = "📦 Clean";
+            cleanShareColumn.UseColumnTextForButtonValue = true;
+            cleanShareColumn.Width = 100;
+            cleanShareColumn.FlatStyle = FlatStyle.Flat;
+            cleanShareColumn.DefaultCellStyle.BackColor = Color.FromArgb(0, 100, 50);
+            cleanShareColumn.DefaultCellStyle.ForeColor = Color.FromArgb(150, 255, 150);
+            gamesGrid.Columns.Add(cleanShareColumn);
+
+            var crackedShareColumn = new DataGridViewButtonColumn();
+            crackedShareColumn.Name = "CrackedShare";
+            crackedShareColumn.HeaderText = "Zip Cracked";
+            crackedShareColumn.Text = "🎮 Cracked";
+            crackedShareColumn.UseColumnTextForButtonValue = true;
+            crackedShareColumn.Width = 100;
+            crackedShareColumn.FlatStyle = FlatStyle.Flat;
+            crackedShareColumn.DefaultCellStyle.BackColor = Color.FromArgb(100, 50, 0);
+            crackedShareColumn.DefaultCellStyle.ForeColor = Color.FromArgb(255, 200, 100);
+            gamesGrid.Columns.Add(crackedShareColumn);
+
+            // Scan for Steam games
+            var games = ScanSteamLibraries();
+
+            // Populate grid - with build ID
+            foreach (var game in games)
+            {
+                var rowIndex = gamesGrid.Rows.Add(game.Name, game.BuildId, "Checking...", game.AppId, game.InstallDir, "🔍 RIN", "📦 Clean", "🎮 Cracked");
+
+                // Start background task to check RIN status
+                _ = Task.Run(async () => {
+                    try
+                    {
+                        // Update status to show we're searching
+                        gamesForm.Invoke(new Action(() => {
+                            if (rowIndex < gamesGrid.Rows.Count)
+                            {
+                                gamesGrid.Rows[rowIndex].Cells["RINStatus"].Value = "Searching...";
+                            }
+                        }));
+
+                        // Search for the game on RIN - get multiple results
+                        var searchResults = await SearchRinForGameAsync(game.Name);
+                        RinCleanInfo rinInfo = null;
+                        string successfulThreadUrl = null;
+
+                        // Check each search result until we find clean files
+                        foreach (var threadUrl in searchResults)
+                        {
+                            System.Diagnostics.Debug.WriteLine($"[CHECKING THREAD] {threadUrl}");
+                            rinInfo = await ScrapeRinThreadAsync(threadUrl, game.Name);
+                            if (rinInfo != null)
+                            {
+                                successfulThreadUrl = threadUrl;
+                                System.Diagnostics.Debug.WriteLine($"[SUCCESS] Found clean files in this thread!");
+                                break;
+                            }
+                            else
+                            {
+                                System.Diagnostics.Debug.WriteLine($"[SKIP] No clean files in this thread, trying next...");
+                            }
+                        }
+
+                        if (rinInfo != null)
+                        {
+                            // Update the status cell on UI thread with actual info
+                            gamesForm.Invoke(new Action(() => {
+                                if (rowIndex < gamesGrid.Rows.Count)
+                                {
+                                    var row = gamesGrid.Rows[rowIndex];
+                                    if (!string.IsNullOrEmpty(rinInfo.BuildId))
+                                    {
+                                        // Show the actual RIN build number
+                                        row.Cells["RINStatus"].Value = $"RIN: {rinInfo.BuildId}";
+                                        row.Cells["RINStatus"].Tag = rinInfo.PostUrl; // Store URL for later
+
+                                        // Compare builds
+                                        if (long.TryParse(game.BuildId, out long local) &&
+                                            long.TryParse(rinInfo.BuildId, out long rin))
+                                        {
+                                            if (local > rin)
+                                            {
+                                                row.Cells["RINStatus"].Style.ForeColor = Color.FromArgb(100, 255, 100);
+                                                row.Cells["RINStatus"].Style.Font = new Font("Segoe UI", 9, FontStyle.Bold);
+                                                row.DefaultCellStyle.BackColor = Color.FromArgb(0, 40, 20);
+                                            }
+                                            else if (local == rin)
+                                            {
+                                                row.Cells["RINStatus"].Style.ForeColor = Color.FromArgb(150, 150, 150);
+                                            }
+                                            else
+                                            {
+                                                row.Cells["RINStatus"].Style.ForeColor = Color.FromArgb(200, 150, 100);
+                                            }
+                                        }
+                                    }
+                                    else
+                                    {
+                                        // Found thread but no build number
+                                        row.Cells["RINStatus"].Value = "RIN: No build";
+                                        row.Cells["RINStatus"].Tag = successfulThreadUrl;
+                                        row.Cells["RINStatus"].Style.ForeColor = Color.FromArgb(255, 255, 100);
+                                    }
+                                }
+                            }));
+                        }
+                        else
+                        {
+                            // No clean files found after checking 20 pages - THEY NEED IT BAD!
+                            gamesForm.Invoke(new Action(() => {
+                                if (rowIndex < gamesGrid.Rows.Count)
+                                {
+                                    var row = gamesGrid.Rows[rowIndex];
+
+                                    if (searchResults.Count > 0)
+                                    {
+                                        // Thread exists but no clean files in 20 pages!
+                                        row.Cells["RINStatus"].Value = "NEEDS CLEAN FILES!";
+                                        row.Cells["RINStatus"].Style.BackColor = Color.Red;
+                                        row.Cells["RINStatus"].Style.ForeColor = Color.White;
+                                        row.Cells["RINStatus"].Style.Font = new Font("Segoe UI", 9, FontStyle.Bold);
+                                        row.DefaultCellStyle.BackColor = Color.FromArgb(40, 0, 0);
+                                    }
+                                    else
+                                    {
+                                        // Not on RIN at all
+                                        row.Cells["RINStatus"].Value = "NOT ON RIN";
+                                        row.Cells["RINStatus"].Style.ForeColor = Color.Gray;
+                                    }
+                                }
+                            }));
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        // Show the actual error instead of hiding it
+                        gamesForm.Invoke(new Action(() => {
+                            if (rowIndex < gamesGrid.Rows.Count)
+                            {
+                                gamesGrid.Rows[rowIndex].Cells["RINStatus"].Value = "Error";
+                                gamesGrid.Rows[rowIndex].Cells["RINStatus"].ToolTipText = ex.Message;
+                                gamesGrid.Rows[rowIndex].Cells["RINStatus"].Style.ForeColor = Color.Red;
+                            }
+                        }));
+                        System.Diagnostics.Debug.WriteLine($"Error checking RIN for {game.Name}: {ex.Message}");
+                    }
+                });
+            }
+
+            // Handle button clicks
+            gamesGrid.CellClick += async (s, args) =>
+            {
+                if (args.RowIndex < 0) return;
+
+                var gameName = gamesGrid.Rows[args.RowIndex].Cells["GameName"].Value.ToString();
+                var appId = gamesGrid.Rows[args.RowIndex].Cells["AppID"].Value?.ToString();
+                var installPath = gamesGrid.Rows[args.RowIndex].Cells["InstallPath"].Value?.ToString();
+
+                if (string.IsNullOrEmpty(installPath))
+                {
+                    MessageBox.Show("Game installation path not found!", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return;
+                }
+
+                if (args.ColumnIndex == gamesGrid.Columns["SearchRIN"].Index)
+                {
+                    // Search cs.rin.ru for this game
+                    var sanitized = SanitizeGameNameForURL(gameName);
+                    var searchUrl = $"https://cs.rin.ru/forum/search.php?keywords={sanitized}&terms=all&author=&sc=1&sf=titleonly&sk=t&sd=d&sr=topics&st=0&ch=300&t=0&submit=Search";
+                    Process.Start(searchUrl);
+                }
+                else if (args.ColumnIndex == gamesGrid.Columns["CleanShare"].Index)
+                {
+                    await ShareGameAsync(gameName, installPath, false, gamesForm); // Clean share
+                }
+                else if (args.ColumnIndex == gamesGrid.Columns["CrackedShare"].Index)
+                {
+                    await ShareGameAsync(gameName, installPath, true, gamesForm); // Cracked share
+                }
+            };
+
+            // Add status label
+            var statusLabel = new Label();
+            statusLabel.Text = $"Found {games.Count} games in your Steam library";
+            statusLabel.Dock = DockStyle.Bottom;
+            statusLabel.Height = 30;
+            statusLabel.TextAlign = ContentAlignment.MiddleCenter;
+            statusLabel.BackColor = Color.FromArgb(0, 30, 60);
+            statusLabel.ForeColor = Color.FromArgb(192, 255, 255);
+
+            gamesForm.Controls.Add(gamesGrid);
+            gamesForm.Controls.Add(statusLabel);
+            gamesForm.ShowDialog();
+        }
+
+        private string SanitizeGameNameForURL(string gameName)
+        {
+            // First replace spaces with %20
+            var result = gameName.Replace(" ", "%20");
+
+            // Remove special characters
+            var charsToRemove = new[] { '-', ':', '_', '&', '!', '?', ',', '.', '(', ')', '$', '#', '%', '+', ';', '\'', '`', '"' };
+
+            foreach (var c in charsToRemove)
+            {
+                result = result.Replace(c.ToString(), "");
+            }
+
+            return result;
+        }
+
+        private List<SteamGame> ScanSteamLibraries()
+        {
+            var games = new List<SteamGame>();
+            var steamPaths = new List<string>();
+
+            // Add default Steam path
+            var defaultSteamPath = @"C:\Program Files (x86)\Steam\steamapps";
+            if (Directory.Exists(defaultSteamPath))
+            {
+                steamPaths.Add(defaultSteamPath);
+            }
+
+            // Also check 64-bit Program Files
+            var steam64Path = @"C:\Program Files\Steam\steamapps";
+            if (Directory.Exists(steam64Path))
+            {
+                steamPaths.Add(steam64Path);
+            }
+
+            // Check all drives for SteamLibrary folders
+            foreach (var drive in DriveInfo.GetDrives())
+            {
+                if (drive.DriveType == DriveType.Fixed)
+                {
+                    var steamLibPath = Path.Combine(drive.Name, "SteamLibrary", "steamapps");
+                    if (Directory.Exists(steamLibPath) && !steamPaths.Contains(steamLibPath))
+                    {
+                        steamPaths.Add(steamLibPath);
+                    }
+                }
+            }
+
+            // Look for additional library folders in libraryfolders.vdf
+            foreach (var basePath in steamPaths.ToList())
+            {
+                var libraryFoldersPath = Path.Combine(basePath, "libraryfolders.vdf");
+                if (File.Exists(libraryFoldersPath))
+                {
+                    try
+                    {
+                        var content = File.ReadAllText(libraryFoldersPath);
+                        // Simple regex to find paths
+                        var pathMatches = Regex.Matches(content, @"""path""\s+""([^""]+)""");
+                        foreach (Match match in pathMatches)
+                        {
+                            var libPath = Path.Combine(match.Groups[1].Value.Replace(@"\\", @"\"), "steamapps");
+                            if (Directory.Exists(libPath) && !steamPaths.Contains(libPath))
+                            {
+                                steamPaths.Add(libPath);
+                            }
+                        }
+                    }
+                    catch { }
+                }
+            }
+
+            // Scan each Steam library for appmanifest files
+            foreach (var steamPath in steamPaths)
+            {
+                try
+                {
+                    var manifestFiles = Directory.GetFiles(steamPath, "appmanifest_*.acf");
+
+                    foreach (var manifestFile in manifestFiles)
+                    {
+                        var game = ParseAppManifest(manifestFile);
+                        if (game != null && !games.Any(g => g.AppId == game.AppId))
+                        {
+                            games.Add(game);
+                        }
+                    }
+                }
+                catch { }
+            }
+
+            // Sort by name
+            return games.OrderBy(g => g.Name).ToList();
+        }
+
+        private SteamGame ParseAppManifest(string filePath)
+        {
+            try
+            {
+                var content = File.ReadAllText(filePath);
+
+                // Extract appid
+                var appIdMatch = Regex.Match(content, @"""appid""\s+""(\d+)""");
+                if (!appIdMatch.Success) return null;
+
+                // Extract name
+                var nameMatch = Regex.Match(content, @"""name""\s+""([^""]+)""");
+                if (!nameMatch.Success) return null;
+
+                // Extract install dir
+                var installDirMatch = Regex.Match(content, @"""installdir""\s+""([^""]+)""");
+                var installDir = installDirMatch.Success ? installDirMatch.Groups[1].Value : "";
+
+                // Extract build id
+                var buildIdMatch = Regex.Match(content, @"""buildid""\s+""([^""]+)""");
+                var buildId = buildIdMatch.Success ? buildIdMatch.Groups[1].Value : "Unknown";
+
+                // Get the actual path
+                var manifestDir = Path.GetDirectoryName(filePath);
+                var commonDir = Path.Combine(manifestDir, "common", installDir);
+
+                // Debug output
+                System.Diagnostics.Debug.WriteLine($"Game: {nameMatch.Groups[1].Value}");
+                System.Diagnostics.Debug.WriteLine($"  Manifest: {filePath}");
+                System.Diagnostics.Debug.WriteLine($"  CommonDir: {commonDir}");
+                System.Diagnostics.Debug.WriteLine($"  Exists: {Directory.Exists(commonDir)}");
+
+                return new SteamGame
+                {
+                    AppId = appIdMatch.Groups[1].Value,
+                    Name = nameMatch.Groups[1].Value,
+                    InstallDir = commonDir,  // Always set the path, even if directory doesn't exist yet
+                    BuildId = buildId
+                };
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        private class SteamGame
+        {
+            public string AppId { get; set; }
+            public string Name { get; set; }
+            public string InstallDir { get; set; }
+            public string BuildId { get; set; }
+        }
+
+        private class RinCleanInfo
+        {
+            public string BuildId { get; set; }
+            public DateTime PostDate { get; set; }
+            public string PostUrl { get; set; }
+        }
+
+        private RinSeleniumScraper rinScraper;
+
+        private async Task<List<string>> SearchRinForGameAsync(string gameName)
+        {
+            var results = new List<string>();
+            try
+            {
+                System.Diagnostics.Debug.WriteLine($"\n{'='*80}");
+                System.Diagnostics.Debug.WriteLine($"SEARCHING RIN FOR: {gameName}");
+                System.Diagnostics.Debug.WriteLine($"{'='*80}");
+
+                // Initialize Selenium scraper if needed
+                if (rinScraper == null)
+                {
+                    rinScraper = new RinSeleniumScraper();
+                    if (!await rinScraper.Initialize(this))
+                    {
+                        System.Diagnostics.Debug.WriteLine("[ERROR] Failed to initialize Selenium scraper");
+                        return results;
+                    }
+                }
+
+                // Search using Selenium
+                results = await rinScraper.SearchForGame(gameName);
+                System.Diagnostics.Debug.WriteLine($"[SELENIUM] Found {results.Count} results for '{gameName}'");
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[EXCEPTION] {ex.GetType().Name}: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"[STACK] {ex.StackTrace}");
+            }
+            return results;
+        }
+
+        private async Task<RinCleanInfo> ScrapeRinThreadAsync(string threadUrl, string gameName)
+        {
+            try
+            {
+                System.Diagnostics.Debug.WriteLine($"\n{'='*80}");
+                System.Diagnostics.Debug.WriteLine($"SCRAPING THREAD FOR: {gameName}");
+                System.Diagnostics.Debug.WriteLine($"{'='*80}");
+                System.Diagnostics.Debug.WriteLine($"[THREAD URL] {threadUrl}");
+
+                // Use Selenium to scrape the thread
+                if (rinScraper == null)
+                {
+                    rinScraper = new RinSeleniumScraper();
+                    if (!await rinScraper.Initialize(this))
+                    {
+                        System.Diagnostics.Debug.WriteLine("[ERROR] Failed to initialize Selenium scraper");
+                        return null;
+                    }
+                }
+
+                // Scrape the thread using Selenium
+                var cleanInfo = await rinScraper.ScrapeThread(threadUrl, gameName);
+                return cleanInfo;
+
+                    System.Diagnostics.Debug.WriteLine($"[FETCH] Getting first page to verify thread...");
+
+                    // First, get the thread and verify it's the right one
+                    var response = await client.GetStringAsync(threadUrl);
+                    System.Diagnostics.Debug.WriteLine($"[RESPONSE] {response.Length} bytes");
+
+                    // Extract thread title to verify we're in the right place
+                    var titleMatch = Regex.Match(response, @"<h1[^>]*>([^<]+)</h1>");
+                    string threadTitle = titleMatch.Success ? titleMatch.Groups[1].Value : "UNKNOWN";
+                    System.Diagnostics.Debug.WriteLine($"[THREAD TITLE] '{threadTitle}'");
+                    System.Diagnostics.Debug.WriteLine($"[GAME NAME] '{gameName}'");
+
+                    // Check if this thread title contains the game name (fuzzy match)
+                    var gameWords = gameName.ToLower().Split(new[] { ' ', ':', '-', '_' }, StringSplitOptions.RemoveEmptyEntries);
+                    var titleLower = threadTitle.ToLower();
+                    int matchedWords = gameWords.Count(word => titleLower.Contains(word));
+                    float matchRatio = (float)matchedWords / gameWords.Length;
+
+                    System.Diagnostics.Debug.WriteLine($"[MATCH CHECK] Game words: {string.Join(", ", gameWords)}");
+                    System.Diagnostics.Debug.WriteLine($"[MATCH RATIO] {matchedWords}/{gameWords.Length} = {matchRatio:P0}");
+
+                    if (matchRatio < 0.5f)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"[WARNING] Thread title doesn't match game name well! Continuing anyway...");
+                    }
+
+                    // Check if it's in Main Forum (good sign)
+                    bool isMainForum = response.Contains("Main Forum") || response.Contains("viewforum.php?f=10");
+                    System.Diagnostics.Debug.WriteLine($"[FORUM] Is in Main Forum: {isMainForum}");
+
+                    // Extract page count from pagination
+                    var pageMatch = Regex.Match(response, @"Page \d+ of (\d+)");
+                    int totalPages = 1;
+                    if (pageMatch.Success)
+                    {
+                        totalPages = int.Parse(pageMatch.Groups[1].Value);
+                    }
+                    System.Diagnostics.Debug.WriteLine($"[PAGES] Thread has {totalPages} total pages");
+
+                    // Check if we're already on the last page (URL might have &start=)
+                    bool alreadyOnLastPage = threadUrl.Contains("&start=");
+
+                    if (!alreadyOnLastPage && totalPages > 1)
+                    {
+                        // Jump to the last page immediately
+                        var lastPageStart = (totalPages - 1) * 15;
+                        var lastPageUrl = threadUrl.Contains("?")
+                            ? $"{threadUrl}&start={lastPageStart}"
+                            : $"{threadUrl}?start={lastPageStart}";
+
+                        System.Diagnostics.Debug.WriteLine($"[JUMP] Going directly to last page: {lastPageUrl}");
+                        response = await client.GetStringAsync(lastPageUrl);
+                        System.Diagnostics.Debug.WriteLine($"[LOADED] Now on page {totalPages}");
+                    }
+                    else if (alreadyOnLastPage)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"[OPTIMIZED] Already on last page from search results!");
+                    }
+
+                    // Check up to 20 pages backwards - if nothing in 20 pages, they REALLY need our files!
+                    int maxPagesToCheck = 20;
+                    int pagesChecked = 0;
+                    string currentPageContent = response;
+
+                    System.Diagnostics.Debug.WriteLine($"[SCAN] Will check up to {maxPagesToCheck} pages for clean files");
+
+                    while (pagesChecked < maxPagesToCheck)
+                    {
+                        pagesChecked++;
+                        System.Diagnostics.Debug.WriteLine($"\n[PAGE CHECK {pagesChecked}/{maxPagesToCheck}]");
+
+                        string pageContent = currentPageContent;
+
+                        // Look for posts containing "Clean Files" (case insensitive)
+                        var postDivs = Regex.Matches(pageContent,
+                            @"<div class=""postbody"">.*?</div>\s*</div>\s*</div>",
+                            RegexOptions.IgnoreCase | RegexOptions.Singleline);
+
+                        System.Diagnostics.Debug.WriteLine($"[POSTS] Found {postDivs.Count} posts on this page");
+
+                        int postNum = 0;
+                        foreach (Match postDiv in postDivs)
+                        {
+                            postNum++;
+                            var postContent = postDiv.Value;
+
+                            // Extract who posted it
+                            var userMatch = Regex.Match(postContent, @"<strong>([^<]+)</strong>");
+                            string poster = userMatch.Success ? userMatch.Groups[1].Value : "Unknown";
+
+                            // Look for Clean Files OR Version posts (like "Barony [Win64] [Branch: Public] (Clean Steam Files)")
+                            bool hasCleanFiles = Regex.IsMatch(postContent,
+                                @"(Clean\s*(Steam\s*)?Files?)|(\(Clean\s*Steam\s*Files\))",
+                                RegexOptions.IgnoreCase);
+
+                            // Also check for version format like shown in the screenshot
+                            bool hasVersionFormat = Regex.IsMatch(postContent,
+                                @"Version:\s*\w+\s*\d+,\s*\d{4}",
+                                RegexOptions.IgnoreCase);
+
+                            // Check for the RIN hidden link format
+                            bool hasHiddenLinks = postContent.Contains("[[Please login to see this link.]]") ||
+                                                postContent.Contains("Please login to see this") ||
+                                                postContent.Contains("login to see");
+
+                            // Count how many links
+                            int linkCount = Regex.Matches(postContent, @"\[\[Please login").Count;
+
+                            if (hasCleanFiles || hasVersionFormat || hasHiddenLinks)
+                            {
+                                System.Diagnostics.Debug.WriteLine($"  [POST {postNum}] by {poster}:");
+                                System.Diagnostics.Debug.WriteLine($"    Clean Files text: {hasCleanFiles}");
+                                System.Diagnostics.Debug.WriteLine($"    Version format: {hasVersionFormat}");
+                                System.Diagnostics.Debug.WriteLine($"    Hidden links: {hasHiddenLinks} (count: {linkCount})");
+
+                                // Show a snippet of the post
+                                var textOnly = Regex.Replace(postContent, "<[^>]+>", " ").Trim();
+                                textOnly = Regex.Replace(textOnly, @"\s+", " ");
+                                if (textOnly.Length > 300)
+                                    textOnly = textOnly.Substring(0, 300) + "...";
+                                System.Diagnostics.Debug.WriteLine($"    Preview: {textOnly}");
+                            }
+
+                            // We found clean files if we have the text AND links, OR if we have the version format
+                            if ((hasCleanFiles && hasHiddenLinks) || hasVersionFormat)
+                            {
+                                System.Diagnostics.Debug.WriteLine($"    [MATCH!] This post has both Clean Files AND hidden links!");
+
+                                string buildId = null;
+
+                                // Look for Build number in multiple formats
+                                System.Diagnostics.Debug.WriteLine($"    [BUILD SEARCH] Looking for build numbers...");
+
+                                // Format 1: "Build 18871170" or "[Build 18871170]"
+                                var buildMatch = Regex.Match(postContent,
+                                    @"\[?Build\s*[:=]?\s*(\d{5,})\]?",
+                                    RegexOptions.IgnoreCase);
+
+                                if (buildMatch.Success)
+                                {
+                                    buildId = buildMatch.Groups[1].Value;
+                                    System.Diagnostics.Debug.WriteLine($"    [FOUND] Build number: {buildId}");
+                                }
+
+                                // Format 2: Look for "Uploaded version:" followed by date and build
+                                if (string.IsNullOrEmpty(buildId))
+                                {
+                                    var uploadMatch = Regex.Match(postContent,
+                                        @"Uploaded\s*version:\s*[^\[]+\[Build\s*(\d{5,})\]",
+                                        RegexOptions.IgnoreCase);
+                                    if (uploadMatch.Success)
+                                    {
+                                        buildId = uploadMatch.Groups[1].Value;
+                                        System.Diagnostics.Debug.WriteLine($"    [FOUND] Build from 'Uploaded version': {buildId}");
+                                    }
+                                }
+
+                                // Format 3: Standalone large number (7+ digits)
+                                if (string.IsNullOrEmpty(buildId))
+                                {
+                                    var standaloneMatch = Regex.Match(postContent, @"\b(\d{7,})\b");
+                                    if (standaloneMatch.Success)
+                                    {
+                                        buildId = standaloneMatch.Groups[1].Value;
+                                        System.Diagnostics.Debug.WriteLine($"    [FOUND] Standalone build number: {buildId}");
+                                    }
+                                }
+                                    buildMatch = Regex.Match(postContent,
+                                        @"(?:Version|v\.?)\s*[:=]?\s*(\d{5,})",
+                                        RegexOptions.IgnoreCase);
+
+                                    if (buildMatch.Success)
+                                    {
+                                        buildId = buildMatch.Groups[1].Value;
+                                        System.Diagnostics.Debug.WriteLine($"    [FOUND] Build number via 'Version' pattern: {buildId}");
+                                    }
+                                    else
+                                    {
+                                        System.Diagnostics.Debug.WriteLine($"    [NOT FOUND] No 'Version' pattern");
+
+                                        // Last resort: Find ANY sequence of 5+ digits
+                                        System.Diagnostics.Debug.WriteLine($"    [BUILD SEARCH] Method 3: Looking for ANY 5+ digit number...");
+                                        var allNumbers = Regex.Matches(postContent, @"\b(\d{5,})\b");
+                                        System.Diagnostics.Debug.WriteLine($"    [NUMBERS FOUND] {allNumbers.Count} numbers with 5+ digits");
+
+                                        foreach (Match numMatch in allNumbers)
+                                        {
+                                            System.Diagnostics.Debug.WriteLine($"      - {numMatch.Groups[1].Value}");
+                                        }
+
+                                        if (allNumbers.Count > 0)
+                                        {
+                                            buildId = allNumbers[0].Groups[1].Value;
+                                            System.Diagnostics.Debug.WriteLine($"    [USING] First number found: {buildId}");
+                                        }
+                                        else
+                                        {
+                                            System.Diagnostics.Debug.WriteLine($"    [FAILED] No build number found at all!");
+                                        }
+                                    }
+                                }
+
+                                // Extract post date - look for the post timestamp
+                                var dateMatch = Regex.Match(postContent,
+                                    @"Posted:\s*</span>\s*<span[^>]*>([^<]+)</span>",
+                                    RegexOptions.IgnoreCase);
+
+                                DateTime postDate = DateTime.Now;
+                                if (dateMatch.Success)
+                                {
+                                    string dateStr = dateMatch.Groups[1].Value.Trim();
+                                    // Handle RIN date formats like "Mon Jun 14, 2021 3:21 pm"
+                                    dateStr = Regex.Replace(dateStr, @"\s+", " "); // Normalize spaces
+                                    DateTime.TryParse(dateStr, out postDate);
+                                }
+
+                                System.Diagnostics.Debug.WriteLine($"✅ FOUND CLEAN FILES!");
+                                System.Diagnostics.Debug.WriteLine($"   Build ID: {buildId ?? "NOT FOUND"}");
+                                System.Diagnostics.Debug.WriteLine($"   Post Date: {postDate}");
+                                System.Diagnostics.Debug.WriteLine($"   Post URL: {pageUrl}");
+
+                                return new RinCleanInfo
+                                {
+                                    BuildId = buildId,
+                                    PostDate = postDate,
+                                    PostUrl = threadUrl  // Use the current page URL
+                                };
+                            }
+                        }
+
+                        // If we haven't found clean files and haven't hit max pages, go to previous page
+                        if (pagesChecked < maxPagesToCheck)
+                        {
+                            var prevMatch = Regex.Match(pageContent, @"<a href=""\./?(viewtopic\.php\?[^""]+)""[^>]*>Previous</a>");
+                            if (prevMatch.Success)
+                            {
+                                var prevUrl = $"https://cs.rin.ru/forum/{HttpUtility.HtmlDecode(prevMatch.Groups[1].Value)}";
+                                System.Diagnostics.Debug.WriteLine($"[NAVIGATE] Going to previous page...");
+
+                                // Small delay to not spam
+                                await Task.Delay(1000);
+
+                                currentPageContent = await client.GetStringAsync(prevUrl);
+                            }
+                            else
+                            {
+                                System.Diagnostics.Debug.WriteLine($"[END] No previous page - reached beginning of thread");
+                                break;
+                            }
+                        }
+                    }
+
+                    System.Diagnostics.Debug.WriteLine($"❌ No clean files found after checking {pagesChecked} pages - THEY NEED OUR FILES!");
+                }
+            }
+            catch (HttpRequestException httpEx)
+            {
+                System.Diagnostics.Debug.WriteLine($"❌ HTTP ERROR scraping thread: {httpEx.Message}");
+                System.Diagnostics.Debug.WriteLine($"   Inner exception: {httpEx.InnerException?.Message}");
+            }
+            catch (TaskCanceledException)
+            {
+                System.Diagnostics.Debug.WriteLine($"❌ TIMEOUT scraping thread (30 second timeout)");
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"❌ GENERAL ERROR scraping thread: {ex.GetType().Name}: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"   Stack trace: {ex.StackTrace}");
+            }
+
+            return null; // No clean files found
+        }
+
+        private void UpdateStatusCell(DataGridViewRow row, string localBuild, string rinBuild)
+        {
+            // Clear any existing styles first
+            row.DefaultCellStyle.BackColor = Color.FromArgb(0, 2, 10);
+
+            if (string.IsNullOrEmpty(rinBuild))
+            {
+                // No clean files found on RIN - URGENT NEED!
+                row.Cells["RINStatus"].Value = "🚨 NEEDED!";
+                row.Cells["RINStatus"].Style.ForeColor = Color.FromArgb(255, 100, 100);
+                row.Cells["RINStatus"].Style.Font = new Font("Segoe UI", 10, FontStyle.Bold);
+
+                // Highlight entire row in red tint
+                row.DefaultCellStyle.BackColor = Color.FromArgb(40, 0, 0);
+
+                // Make Clean Share button glow
+                foreach (DataGridViewCell cell in row.Cells)
+                {
+                    if (cell.OwningColumn.Name == "CleanShare")
+                    {
+                        cell.Style.BackColor = Color.FromArgb(150, 50, 50);
+                        cell.Style.ForeColor = Color.FromArgb(255, 200, 200);
+                        cell.Style.Font = new Font("Segoe UI", 9, FontStyle.Bold);
+                    }
+                }
+            }
+            else
+            {
+                // Try to compare build numbers
+                if (long.TryParse(localBuild, out long local) && long.TryParse(rinBuild, out long rin))
+                {
+                    if (local > rin)
+                    {
+                        // WE HAVE NEWER VERSION - SHARE IT!
+                        row.Cells["RINStatus"].Value = "💎 NEWER!";
+                        row.Cells["RINStatus"].Style.ForeColor = Color.FromArgb(100, 255, 100);
+                        row.Cells["RINStatus"].Style.Font = new Font("Segoe UI", 10, FontStyle.Bold);
+
+                        // Green glow for newer builds
+                        row.DefaultCellStyle.BackColor = Color.FromArgb(0, 40, 20);
+
+                        // Highlight Clean Share button
+                        foreach (DataGridViewCell cell in row.Cells)
+                        {
+                            if (cell.OwningColumn.Name == "CleanShare")
+                            {
+                                cell.Style.BackColor = Color.FromArgb(50, 150, 50);
+                                cell.Style.ForeColor = Color.FromArgb(200, 255, 200);
+                                cell.Style.Font = new Font("Segoe UI", 9, FontStyle.Bold);
+                            }
+                        }
+                    }
+                    else if (local == rin)
+                    {
+                        row.Cells["RINStatus"].Value = "✅ Current";
+                        row.Cells["RINStatus"].Style.ForeColor = Color.FromArgb(100, 200, 100);
+                    }
+                    else
+                    {
+                        row.Cells["RINStatus"].Value = "📦 Old";
+                        row.Cells["RINStatus"].Style.ForeColor = Color.Gray;
+                    }
+                }
+                else if (!string.IsNullOrEmpty(rinBuild))
+                {
+                    // RIN has a build but we can't compare numbers
+                    row.Cells["RINStatus"].Value = "❓ Check";
+                    row.Cells["RINStatus"].Style.ForeColor = Color.Yellow;
+                }
+                else
+                {
+                    // RIN has clean files but no build number found
+                    row.Cells["RINStatus"].Value = "📋 Has Clean";
+                    row.Cells["RINStatus"].Style.ForeColor = Color.FromArgb(150, 150, 255);
+                }
+            }
         }
     }
 }
