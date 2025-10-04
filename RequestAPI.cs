@@ -1,18 +1,21 @@
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using System.Net.Http;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows.Forms;
 using Newtonsoft.Json;
+using System.Drawing;
 
 namespace SteamAppIdIdentifier
 {
-    public static class RequestAPI
+    public static partial class RequestAPI
     {
-        private static readonly string API_BASE = "https://your-api-endpoint.com/api"; // Replace with actual endpoint
-        private static readonly HttpClient client = new HttpClient();
+        internal const string API_BASE = "https://pydrive.harryeffingpotter.com/sacgui/api";
+        internal static readonly HttpClient client = new HttpClient();
         private static string _hwid;
 
         // Get unique HWID for this machine
@@ -51,10 +54,41 @@ namespace SteamAppIdIdentifier
             return "Unknown";
         }
 
-        // Submit a new request
+        // Submit a new request with full parameters
+        public static async Task<bool> SubmitRequest(string appId, string gameName, string userId, string hwid)
+        {
+            try
+            {
+                var request = new
+                {
+                    appId = appId,
+                    gameName = gameName,
+                    userId = userId,
+                    hwid = hwid
+                };
+
+                var json = JsonConvert.SerializeObject(request);
+                var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+                var response = await client.PostAsync($"{API_BASE}/request", content);
+                return response.IsSuccessStatusCode;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        // Overload for backward compatibility
+        public static async Task<bool> SubmitRequest(string userId, string appId, string gameName)
+        {
+            return await SubmitRequest(appId, gameName, userId, HWIDManager.GetHWID());
+        }
+
+        // Overload for backward compatibility
         public static async Task<bool> SubmitRequest(string appId, string gameName)
         {
-            return await SubmitGameRequest(appId, gameName, "Both");
+            return await SubmitRequest(appId, gameName, HWIDManager.GetUserId(), HWIDManager.GetHWID());
         }
 
         // Submit a game request with type (Clean, Cracked, Both)
@@ -135,6 +169,23 @@ namespace SteamAppIdIdentifier
             }
         }
 
+        // Get top requested games from community
+        public static async Task<List<TopRequestedGame>> GetTopRequestedGames(int limit = 20)
+        {
+            try
+            {
+                var response = await client.GetAsync($"{API_BASE}/top-requests?limit={limit}");
+                if (response.IsSuccessStatusCode)
+                {
+                    var json = await response.Content.ReadAsStringAsync();
+                    return JsonConvert.DeserializeObject<List<TopRequestedGame>>(json);
+                }
+            }
+            catch { }
+
+            return new List<TopRequestedGame>();
+        }
+
         // Get active requests
         public static async Task<List<RequestedGame>> GetActiveRequests()
         {
@@ -149,6 +200,37 @@ namespace SteamAppIdIdentifier
             }
             catch { }
             return new List<RequestedGame>();
+        }
+
+        // Remove a request
+        public static async Task RemoveRequest(string appId, string userId, string hwid)
+        {
+            try
+            {
+                var request = new
+                {
+                    appId = appId,
+                    userId = userId,
+                    hwid = hwid
+                };
+
+                var json = JsonConvert.SerializeObject(request);
+                var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+                var response = await client.PostAsync($"{API_BASE}/remove-request", content);
+                response.EnsureSuccessStatusCode();
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Failed to remove request: {ex.Message}");
+                throw;
+            }
+        }
+
+        // Overload for backward compatibility
+        public static async Task RemoveRequest(string userId, string appId)
+        {
+            await RemoveRequest(appId, userId, HWIDManager.GetHWID());
         }
 
         // Get global stats
@@ -202,6 +284,18 @@ namespace SteamAppIdIdentifier
             public int CleanRequests { get; set; }
             public int CrackedRequests { get; set; }
             public DateTime FirstRequested { get; set; }
+            public DateTime? RequestDate { get; set; }
+            public string Status { get; set; }
+            public int VoteCount { get; set; }
+            public int UncrackableVotes { get; set; }
+        }
+
+        public class TopRequestedGame
+        {
+            public string AppId { get; set; }
+            public string GameName { get; set; }
+            public int RequestCount { get; set; }
+            public DateTime? LastRequested { get; set; }
         }
 
         public class GlobalStats
@@ -236,6 +330,47 @@ namespace SteamAppIdIdentifier
                 if (ratio >= 0.5) return "📥 Receiver";
                 return "🆕 New User";
             }
+        }
+
+        // Get user activity history
+        public static async Task<UserActivity> GetUserActivity(string userId)
+        {
+            try
+            {
+                var response = await client.GetAsync($"{API_BASE}/activity/{userId}");
+                if (response.IsSuccessStatusCode)
+                {
+                    var json = await response.Content.ReadAsStringAsync();
+                    return JsonConvert.DeserializeObject<UserActivity>(json);
+                }
+            }
+            catch { }
+
+            return new UserActivity
+            {
+                RecentRequests = new List<RequestedGame>(),
+                RecentHonors = new List<HonorRecord>(),
+                ActiveRequests = new List<RequestedGame>(),
+                FulfilledRequests = new List<RequestedGame>(),
+                Contributions = new List<HonorRecord>()
+            };
+        }
+
+        public class UserActivity
+        {
+            public List<RequestedGame> RecentRequests { get; set; }
+            public List<HonorRecord> RecentHonors { get; set; }
+            public List<RequestedGame> ActiveRequests { get; set; }
+            public List<RequestedGame> FulfilledRequests { get; set; }
+            public List<HonorRecord> Contributions { get; set; }
+        }
+
+        public class HonorRecord
+        {
+            public string AppId { get; set; }
+            public string GameName { get; set; }
+            public DateTime HonoredDate { get; set; }
+            public string UploadType { get; set; }
         }
     }
 
@@ -295,6 +430,9 @@ namespace SteamAppIdIdentifier
     // Check on app startup
     public static class StartupRequestChecker
     {
+        private static readonly HttpClient client = RequestAPI.client;
+        private const string API_BASE = RequestAPI.API_BASE;
+
         public static async Task CheckAndNotify(Form mainForm, List<string> userAppIds)
         {
             try
@@ -342,7 +480,7 @@ namespace SteamAppIdIdentifier
                         Dock = DockStyle.Fill,
                         ForeColor = System.Drawing.Color.White,
                         Font = new System.Drawing.Font("Segoe UI", 10),
-                        Padding = new Padding(20)
+                        Padding = new System.Windows.Forms.Padding(20)
                     };
 
                     notificationForm.Controls.Add(label);
@@ -361,5 +499,86 @@ namespace SteamAppIdIdentifier
             }
             catch { }
         }
+
+        public static async Task VoteOnRequest(string userId, string appId, bool upvote)
+        {
+            try
+            {
+                var content = new StringContent(JsonConvert.SerializeObject(new
+                {
+                    userId = userId,
+                    appId = appId,
+                    voteType = upvote ? "upvote" : "downvote",
+                    timestamp = DateTime.UtcNow
+                }), Encoding.UTF8, "application/json");
+
+                var response = await client.PostAsync($"{API_BASE}/vote-request", content);
+                response.EnsureSuccessStatusCode();
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Failed to vote on request: {ex.Message}");
+                throw;
+            }
+        }
+
+        public static async Task VoteUncrackable(string userId, string appId)
+        {
+            try
+            {
+                var content = new StringContent(JsonConvert.SerializeObject(new
+                {
+                    userId = userId,
+                    appId = appId,
+                    timestamp = DateTime.UtcNow
+                }), Encoding.UTF8, "application/json");
+
+                var response = await client.PostAsync($"{API_BASE}/vote-uncrackable", content);
+                response.EnsureSuccessStatusCode();
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Failed to vote uncrackable: {ex.Message}");
+                throw;
+            }
+        }
+
+        public static async Task<GameRequestStats> GetGameRequestStats(string appId)
+        {
+            try
+            {
+                var response = await client.GetAsync($"{API_BASE}/game-stats/{appId}");
+                if (response.IsSuccessStatusCode)
+                {
+                    var json = await response.Content.ReadAsStringAsync();
+                    return JsonConvert.DeserializeObject<GameRequestStats>(json);
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Failed to get game stats: {ex.Message}");
+                return new GameRequestStats
+                {
+                    AppId = appId,
+                    ActiveRequests = 0,
+                    UncrackableVotes = 0
+                };
+            }
+
+            return new GameRequestStats
+            {
+                AppId = appId,
+                ActiveRequests = 0,
+                UncrackableVotes = 0
+            };
+        }
+
     }
+}
+
+public class GameRequestStats
+{
+    public string AppId { get; set; }
+    public int ActiveRequests { get; set; }
+    public int UncrackableVotes { get; set; }
 }

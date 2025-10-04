@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
+using System.Linq;
 using System.Net.Http;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
@@ -107,9 +108,26 @@ namespace SteamAppIdIdentifier
                 Location = new Point(20, 290),
                 Size = new Size(540, 25),
                 BackColor = Color.FromArgb(50, 50, 50),
-                ForeColor = Color.White,
-                PlaceholderText = "e.g., 12345678 or 1.2.3 or 'None - no clean files exist'"
+                ForeColor = Color.White
             };
+            currentRinVersionBox.GotFocus += (s, e) =>
+            {
+                if (currentRinVersionBox.Text == "e.g., 12345678 or 1.2.3 or 'None - no clean files exist'")
+                {
+                    currentRinVersionBox.Text = "";
+                    currentRinVersionBox.ForeColor = Color.White;
+                }
+            };
+            currentRinVersionBox.LostFocus += (s, e) =>
+            {
+                if (string.IsNullOrWhiteSpace(currentRinVersionBox.Text))
+                {
+                    currentRinVersionBox.Text = "e.g., 12345678 or 1.2.3 or 'None - no clean files exist'";
+                    currentRinVersionBox.ForeColor = Color.Gray;
+                }
+            };
+            currentRinVersionBox.Text = "e.g., 12345678 or 1.2.3 or 'None - no clean files exist'";
+            currentRinVersionBox.ForeColor = Color.Gray;
 
             // Notes
             var notesLabel = new Label
@@ -126,9 +144,26 @@ namespace SteamAppIdIdentifier
                 Size = new Size(540, 50),
                 BackColor = Color.FromArgb(50, 50, 50),
                 ForeColor = Color.White,
-                Multiline = true,
-                PlaceholderText = "e.g., 'Links are dead', 'DLC needed', etc."
+                Multiline = true
             };
+            notesBox.GotFocus += (s, e) =>
+            {
+                if (notesBox.Text == "e.g., 'Links are dead', 'DLC needed', etc.")
+                {
+                    notesBox.Text = "";
+                    notesBox.ForeColor = Color.White;
+                }
+            };
+            notesBox.LostFocus += (s, e) =>
+            {
+                if (string.IsNullOrWhiteSpace(notesBox.Text))
+                {
+                    notesBox.Text = "e.g., 'Links are dead', 'DLC needed', etc.";
+                    notesBox.ForeColor = Color.Gray;
+                }
+            };
+            notesBox.Text = "e.g., 'Links are dead', 'DLC needed', etc.";
+            notesBox.ForeColor = Color.Gray;
 
             // Submit button
             submitRequestButton = new Button
@@ -291,7 +326,7 @@ namespace SteamAppIdIdentifier
 
             if (File.Exists(requestsFile))
             {
-                var json = File.ReadAllText(requestsFile);
+                var json = await Task.Run(() => File.ReadAllText(requestsFile));
                 requests = JsonConvert.DeserializeObject<List<UpdateRequest>>(json) ?? new List<UpdateRequest>();
             }
 
@@ -299,7 +334,7 @@ namespace SteamAppIdIdentifier
             requests.RemoveAll(r => r.AppId == request.AppId);
             requests.Add(request);
 
-            File.WriteAllText(requestsFile, JsonConvert.SerializeObject(requests, Formatting.Indented));
+            await Task.Run(() => File.WriteAllText(requestsFile, JsonConvert.SerializeObject(requests, Formatting.Indented)));
         }
 
         private async Task CheckForAvailableUpdates(UpdateRequest request)
@@ -349,7 +384,7 @@ namespace SteamAppIdIdentifier
             if (!File.Exists(requestsFile))
                 return notifications;
 
-            var json = File.ReadAllText(requestsFile);
+            var json = await Task.Run(() => File.ReadAllText(requestsFile));
             var requests = JsonConvert.DeserializeObject<List<UpdateRequest>>(json);
 
             foreach (var request in requests)
@@ -395,7 +430,7 @@ namespace SteamAppIdIdentifier
             public string RequesterId { get; set; }
         }
 
-        private class SteamGame
+        public class SteamGame
         {
             public string AppId { get; set; }
             public string Name { get; set; }

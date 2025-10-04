@@ -1,7 +1,10 @@
 using System;
 using System.Drawing;
+using System.Net.Http;
+using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using Newtonsoft.Json;
 
 namespace SteamAppIdIdentifier
 {
@@ -38,21 +41,52 @@ namespace SteamAppIdIdentifier
 
             if (status.HasUserVoted)
             {
-                MessageBox.Show(
-                    $"You already voted on {gameName}.\n\n" +
-                    $"Your vote: {status.UserVoteType}\n" +
-                    $"Current votes: {status.UncrackableVotes} uncrackable, {status.CrackableVotes} crackable",
+                // Ask if they want to remove their vote
+                var result = MessageBox.Show(
+                    $"You already voted '{status.UserVoteType}' for {gameName}.\n\n" +
+                    $"Current votes: {status.UncrackableVotes} uncrackable, {status.CrackableVotes} crackable\n\n" +
+                    "Do you want to REMOVE your vote?",
                     "Already Voted",
-                    MessageBoxButtons.OK,
-                    MessageBoxIcon.Information
+                    MessageBoxButtons.YesNo,
+                    MessageBoxIcon.Question
                 );
+
+                if (result == DialogResult.Yes)
+                {
+                    // Remove the vote
+                    return await RemoveVote(appId);
+                }
                 return false;
             }
 
             var voteForm = new UncrackableVoteForm(appId, gameName, status);
-            var result = voteForm.ShowDialog(parentForm);
+            var voteResult = voteForm.ShowDialog(parentForm);
 
-            return result == DialogResult.OK;
+            return voteResult == DialogResult.OK;
+        }
+
+        public static async Task<bool> RemoveVote(string appId)
+        {
+            try
+            {
+                var removeRequest = new
+                {
+                    appId = appId,
+                    userId = HWIDManager.GetUserId(),
+                    hwid = HWIDManager.GetHWID()
+                };
+
+                var json = Newtonsoft.Json.JsonConvert.SerializeObject(removeRequest);
+                var content = new System.Net.Http.StringContent(json, System.Text.Encoding.UTF8, "application/json");
+
+                using (var client = new System.Net.Http.HttpClient())
+                {
+                    var response = await client.PostAsync("https://pydrive.harryeffingpotter.com/sacgui/api/remove-uncrackable-vote", content);
+                    return response.IsSuccessStatusCode;
+                }
+            }
+            catch { }
+            return false;
         }
 
         public static async Task<bool> SubmitVote(string appId, string gameName, bool isUncrackable, string reason)
@@ -62,12 +96,9 @@ namespace SteamAppIdIdentifier
                 var vote = new
                 {
                     appId = appId,
-                    gameName = gameName,
                     userId = HWIDManager.GetUserId(),
                     hwid = HWIDManager.GetHWID(),
-                    isUncrackable = isUncrackable,
-                    reason = reason,
-                    timestamp = DateTime.UtcNow
+                    vote = isUncrackable ? "agree" : "disagree"
                 };
 
                 var json = Newtonsoft.Json.JsonConvert.SerializeObject(vote);
@@ -285,8 +316,24 @@ namespace SteamAppIdIdentifier
                 Size = new Size(400, 50),
                 Multiline = true,
                 BackColor = Color.FromArgb(40, 40, 40),
-                ForeColor = Color.White,
-                PlaceholderText = "Any additional info that might help..."
+                ForeColor = Color.Gray,
+                Text = "Any additional info that might help..."
+            };
+
+            // Add placeholder behavior
+            customReasonBox.GotFocus += (s, e) => {
+                if (customReasonBox.Text == "Any additional info that might help...")
+                {
+                    customReasonBox.Text = "";
+                    customReasonBox.ForeColor = Color.White;
+                }
+            };
+            customReasonBox.LostFocus += (s, e) => {
+                if (string.IsNullOrWhiteSpace(customReasonBox.Text))
+                {
+                    customReasonBox.Text = "Any additional info that might help...";
+                    customReasonBox.ForeColor = Color.Gray;
+                }
             };
 
             // Warning about 5 votes

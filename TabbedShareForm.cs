@@ -758,6 +758,8 @@ namespace SteamAppIdIdentifier
 
         private async Task UpdateYourGamesTab()
         {
+            await Task.CompletedTask; // Placeholder for future async operations
+
             var grid = this.Controls.Find("YourGamesGrid", true).FirstOrDefault() as DataGridView;
             if (grid == null) return;
 
@@ -809,6 +811,8 @@ namespace SteamAppIdIdentifier
 
         private async Task UpdateTopWantedTab()
         {
+            await Task.CompletedTask; // Placeholder for future async operations
+
             var grid = this.Controls.Find("TopWantedGrid", true).FirstOrDefault() as DataGridView;
             if (grid == null) return;
 
@@ -877,7 +881,7 @@ namespace SteamAppIdIdentifier
                     var recentFulfilled = userActivity.FulfilledRequests.Take(5);
                     foreach (var fulfilled in recentFulfilled)
                     {
-                        notificationsList.Items.Add($"🎉 {fulfilled.GameName} - {fulfilled.Type}");
+                        notificationsList.Items.Add($"🎉 {fulfilled.GameName} - {fulfilled.RequestType}");
                     }
                     if (!recentFulfilled.Any())
                     {
@@ -886,16 +890,46 @@ namespace SteamAppIdIdentifier
                     }
                 }
 
-                // Update grids
-                await UpdateRequestsGrid(userActivity.ActiveRequests);
-                await UpdateFulfilledGrid(userActivity.FulfilledRequests);
-                await UpdateContributionsGrid(userActivity.Contributions);
+                // Update grids - convert types
+                var activeRequests = userActivity.ActiveRequests.Select(r => new UserRequestActivity
+                {
+                    AppId = r.AppId,
+                    GameName = r.GameName,
+                    RequestType = r.RequestType,
+                    RequestedAt = r.FirstRequested,
+                    IsFulfilled = false
+                }).ToList();
+
+                var fulfilledRequests = userActivity.FulfilledRequests.Select(r => new FulfilledRequestActivity
+                {
+                    AppId = r.AppId,
+                    GameName = r.GameName,
+                    Type = r.RequestType,
+                    FulfilledAt = DateTime.Now,
+                    FulfilledByUserId = "",
+                    DownloadUrl = ""
+                }).ToList();
+
+                var contributions = userActivity.Contributions.Select(c => new ContributionActivity
+                {
+                    AppId = c.AppId,
+                    GameName = c.GameName,
+                    ShareType = c.UploadType,
+                    SharedAt = c.HonoredDate,
+                    RequestersHelped = 1
+                }).ToList();
+
+                await UpdateRequestsGrid(activeRequests);
+                await UpdateFulfilledGrid(fulfilledRequests);
+                await UpdateContributionsGrid(contributions);
             }
             catch { }
         }
 
         private async Task UpdateRequestsGrid(List<UserRequestActivity> requests)
         {
+            await Task.CompletedTask; // Placeholder for future async operations
+
             var grid = this.Controls.Find("YourRequestsGrid", true).FirstOrDefault() as DataGridView;
             if (grid == null) return;
 
@@ -913,6 +947,8 @@ namespace SteamAppIdIdentifier
 
         private async Task UpdateFulfilledGrid(List<FulfilledRequestActivity> fulfilled)
         {
+            await Task.CompletedTask; // Placeholder for future async operations
+
             var grid = this.Controls.Find("FulfilledRequestsGrid", true).FirstOrDefault() as DataGridView;
             if (grid == null) return;
 
@@ -937,6 +973,8 @@ namespace SteamAppIdIdentifier
 
         private async Task UpdateContributionsGrid(List<ContributionActivity> contributions)
         {
+            await Task.CompletedTask; // Placeholder for future async operations
+
             var grid = this.Controls.Find("ContributionsGrid", true).FirstOrDefault() as DataGridView;
             if (grid == null) return;
 
@@ -1023,6 +1061,7 @@ namespace SteamAppIdIdentifier
             public DateTime SharedAt { get; set; }
             public int RequestsFulfilled { get; set; }
             public int HonorEarned { get; set; }
+            public int RequestersHelped { get; set; }
         }
 
         public class UserActivityData

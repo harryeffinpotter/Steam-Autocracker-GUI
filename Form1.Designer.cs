@@ -43,6 +43,7 @@ namespace APPID
             this.tgDisc = new System.Windows.Forms.Label();
             this.mainPanel = new System.Windows.Forms.Panel();
             this.ShareButton = new System.Windows.Forms.Button();
+            this.RequestButton = new System.Windows.Forms.Button();
             this.btnManualEntry = new System.Windows.Forms.Button();
             this.autoCrackOff = new System.Windows.Forms.PictureBox();
             this.autoCrackOn = new System.Windows.Forms.PictureBox();
@@ -179,6 +180,7 @@ namespace APPID
             // 
             this.mainPanel.Controls.Add(this.resinstruccZip);
             this.mainPanel.Controls.Add(this.ShareButton);
+            this.mainPanel.Controls.Add(this.RequestButton);
             this.mainPanel.Controls.Add(this.btnManualEntry);
             this.mainPanel.Controls.Add(this.autoCrackOff);
             this.mainPanel.Controls.Add(this.autoCrackOn);
@@ -206,7 +208,7 @@ namespace APPID
             this.mainPanel.DragLeave += new System.EventHandler(this.mainPanel_DragLeave);
             // 
             // ShareButton
-            // 
+            //
             this.ShareButton.FlatAppearance.BorderSize = 0;
             resources.ApplyResources(this.ShareButton, "ShareButton");
             this.ShareButton.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(200)))), ((int)(((byte)(100)))));
@@ -214,6 +216,20 @@ namespace APPID
             this.lanMultiplayerToolTip.SetToolTip(this.ShareButton, resources.GetString("ShareButton.ToolTip"));
             this.ShareButton.UseVisualStyleBackColor = true;
             this.ShareButton.Click += new System.EventHandler(this.ShareButton_Click);
+            //
+            // RequestButton
+            //
+            this.RequestButton.FlatAppearance.BorderSize = 0;
+            this.RequestButton.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(50)))), ((int)(((byte)(50)))), ((int)(((byte)(50)))));
+            this.RequestButton.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(150)))), ((int)(((byte)(150)))));
+            this.RequestButton.Location = new System.Drawing.Point(650, 450);
+            this.RequestButton.Size = new System.Drawing.Size(120, 30);
+            this.RequestButton.Text = "🔍 Request Games";
+            this.RequestButton.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
+            this.RequestButton.Name = "RequestButton";
+            this.RequestButton.UseVisualStyleBackColor = false;
+            this.RequestButton.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.RequestButton.Click += new System.EventHandler(this.RequestButton_Click);
             // 
             // btnManualEntry
             // 
@@ -503,6 +519,7 @@ namespace APPID
         private System.Windows.Forms.Button OpenDir;
         private System.Windows.Forms.Button ZipToShare;
         private System.Windows.Forms.Button ShareButton;
+        private System.Windows.Forms.Button RequestButton;
         private System.Windows.Forms.Panel ManAppPanel;
         private System.Windows.Forms.Label ManAppLbl;
         private System.Windows.Forms.TextBox ManAppBox;

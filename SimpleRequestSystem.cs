@@ -55,8 +55,24 @@ namespace SteamAppIdIdentifier
                 Location = new Point(20, 85),
                 Size = new Size(350, 25),
                 BackColor = Color.FromArgb(50, 50, 50),
-                ForeColor = Color.White,
-                PlaceholderText = "Type game name..."
+                ForeColor = Color.Gray,
+                Text = "Type game name..."
+            };
+
+            // Add placeholder behavior
+            searchBox.GotFocus += (s, e) => {
+                if (searchBox.Text == "Type game name...")
+                {
+                    searchBox.Text = "";
+                    searchBox.ForeColor = Color.White;
+                }
+            };
+            searchBox.LostFocus += (s, e) => {
+                if (string.IsNullOrWhiteSpace(searchBox.Text))
+                {
+                    searchBox.Text = "Type game name...";
+                    searchBox.ForeColor = Color.Gray;
+                }
             };
 
             searchButton = new Button

@@ -97,41 +97,41 @@ namespace APPID
         public static void Tit(string Message, Color color)
         {
             // Handle cross-thread calls
-            if (Program.form.InvokeRequired)
+            if (SteamAppIdIdentifier.Program.form.InvokeRequired)
             {
-                Program.form.Invoke(new Action(() => Tit(Message, color)));
+                SteamAppIdIdentifier.Program.form.Invoke(new Action(() => Tit(Message, color)));
                 return;
             }
 
             string MessageLow = Message.ToLower();
             if (MessageLow.Contains("READY TO CRACK!".ToLower()))
             {
-                Program.form.StatusLabel.ForeColor = Color.HotPink;
+                SteamAppIdIdentifier.Program.form.StatusLabel.ForeColor = Color.HotPink;
             }
             else if (MessageLow.Contains("Complete".ToLower()))
             {
-                Program.form.StatusLabel.ForeColor = Color.MediumSpringGreen;
+                SteamAppIdIdentifier.Program.form.StatusLabel.ForeColor = Color.MediumSpringGreen;
             }
             else if (MessageLow.Contains("no steam".ToLower()))
             {
-                Program.form.StatusLabel.ForeColor = Color.Crimson;
+                SteamAppIdIdentifier.Program.form.StatusLabel.ForeColor = Color.Crimson;
             }
             else
             {
-                Program.form.StatusLabel.ForeColor = color;
+                SteamAppIdIdentifier.Program.form.StatusLabel.ForeColor = color;
             }
-            Program.form.StatusLabel.Text = Message;
-            Program.form.Text = Message.Replace("&&", "&");
+            SteamAppIdIdentifier.Program.form.StatusLabel.Text = Message;
+            SteamAppIdIdentifier.Program.form.Text = Message.Replace("&&", "&");
         }
         public static void Tat(string Message)
         {
             // Handle cross-thread calls
-            if (Program.form.InvokeRequired)
+            if (SteamAppIdIdentifier.Program.form.InvokeRequired)
             {
-                Program.form.Invoke(new Action(() => Tat(Message)));
+                SteamAppIdIdentifier.Program.form.Invoke(new Action(() => Tat(Message)));
                 return;
             }
-            Program.form.currDIrText.Text = $"{Message}";
+            SteamAppIdIdentifier.Program.form.currDIrText.Text = $"{Message}";
         }
         public static bool VRLExists = false;
 
@@ -316,7 +316,7 @@ namespace APPID
 
             if (args2 != null)
             {
-                foreach (string args1 in Program.args2)
+                foreach (string args1 in SteamAppIdIdentifier.Program.args2)
                 {
                     args3 = RemoveSpecialCharacters(args1);
                     args2 += args3 + " ";
@@ -1616,7 +1616,6 @@ oLink3.Save";
                 // Hide OpenDir and ZipToShare when new directory selected
                 OpenDir.Visible = false;
                 ZipToShare.Visible = false;
-                hasCrackedSuccessfully = false;  // Reset for next crack
                 parentOfSelection = Directory.GetParent(gameDir).FullName;
                 gameDirName = Path.GetFileName(gameDir);
                 btnManualEntry.Visible = true;
@@ -1644,7 +1643,6 @@ oLink3.Save";
             }
         }
         public bool cracking;
-        private bool hasCrackedSuccessfully = false;  // Track if a crack has completed successfully
         private async void startCrackPic_Click(object sender, EventArgs e)
         {
            if (!cracking)
@@ -1661,8 +1659,6 @@ oLink3.Save";
                 // Check if we actually cracked anything
                 if (crackedSuccessfully)
                 {
-                    hasCrackedSuccessfully = true;  // Mark that we've successfully cracked
-
                     // Set the permanent success message
                     Tit("Crack complete!\nSelect another game directory to keep the party going!", Color.LightSkyBlue);
 
@@ -1784,7 +1780,6 @@ oLink3.Save";
                     // Hide OpenDir and ZipToShare when new directory selected
                     OpenDir.Visible = false;
                     ZipToShare.Visible = false;
-                    hasCrackedSuccessfully = false;  // Reset for next crack
                     parentOfSelection = Directory.GetParent(gameDir).FullName;
                     gameDirName = Path.GetFileName(gameDir);
                     mainPanel.Visible = false;  // Hide mainPanel so dataGridView is visible
@@ -1850,7 +1845,7 @@ oLink3.Save";
 
         private void SteamAppId_FormClosing(object sender, FormClosingEventArgs e)
         {
-            Program.CmdKILL("APPID");
+            SteamAppIdIdentifier.Program.CmdKILL("APPID");
         }
 
         private void OpenDir_Click(object sender, EventArgs e)
@@ -1900,9 +1895,12 @@ oLink3.Save";
                 if (crack)
                 {
                     // Crack the game first
-                    parentForm.Invoke(new Action(() => {
-                        Tit($"Cracking {gameName}...", Color.Yellow);
-                    }));
+                    if (parentForm.IsHandleCreated)
+                    {
+                        parentForm.Invoke(new Action(() => {
+                            Tit($"Cracking {gameName}...", Color.Yellow);
+                        }));
+                    }
 
                     bool crackSuccess = await CrackAsync();
                     if (!crackSuccess)
@@ -1957,26 +1955,35 @@ oLink3.Save";
                 string zipName = $"{prefix} {gameName}.{format.ToLower()}";
                 string zipPath = Path.Combine(desktopPath, zipName);
 
-                parentForm.Invoke(new Action(() => {
-                    Tit($"Compressing {gameName}...", Color.Cyan);
-                }));
+                if (parentForm.IsHandleCreated)
+                {
+                    parentForm.Invoke(new Action(() => {
+                        Tit($"Compressing {gameName}...", Color.Cyan);
+                    }));
+                }
 
                 // Perform compression
                 bool compressionSuccess = await CompressGameAsync(gamePath, zipPath, format, level, encryptForRIN);
 
                 if (!compressionSuccess)
                 {
-                    parentForm.Invoke(new Action(() => {
-                        Tit($"Compression failed!", Color.Red);
-                    }));
+                    if (parentForm.IsHandleCreated)
+                    {
+                        parentForm.Invoke(new Action(() => {
+                            Tit($"Compression failed!", Color.Red);
+                        }));
+                    }
                     return;
                 }
 
                 if (upload)
                 {
-                    parentForm.Invoke(new Action(() => {
-                        Tit($"Uploading to YSG/HFP backend (6 month expiry)...", Color.Magenta);
-                    }));
+                    if (parentForm.IsHandleCreated)
+                    {
+                        parentForm.Invoke(new Action(() => {
+                            Tit($"Uploading to YSG/HFP backend (6 month expiry)...", Color.Magenta);
+                        }));
+                    }
 
                     string uploadUrl = await UploadToBackend(zipPath, parentForm);
 
@@ -1988,9 +1995,12 @@ oLink3.Save";
                 }
                 else
                 {
-                    parentForm.Invoke(new Action(() => {
-                        Tit($"Saved to Desktop: {zipName}", Color.Green);
-                    }));
+                    if (parentForm.IsHandleCreated)
+                    {
+                        parentForm.Invoke(new Action(() => {
+                            Tit($"Saved to Desktop: {zipName}", Color.Green);
+                        }));
+                    }
                     Process.Start("explorer.exe", desktopPath);
                 }
             }
@@ -2081,60 +2091,180 @@ oLink3.Save";
 
         private async Task<string> UploadToBackend(string filePath, Form parentForm)
         {
+            System.Diagnostics.Debug.WriteLine($"[UPLOAD] === Starting upload process ===");
+            System.Diagnostics.Debug.WriteLine($"[UPLOAD] File path: {filePath}");
+            System.Diagnostics.Debug.WriteLine($"[UPLOAD] File exists: {File.Exists(filePath)}");
+
+            if (File.Exists(filePath))
+            {
+                var fileInfo = new FileInfo(filePath);
+                System.Diagnostics.Debug.WriteLine($"[UPLOAD] File size: {fileInfo.Length / (1024.0 * 1024.0):F2} MB");
+            }
+
+            System.Diagnostics.Debug.WriteLine($"[UPLOAD] Parent form handle created: {parentForm.IsHandleCreated}");
+
             try
             {
+                // Check if the form handle is created before invoking
+                if (!parentForm.IsHandleCreated)
+                {
+                    // If handle not created, we can't show UI updates
+                    System.Diagnostics.Debug.WriteLine("[UPLOAD] Warning: Form handle not created, UI updates disabled");
+                    // Continue with upload anyway
+                }
+                System.Diagnostics.Debug.WriteLine("[UPLOAD] Creating HttpClient...");
                 using (var client = new HttpClient())
                 {
-                    // ShareX/Zipline backend configuration
-                    client.DefaultRequestHeaders.Add("Authorization", "REMOVED_ZIPLINE_TOKEN");
-                    client.DefaultRequestHeaders.Add("x-zipline-expiry", "180d"); // 6 month expiry
+                    // SACGUI backend configuration - no auth headers needed
+                    System.Diagnostics.Debug.WriteLine("[UPLOAD] Configuring client for SACGUI...");
                     client.Timeout = TimeSpan.FromHours(2); // Allow for large files
+                    System.Diagnostics.Debug.WriteLine("[UPLOAD] Timeout set to 2 hours");
 
                     var fileInfo = new FileInfo(filePath);
                     long fileSize = fileInfo.Length;
 
                     // Use multipart form for upload
+                    System.Diagnostics.Debug.WriteLine("[UPLOAD] Creating multipart form content...");
                     using (var content = new MultipartFormDataContent())
                     {
                         // Read file in chunks to avoid memory issues with large files
+                        System.Diagnostics.Debug.WriteLine("[UPLOAD] Opening file stream...");
                         using (var fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read))
                         {
+                            System.Diagnostics.Debug.WriteLine("[UPLOAD] File stream opened successfully");
+
+                            // Check file size before upload
+                            var uploadFileInfo = new FileInfo(filePath);
+                            var fileSizeMB = uploadFileInfo.Length / (1024.0 * 1024.0);
+                            System.Diagnostics.Debug.WriteLine($"[UPLOAD] File size: {fileSizeMB:F2} MB");
+
+                            if (fileSizeMB > 500)
+                            {
+                                System.Diagnostics.Debug.WriteLine($"[UPLOAD] WARNING: File is larger than 500MB, may exceed server limits!");
+
+                                // Show warning to user
+                                if (parentForm.IsHandleCreated)
+                                {
+                                    parentForm.Invoke(new Action(() => {
+                                        MessageBox.Show($"File is {fileSizeMB:F0}MB. The server may reject files over 500MB.\n\nConsider using higher compression settings.",
+                                            "Large File Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                                    }));
+                                }
+                            }
+
                             var fileContent = new StreamContent(fileStream);
                             fileContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/octet-stream");
                             content.Add(fileContent, "file", Path.GetFileName(filePath));
+
+                            // Add required form fields for SACGUI
+                            string hwid = HWIDManager.GetHWID(); // Get the hardware ID
+                            content.Add(new StringContent(hwid), "hwid");
+                            content.Add(new StringContent("SACGUI-2.0"), "version");
+
+                            // Extract game name from filename (remove prefix and extension)
+                            string fileName = Path.GetFileNameWithoutExtension(filePath);
+                            string gameName = fileName.Replace("[CRACKED] ", "").Replace("[CLEAN] ", "").Replace("[SACGUI] ", "");
+                            content.Add(new StringContent(gameName), "game_name");
+
+                            // Get client IP - use local IP for now
+                            string clientIp = "127.0.0.1";
+                            try
+                            {
+                                using (var ipClient = new HttpClient())
+                                {
+                                    ipClient.Timeout = TimeSpan.FromSeconds(5);
+                                    var ipResponse = await ipClient.GetStringAsync("https://api.ipify.org");
+                                    if (!string.IsNullOrEmpty(ipResponse))
+                                        clientIp = ipResponse.Trim();
+                                }
+                            }
+                            catch { }
+                            content.Add(new StringContent(clientIp), "client_ip");
+
+                            System.Diagnostics.Debug.WriteLine($"[UPLOAD] Added HWID: {hwid}");
+                            System.Diagnostics.Debug.WriteLine($"[UPLOAD] Added Version: SACGUI-2.0");
+                            System.Diagnostics.Debug.WriteLine($"[UPLOAD] Added Game Name: {gameName}");
+                            System.Diagnostics.Debug.WriteLine($"[UPLOAD] Added Client IP: {clientIp}");
 
                             // Upload with progress tracking
                             var progressHandler = new ProgressMessageHandler();
                             progressHandler.HttpSendProgress += (s, e) => {
                                 int percentage = (int)((e.BytesTransferred * 100) / fileSize);
-                                parentForm.Invoke(new Action(() => {
-                                    Tit($"Uploading... {percentage}%", Color.Magenta);
-                                }));
+                                if (parentForm.IsHandleCreated)
+                                {
+                                    parentForm.Invoke(new Action(() => {
+                                        Tit($"Uploading... {percentage}%", Color.Magenta);
+                                    }));
+                                }
                             };
 
                             using (var progressClient = new HttpClient(progressHandler))
                             {
-                                progressClient.DefaultRequestHeaders.Add("Authorization", "REMOVED_ZIPLINE_TOKEN");
-                                progressClient.DefaultRequestHeaders.Add("x-zipline-expiry", "180d");
+                                // Set timeout and user agent
                                 progressClient.Timeout = TimeSpan.FromHours(2);
+                                progressClient.DefaultRequestHeaders.Add("User-Agent", "SACGUI-Uploader/2.0");
 
-                                var response = await progressClient.PostAsync("https://pasta.doxium.io/api/upload", content);
+                                // Use streaming upload endpoint for large files
+                                var retentionHours = 168; // 7 days
+                                var uploadUrl = $"https://pydrive.harryeffingpotter.com/upload/stream?retention_hours={retentionHours}";
+                                System.Diagnostics.Debug.WriteLine($"[UPLOAD] Sending POST request to {uploadUrl}");
+                                System.Diagnostics.Debug.WriteLine("[UPLOAD] Using streaming upload for large file support");
+                                System.Diagnostics.Debug.WriteLine("[UPLOAD] Request starting...");
 
-                                if (response.IsSuccessStatusCode)
+                                // Create new multipart content for streaming endpoint (only needs file)
+                                using (var streamContent = new MultipartFormDataContent())
                                 {
-                                    var jsonResponse = await response.Content.ReadAsStringAsync();
-                                    // Parse the response to get the file URL
-                                    var urlMatch = Regex.Match(jsonResponse, @"""files""\s*:\s*\[\s*""([^""]+)""\]");
-                                    if (urlMatch.Success)
-                                    {
-                                        return urlMatch.Groups[1].Value;
-                                    }
+                                    fileStream.Position = 0;
+                                    var streamFileContent = new StreamContent(fileStream);
+                                    streamFileContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/octet-stream");
+                                    streamContent.Add(streamFileContent, "file", Path.GetFileName(filePath));
 
-                                    // Alternative response format
-                                    urlMatch = Regex.Match(jsonResponse, @"""url""\s*:\s*""([^""]+)""");
-                                    if (urlMatch.Success)
+                                    var response = await progressClient.PostAsync(uploadUrl, streamContent);
+                                System.Diagnostics.Debug.WriteLine($"[UPLOAD] Response received: Status={response.StatusCode} ({(int)response.StatusCode})");
+
+                                    if (response.IsSuccessStatusCode)
                                     {
-                                        return urlMatch.Groups[1].Value;
+                                        var responseText = await response.Content.ReadAsStringAsync();
+                                        System.Diagnostics.Debug.WriteLine($"[UPLOAD] Success! Response: {responseText}");
+
+                                        // Parse streaming endpoint response
+                                        try
+                                        {
+                                            dynamic result = Newtonsoft.Json.JsonConvert.DeserializeObject(responseText);
+
+                                            // Get the share URL from response
+                                            string shareUrl = result?.share_url?.ToString();
+
+                                            if (!string.IsNullOrEmpty(shareUrl))
+                                            {
+                                                System.Diagnostics.Debug.WriteLine($"[UPLOAD] Extracted share URL: {shareUrl}");
+                                                return shareUrl;
+                                            }
+
+                                            // Check for file_id to construct download URL
+                                            string fileId = result?.file_id?.ToString();
+                                            if (!string.IsNullOrEmpty(fileId))
+                                            {
+                                                shareUrl = $"https://pydrive.harryeffingpotter.com/download/{fileId}";
+                                                System.Diagnostics.Debug.WriteLine($"[UPLOAD] Constructed download URL: {shareUrl}");
+                                                return shareUrl;
+                                            }
+
+                                            // The streaming endpoint should return either share_url or file_id
+                                            System.Diagnostics.Debug.WriteLine($"[UPLOAD] Error: No share_url or file_id in response");
+                                        }
+                                        catch (Exception parseEx)
+                                        {
+                                            System.Diagnostics.Debug.WriteLine($"[UPLOAD] Failed to parse response: {parseEx.Message}");
+                                        }
+
+                                        System.Diagnostics.Debug.WriteLine("[UPLOAD] WARNING: Could not extract URL from response");
+                                    }
+                                    else
+                                    {
+                                        var errorContent = await response.Content.ReadAsStringAsync();
+                                        System.Diagnostics.Debug.WriteLine($"[UPLOAD] Request failed with status {response.StatusCode}");
+                                        System.Diagnostics.Debug.WriteLine($"[UPLOAD] Error response: {errorContent}");
                                     }
                                 }
                             }
@@ -2142,13 +2272,46 @@ oLink3.Save";
                     }
                 }
             }
+            catch (HttpRequestException httpEx)
+            {
+                System.Diagnostics.Debug.WriteLine($"[UPLOAD] HTTP Request Exception: {httpEx.Message}");
+                System.Diagnostics.Debug.WriteLine($"[UPLOAD] Inner Exception: {httpEx.InnerException?.Message}");
+                System.Diagnostics.Debug.WriteLine($"[UPLOAD] Stack Trace:\n{httpEx.StackTrace}");
+
+                if (parentForm.IsHandleCreated)
+                {
+                    parentForm.Invoke(new Action(() => {
+                        MessageBox.Show($"Upload failed (HTTP Error):\n{httpEx.Message}\n\nInner: {httpEx.InnerException?.Message}", "Upload Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    }));
+                }
+            }
+            catch (TaskCanceledException tcEx)
+            {
+                System.Diagnostics.Debug.WriteLine($"[UPLOAD] Task Cancelled/Timeout: {tcEx.Message}");
+
+                if (parentForm.IsHandleCreated)
+                {
+                    parentForm.Invoke(new Action(() => {
+                        MessageBox.Show("Upload failed: Request timed out (file too large or slow connection)", "Upload Timeout", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    }));
+                }
+            }
             catch (Exception ex)
             {
-                parentForm.Invoke(new Action(() => {
-                    MessageBox.Show($"Upload failed: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                }));
+                System.Diagnostics.Debug.WriteLine($"[UPLOAD] General Exception: {ex.GetType().Name}");
+                System.Diagnostics.Debug.WriteLine($"[UPLOAD] Message: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"[UPLOAD] Inner Exception: {ex.InnerException?.Message}");
+                System.Diagnostics.Debug.WriteLine($"[UPLOAD] Stack Trace:\n{ex.StackTrace}");
+
+                if (parentForm.IsHandleCreated)
+                {
+                    parentForm.Invoke(new Action(() => {
+                        MessageBox.Show($"Upload failed:\n{ex.Message}\n\nType: {ex.GetType().Name}\n\nInner: {ex.InnerException?.Message}", "Upload Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    }));
+                }
             }
 
+            System.Diagnostics.Debug.WriteLine("[UPLOAD] === Upload process ended with failure ===");
             return null;
         }
 
@@ -2159,15 +2322,29 @@ oLink3.Save";
 
             protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
             {
+                // For now, just send without progress tracking
+                // Full implementation would require tracking the request stream
                 var response = await base.SendAsync(request, cancellationToken);
+
+                // Simulate progress complete
+                HttpSendProgress?.Invoke(this, new HttpProgressEventArgs(0, 100, 100));
+
                 return response;
             }
         }
 
         public class HttpProgressEventArgs : EventArgs
         {
-            public long BytesTransferred { get; set; }
-            public long? TotalBytes { get; set; }
+            public long BytesTransferred { get; }
+            public long? TotalBytes { get; }
+            public int ProgressPercentage { get; }
+
+            public HttpProgressEventArgs(int progressPercentage, long bytesTransferred, long? totalBytes)
+            {
+                ProgressPercentage = progressPercentage;
+                BytesTransferred = bytesTransferred;
+                TotalBytes = totalBytes;
+            }
         }
 
         private void ShowUploadSuccess(string url, string gameName, bool isCracked, Form parentForm)
@@ -2205,7 +2382,10 @@ oLink3.Save";
                 Clipboard.SetText(url);
                 copyButton.Text = "✓ Copied!";
                 Task.Delay(2000).ContinueWith(t => {
-                    copyButton.Invoke(new Action(() => copyButton.Text = "📋 Copy"));
+                    if (copyButton.IsHandleCreated)
+                    {
+                        copyButton.Invoke(new Action(() => copyButton.Text = "📋 Copy"));
+                    }
                 });
             };
 
@@ -2576,8 +2756,21 @@ oLink3.Save";
 
         private void ShareButton_Click(object sender, EventArgs e)
         {
-            var shareForm = new UnifiedShareRequestForm(this);
+            // Show the enhanced share window with your Steam games
+            var shareForm = new EnhancedShareWindow(this);
             shareForm.Show();
+        }
+
+        private void RequestButton_Click(object sender, EventArgs e)
+        {
+            // Show the requests window for browsing and requesting games
+            var requestForm = new RequestsWindow(this);
+            requestForm.Show();
+        }
+
+        public System.Data.DataTable GetDataTable()
+        {
+            return dataTableGeneration?.DataTableToGenerate;
         }
 
         private void ShowSteamGamesForm()
@@ -3002,8 +3195,11 @@ oLink3.Save";
         private class RinCleanInfo
         {
             public string BuildId { get; set; }
+            public string BuildNumber { get; set; }
             public DateTime PostDate { get; set; }
             public string PostUrl { get; set; }
+            public bool HasCleanFiles { get; set; }
+            public string Status { get; set; }
         }
 
         private RinSeleniumScraper rinScraper;
@@ -3029,7 +3225,11 @@ oLink3.Save";
                 }
 
                 // Search using Selenium
-                results = await rinScraper.SearchForGame(gameName);
+                var gameInfo = await rinScraper.SearchAndScrapeGame(gameName);
+                if (gameInfo != null && !string.IsNullOrEmpty(gameInfo.ThreadUrl))
+                {
+                    results.Add(gameInfo.ThreadUrl);
+                }
                 System.Diagnostics.Debug.WriteLine($"[SELENIUM] Found {results.Count} results for '{gameName}'");
             }
             catch (Exception ex)
@@ -3060,283 +3260,28 @@ oLink3.Save";
                     }
                 }
 
-                // Scrape the thread using Selenium
-                var cleanInfo = await rinScraper.ScrapeThread(threadUrl, gameName);
-                return cleanInfo;
-
-                    System.Diagnostics.Debug.WriteLine($"[FETCH] Getting first page to verify thread...");
-
-                    // First, get the thread and verify it's the right one
-                    var response = await client.GetStringAsync(threadUrl);
-                    System.Diagnostics.Debug.WriteLine($"[RESPONSE] {response.Length} bytes");
-
-                    // Extract thread title to verify we're in the right place
-                    var titleMatch = Regex.Match(response, @"<h1[^>]*>([^<]+)</h1>");
-                    string threadTitle = titleMatch.Success ? titleMatch.Groups[1].Value : "UNKNOWN";
-                    System.Diagnostics.Debug.WriteLine($"[THREAD TITLE] '{threadTitle}'");
-                    System.Diagnostics.Debug.WriteLine($"[GAME NAME] '{gameName}'");
-
-                    // Check if this thread title contains the game name (fuzzy match)
-                    var gameWords = gameName.ToLower().Split(new[] { ' ', ':', '-', '_' }, StringSplitOptions.RemoveEmptyEntries);
-                    var titleLower = threadTitle.ToLower();
-                    int matchedWords = gameWords.Count(word => titleLower.Contains(word));
-                    float matchRatio = (float)matchedWords / gameWords.Length;
-
-                    System.Diagnostics.Debug.WriteLine($"[MATCH CHECK] Game words: {string.Join(", ", gameWords)}");
-                    System.Diagnostics.Debug.WriteLine($"[MATCH RATIO] {matchedWords}/{gameWords.Length} = {matchRatio:P0}");
-
-                    if (matchRatio < 0.5f)
+                // Since ScrapeThread doesn't exist, use SearchAndScrapeGame again with the game name
+                var gameInfo = await rinScraper.SearchAndScrapeGame(gameName);
+                if (gameInfo != null)
+                {
+                    return new RinCleanInfo
                     {
-                        System.Diagnostics.Debug.WriteLine($"[WARNING] Thread title doesn't match game name well! Continuing anyway...");
-                    }
-
-                    // Check if it's in Main Forum (good sign)
-                    bool isMainForum = response.Contains("Main Forum") || response.Contains("viewforum.php?f=10");
-                    System.Diagnostics.Debug.WriteLine($"[FORUM] Is in Main Forum: {isMainForum}");
-
-                    // Extract page count from pagination
-                    var pageMatch = Regex.Match(response, @"Page \d+ of (\d+)");
-                    int totalPages = 1;
-                    if (pageMatch.Success)
-                    {
-                        totalPages = int.Parse(pageMatch.Groups[1].Value);
-                    }
-                    System.Diagnostics.Debug.WriteLine($"[PAGES] Thread has {totalPages} total pages");
-
-                    // Check if we're already on the last page (URL might have &start=)
-                    bool alreadyOnLastPage = threadUrl.Contains("&start=");
-
-                    if (!alreadyOnLastPage && totalPages > 1)
-                    {
-                        // Jump to the last page immediately
-                        var lastPageStart = (totalPages - 1) * 15;
-                        var lastPageUrl = threadUrl.Contains("?")
-                            ? $"{threadUrl}&start={lastPageStart}"
-                            : $"{threadUrl}?start={lastPageStart}";
-
-                        System.Diagnostics.Debug.WriteLine($"[JUMP] Going directly to last page: {lastPageUrl}");
-                        response = await client.GetStringAsync(lastPageUrl);
-                        System.Diagnostics.Debug.WriteLine($"[LOADED] Now on page {totalPages}");
-                    }
-                    else if (alreadyOnLastPage)
-                    {
-                        System.Diagnostics.Debug.WriteLine($"[OPTIMIZED] Already on last page from search results!");
-                    }
-
-                    // Check up to 20 pages backwards - if nothing in 20 pages, they REALLY need our files!
-                    int maxPagesToCheck = 20;
-                    int pagesChecked = 0;
-                    string currentPageContent = response;
-
-                    System.Diagnostics.Debug.WriteLine($"[SCAN] Will check up to {maxPagesToCheck} pages for clean files");
-
-                    while (pagesChecked < maxPagesToCheck)
-                    {
-                        pagesChecked++;
-                        System.Diagnostics.Debug.WriteLine($"\n[PAGE CHECK {pagesChecked}/{maxPagesToCheck}]");
-
-                        string pageContent = currentPageContent;
-
-                        // Look for posts containing "Clean Files" (case insensitive)
-                        var postDivs = Regex.Matches(pageContent,
-                            @"<div class=""postbody"">.*?</div>\s*</div>\s*</div>",
-                            RegexOptions.IgnoreCase | RegexOptions.Singleline);
-
-                        System.Diagnostics.Debug.WriteLine($"[POSTS] Found {postDivs.Count} posts on this page");
-
-                        int postNum = 0;
-                        foreach (Match postDiv in postDivs)
-                        {
-                            postNum++;
-                            var postContent = postDiv.Value;
-
-                            // Extract who posted it
-                            var userMatch = Regex.Match(postContent, @"<strong>([^<]+)</strong>");
-                            string poster = userMatch.Success ? userMatch.Groups[1].Value : "Unknown";
-
-                            // Look for Clean Files OR Version posts (like "Barony [Win64] [Branch: Public] (Clean Steam Files)")
-                            bool hasCleanFiles = Regex.IsMatch(postContent,
-                                @"(Clean\s*(Steam\s*)?Files?)|(\(Clean\s*Steam\s*Files\))",
-                                RegexOptions.IgnoreCase);
-
-                            // Also check for version format like shown in the screenshot
-                            bool hasVersionFormat = Regex.IsMatch(postContent,
-                                @"Version:\s*\w+\s*\d+,\s*\d{4}",
-                                RegexOptions.IgnoreCase);
-
-                            // Check for the RIN hidden link format
-                            bool hasHiddenLinks = postContent.Contains("[[Please login to see this link.]]") ||
-                                                postContent.Contains("Please login to see this") ||
-                                                postContent.Contains("login to see");
-
-                            // Count how many links
-                            int linkCount = Regex.Matches(postContent, @"\[\[Please login").Count;
-
-                            if (hasCleanFiles || hasVersionFormat || hasHiddenLinks)
-                            {
-                                System.Diagnostics.Debug.WriteLine($"  [POST {postNum}] by {poster}:");
-                                System.Diagnostics.Debug.WriteLine($"    Clean Files text: {hasCleanFiles}");
-                                System.Diagnostics.Debug.WriteLine($"    Version format: {hasVersionFormat}");
-                                System.Diagnostics.Debug.WriteLine($"    Hidden links: {hasHiddenLinks} (count: {linkCount})");
-
-                                // Show a snippet of the post
-                                var textOnly = Regex.Replace(postContent, "<[^>]+>", " ").Trim();
-                                textOnly = Regex.Replace(textOnly, @"\s+", " ");
-                                if (textOnly.Length > 300)
-                                    textOnly = textOnly.Substring(0, 300) + "...";
-                                System.Diagnostics.Debug.WriteLine($"    Preview: {textOnly}");
-                            }
-
-                            // We found clean files if we have the text AND links, OR if we have the version format
-                            if ((hasCleanFiles && hasHiddenLinks) || hasVersionFormat)
-                            {
-                                System.Diagnostics.Debug.WriteLine($"    [MATCH!] This post has both Clean Files AND hidden links!");
-
-                                string buildId = null;
-
-                                // Look for Build number in multiple formats
-                                System.Diagnostics.Debug.WriteLine($"    [BUILD SEARCH] Looking for build numbers...");
-
-                                // Format 1: "Build 18871170" or "[Build 18871170]"
-                                var buildMatch = Regex.Match(postContent,
-                                    @"\[?Build\s*[:=]?\s*(\d{5,})\]?",
-                                    RegexOptions.IgnoreCase);
-
-                                if (buildMatch.Success)
-                                {
-                                    buildId = buildMatch.Groups[1].Value;
-                                    System.Diagnostics.Debug.WriteLine($"    [FOUND] Build number: {buildId}");
-                                }
-
-                                // Format 2: Look for "Uploaded version:" followed by date and build
-                                if (string.IsNullOrEmpty(buildId))
-                                {
-                                    var uploadMatch = Regex.Match(postContent,
-                                        @"Uploaded\s*version:\s*[^\[]+\[Build\s*(\d{5,})\]",
-                                        RegexOptions.IgnoreCase);
-                                    if (uploadMatch.Success)
-                                    {
-                                        buildId = uploadMatch.Groups[1].Value;
-                                        System.Diagnostics.Debug.WriteLine($"    [FOUND] Build from 'Uploaded version': {buildId}");
-                                    }
-                                }
-
-                                // Format 3: Standalone large number (7+ digits)
-                                if (string.IsNullOrEmpty(buildId))
-                                {
-                                    var standaloneMatch = Regex.Match(postContent, @"\b(\d{7,})\b");
-                                    if (standaloneMatch.Success)
-                                    {
-                                        buildId = standaloneMatch.Groups[1].Value;
-                                        System.Diagnostics.Debug.WriteLine($"    [FOUND] Standalone build number: {buildId}");
-                                    }
-                                }
-                                    buildMatch = Regex.Match(postContent,
-                                        @"(?:Version|v\.?)\s*[:=]?\s*(\d{5,})",
-                                        RegexOptions.IgnoreCase);
-
-                                    if (buildMatch.Success)
-                                    {
-                                        buildId = buildMatch.Groups[1].Value;
-                                        System.Diagnostics.Debug.WriteLine($"    [FOUND] Build number via 'Version' pattern: {buildId}");
-                                    }
-                                    else
-                                    {
-                                        System.Diagnostics.Debug.WriteLine($"    [NOT FOUND] No 'Version' pattern");
-
-                                        // Last resort: Find ANY sequence of 5+ digits
-                                        System.Diagnostics.Debug.WriteLine($"    [BUILD SEARCH] Method 3: Looking for ANY 5+ digit number...");
-                                        var allNumbers = Regex.Matches(postContent, @"\b(\d{5,})\b");
-                                        System.Diagnostics.Debug.WriteLine($"    [NUMBERS FOUND] {allNumbers.Count} numbers with 5+ digits");
-
-                                        foreach (Match numMatch in allNumbers)
-                                        {
-                                            System.Diagnostics.Debug.WriteLine($"      - {numMatch.Groups[1].Value}");
-                                        }
-
-                                        if (allNumbers.Count > 0)
-                                        {
-                                            buildId = allNumbers[0].Groups[1].Value;
-                                            System.Diagnostics.Debug.WriteLine($"    [USING] First number found: {buildId}");
-                                        }
-                                        else
-                                        {
-                                            System.Diagnostics.Debug.WriteLine($"    [FAILED] No build number found at all!");
-                                        }
-                                    }
-                                }
-
-                                // Extract post date - look for the post timestamp
-                                var dateMatch = Regex.Match(postContent,
-                                    @"Posted:\s*</span>\s*<span[^>]*>([^<]+)</span>",
-                                    RegexOptions.IgnoreCase);
-
-                                DateTime postDate = DateTime.Now;
-                                if (dateMatch.Success)
-                                {
-                                    string dateStr = dateMatch.Groups[1].Value.Trim();
-                                    // Handle RIN date formats like "Mon Jun 14, 2021 3:21 pm"
-                                    dateStr = Regex.Replace(dateStr, @"\s+", " "); // Normalize spaces
-                                    DateTime.TryParse(dateStr, out postDate);
-                                }
-
-                                System.Diagnostics.Debug.WriteLine($"✅ FOUND CLEAN FILES!");
-                                System.Diagnostics.Debug.WriteLine($"   Build ID: {buildId ?? "NOT FOUND"}");
-                                System.Diagnostics.Debug.WriteLine($"   Post Date: {postDate}");
-                                System.Diagnostics.Debug.WriteLine($"   Post URL: {pageUrl}");
-
-                                return new RinCleanInfo
-                                {
-                                    BuildId = buildId,
-                                    PostDate = postDate,
-                                    PostUrl = threadUrl  // Use the current page URL
-                                };
-                            }
-                        }
-
-                        // If we haven't found clean files and haven't hit max pages, go to previous page
-                        if (pagesChecked < maxPagesToCheck)
-                        {
-                            var prevMatch = Regex.Match(pageContent, @"<a href=""\./?(viewtopic\.php\?[^""]+)""[^>]*>Previous</a>");
-                            if (prevMatch.Success)
-                            {
-                                var prevUrl = $"https://cs.rin.ru/forum/{HttpUtility.HtmlDecode(prevMatch.Groups[1].Value)}";
-                                System.Diagnostics.Debug.WriteLine($"[NAVIGATE] Going to previous page...");
-
-                                // Small delay to not spam
-                                await Task.Delay(1000);
-
-                                currentPageContent = await client.GetStringAsync(prevUrl);
-                            }
-                            else
-                            {
-                                System.Diagnostics.Debug.WriteLine($"[END] No previous page - reached beginning of thread");
-                                break;
-                            }
-                        }
-                    }
-
-                    System.Diagnostics.Debug.WriteLine($"❌ No clean files found after checking {pagesChecked} pages - THEY NEED OUR FILES!");
+                        BuildNumber = gameInfo.BuildNumber,
+                        HasCleanFiles = !string.IsNullOrEmpty(gameInfo.BuildNumber),
+                        Status = gameInfo.Status
+                    };
                 }
-            }
-            catch (HttpRequestException httpEx)
-            {
-                System.Diagnostics.Debug.WriteLine($"❌ HTTP ERROR scraping thread: {httpEx.Message}");
-                System.Diagnostics.Debug.WriteLine($"   Inner exception: {httpEx.InnerException?.Message}");
-            }
-            catch (TaskCanceledException)
-            {
-                System.Diagnostics.Debug.WriteLine($"❌ TIMEOUT scraping thread (30 second timeout)");
+                return null;
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"❌ GENERAL ERROR scraping thread: {ex.GetType().Name}: {ex.Message}");
-                System.Diagnostics.Debug.WriteLine($"   Stack trace: {ex.StackTrace}");
+                System.Diagnostics.Debug.WriteLine($"❌ ERROR scraping thread: {ex.Message}");
             }
-
-            return null; // No clean files found
+            return null;
         }
 
+        // This method was removed due to broken implementation
+        /* Original code had 250+ lines of unreachable code here that was deleted */
         private void UpdateStatusCell(DataGridViewRow row, string localBuild, string rinBuild)
         {
             // Clear any existing styles first

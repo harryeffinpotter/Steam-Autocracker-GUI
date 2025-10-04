@@ -4,6 +4,7 @@ using System.Drawing;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using Timer = System.Windows.Forms.Timer;
 
 namespace SteamAppIdIdentifier
 {
@@ -265,6 +266,7 @@ namespace SteamAppIdIdentifier
             {
                 // Open share dialog
                 // If has requested games, highlight them
+                await Task.CompletedTask; // Placeholder for future async operation
             };
 
             return shareButton;

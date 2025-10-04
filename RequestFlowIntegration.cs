@@ -50,6 +50,7 @@ namespace SteamAppIdIdentifier
         {
             // Call API endpoint
             // For now, mock data
+            await Task.CompletedTask; // Placeholder for future async operation
             return new List<string> { "371660", "418240", "242760" }; // Example AppIDs
         }
 
@@ -204,7 +205,7 @@ namespace SteamAppIdIdentifier
             try
             {
                 // Call API to mark this request as honored
-                await RequestAPI.HonorRequest(appId);
+                await RequestAPI.HonorRequest(appId, "both");
             }
             catch { }
         }

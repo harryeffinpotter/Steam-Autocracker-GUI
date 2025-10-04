@@ -2,8 +2,11 @@ using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
+using System.Net.Http;
+using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using Newtonsoft.Json;
 
 namespace SteamAppIdIdentifier
 {
@@ -129,8 +132,8 @@ namespace SteamAppIdIdentifier
                     AppId = g.AppId,
                     GameName = g.GameName,
                     RequestCount = g.RequestCount,
-                    FirstRequested = g.FirstRequested,
-                    RequestType = g.RequestType
+                    FirstRequested = g.LastRequested ?? DateTime.UtcNow.AddDays(-7), // Use LastRequested or default to 7 days ago
+                    RequestType = "Both" // Default since RequestAPI.TopRequestedGame doesn't have this
                 }).ToList();
 
                 RefreshGamesList();
@@ -444,24 +447,9 @@ namespace SteamAppIdIdentifier
         }
     }
 
-    // Extension to RequestAPI for top requested games and admin functions
+    // Extension to RequestAPI for admin functions
     public static partial class RequestAPI
     {
-        public static async Task<List<RequestedGame>> GetTopRequestedGames(int limit = 20)
-        {
-            try
-            {
-                var response = await client.GetAsync($"{API_BASE}/requests/top?limit={limit}");
-                if (response.IsSuccessStatusCode)
-                {
-                    var json = await response.Content.ReadAsStringAsync();
-                    return JsonConvert.DeserializeObject<List<RequestedGame>>(json);
-                }
-            }
-            catch { }
-            return new List<RequestedGame>();
-        }
-
         public static async Task<bool> RemoveGameRequests(string appId, string reason)
         {
             try

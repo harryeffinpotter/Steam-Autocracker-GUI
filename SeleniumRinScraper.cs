@@ -196,8 +196,8 @@ public class SeleniumRinScraper
             foreach (var post in posts)
             {
                 var text = post.Text;
-                if (text.Contains("Clean Files", StringComparison.OrdinalIgnoreCase) ||
-                    text.Contains("Clean Steam Files", StringComparison.OrdinalIgnoreCase))
+                if (text.IndexOf("Clean Files", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                    text.IndexOf("Clean Steam Files", StringComparison.OrdinalIgnoreCase) >= 0)
                 {
                     // Extract build number
                     var buildMatch = System.Text.RegularExpressions.Regex.Match(text, @"Build\s*(\d{5,})", System.Text.RegularExpressions.RegexOptions.IgnoreCase);

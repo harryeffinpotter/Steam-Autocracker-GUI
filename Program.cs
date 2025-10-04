@@ -11,7 +11,7 @@ namespace SteamAppIdIdentifier
     internal static class Program
     {
         public static Mutex mutex;
-        public static SteamAppId form;
+        public static APPID.SteamAppId form;
         public static string[] args2;
         /// <summary>
         /// The main entry point for the application.
@@ -20,6 +20,10 @@ namespace SteamAppIdIdentifier
         public static void Main(string[] args)
         {
             ServicePointManager.SecurityProtocol = (SecurityProtocolType)3072;
+
+            // Extract embedded _bin files on first run
+            ResourceExtractor.ExtractBinFiles();
+
             try
             {
 

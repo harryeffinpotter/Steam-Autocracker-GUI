@@ -476,8 +476,8 @@ namespace SteamAppIdIdentifier
 
                 // Check if it's likely one of our backups (game exe or steam_api dll)
                 if (originalName.EndsWith(".exe", StringComparison.OrdinalIgnoreCase) ||
-                    originalName.Contains("steam_api", StringComparison.OrdinalIgnoreCase) ||
-                    originalName.Contains("steamclient", StringComparison.OrdinalIgnoreCase))
+                    originalName.IndexOf("steam_api", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                    originalName.IndexOf("steamclient", StringComparison.OrdinalIgnoreCase) >= 0)
                 {
                     return true; // We have backups we can restore
                 }

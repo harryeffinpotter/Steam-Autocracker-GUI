@@ -364,6 +364,11 @@ namespace SteamAppIdIdentifier
             return _storedData?.HonorScore ?? 0;
         }
 
+        public static string GetStoredHWID()
+        {
+            return _userId ?? _currentHWID ?? GenerateHWID();
+        }
+
         public static async Task<bool> IncrementHonor(int points = 1)
         {
             if (_storedData != null)
@@ -485,7 +490,7 @@ namespace SteamAppIdIdentifier
             }
         }
 
-        public static async Task<bool> CompleteUpload(string appId, string uploadType, string uploadUrl)
+        public static async Task<bool> CompleteUpload(string appId, string uploadType, string uploadUrl, long fileSize = 0)
         {
             try
             {
@@ -499,15 +504,17 @@ namespace SteamAppIdIdentifier
                     uploadUrl = uploadUrl,
                     userId = HWIDManager.GetUserId(),
                     hwid = HWIDManager.GetHWID(),
-                    timestamp = DateTime.UtcNow
+                    timestamp = DateTime.UtcNow,
+                    fileSize = fileSize > 0 ? fileSize : 1048576, // Default 1MB if not provided
+                    uploadMethod = "pydrive"
                 };
 
                 var json = JsonConvert.SerializeObject(completion);
                 var content = new StringContent(json, Encoding.UTF8, "application/json");
 
-                // Use the special endpoint that checks and removes from requests
+                // Use the correct API endpoint path - no query parameters
                 var response = await client.PostAsync(
-                    $"https://pydrive.harryeffingpotter.com/sacgui/uploadcomplete?type={uploadType}&appid={appId}",
+                    $"{API_BASE}/uploadcomplete",
                     content
                 );
 

@@ -15,6 +15,9 @@
 		<BaseOutputPath>bin\</BaseOutputPath>
 		<OutputPath>bin\$(Configuration)\SACGUI\</OutputPath>
 		<AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+		<!-- Ensure all dependencies are embedded -->
+		<CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+		<IncludeAllContentForSelfExtract>true</IncludeAllContentForSelfExtract>
 	</PropertyGroup>
 
 	<ItemGroup>
@@ -34,7 +37,12 @@
 		</EmbeddedResource>
 		<Content Include="sac.ico" />
 		<Content Include="FodyWeavers.xml" />
-		<Content Include="_bin\**" CopyToOutputDirectory="Always" />
+		<EmbeddedResource Include="_bin\**\*.*">
+			<LogicalName>_bin.%(RecursiveDir)%(Filename)%(Extension)</LogicalName>
+		</EmbeddedResource>
+		<Compile Remove="releases\**" />
+		<None Remove="releases\**" />
+		<EmbeddedResource Include="EnhancedShareWindow.resx" />
 		<EmbeddedResource Include="Form1.resx">
 			<DependentUpon>Form1.cs</DependentUpon>
 			<LogicalName>APPID.SteamAppId.resources</LogicalName>
@@ -43,14 +51,15 @@
 			<Generator>ResXFileCodeGenerator</Generator>
 			<LastGenOutput>Resources.Designer.cs</LastGenOutput>
 		</EmbeddedResource>
+		<EmbeddedResource Include="RequestsWindow.resx" />
 	</ItemGroup>
 
 	<ItemGroup>
 		<PackageReference Include="CliWrap" Version="3.9.0" />
 		<PackageReference Include="HtmlAgilityPack" Version="1.12.3" />
+		<PackageReference Include="PuppeteerSharp" Version="20.2.2" />
 		<PackageReference Include="System.Data.DataSetExtensions" Version="4.5.0" />
 		<PackageReference Include="Costura.Fody" Version="6.0.0">
-			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 			<PrivateAssets>all</PrivateAssets>
 		</PackageReference>
 		<PackageReference Include="Fody" Version="6.9.3">

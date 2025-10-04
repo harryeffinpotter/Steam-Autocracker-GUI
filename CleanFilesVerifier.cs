@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
+using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace SteamAppIdIdentifier
@@ -45,8 +46,8 @@ namespace SteamAppIdIdentifier
 
                     // Check if it's a backed up executable or steam API dll
                     if (originalName.EndsWith(".exe", StringComparison.OrdinalIgnoreCase) ||
-                        originalName.Contains("steam_api", StringComparison.OrdinalIgnoreCase) ||
-                        originalName.Contains("steamclient", StringComparison.OrdinalIgnoreCase))
+                        originalName.IndexOf("steam_api", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                        originalName.IndexOf("steamclient", StringComparison.OrdinalIgnoreCase) >= 0)
                     {
                         result.IsClean = false;
                         result.HasBackupFiles = true;
@@ -326,24 +327,29 @@ namespace SteamAppIdIdentifier
             try
             {
                 // Run verification
-                var result = CleanFilesVerifier.VerifyCleanInstallation(gamePath);
+                var isClean = await Task.Run(() => {
+                    var result = CleanFilesVerifier.VerifyCleanInstallation(gamePath);
 
-                if (!result.IsClean)
-                {
-                    parentForm.Cursor = Cursors.Default;
-
-                    // Show contamination dialog
-                    if (CleanFilesVerifier.ShowContaminationDialog(result, gameName))
+                    if (!result.IsClean)
                     {
-                        // Open Steam verification page
-                        CleanFilesVerifier.OpenSteamVerifyPage(appId);
+                        parentForm.Invoke(new Action(() => {
+                            parentForm.Cursor = Cursors.Default;
+
+                            // Show contamination dialog
+                            if (CleanFilesVerifier.ShowContaminationDialog(result, gameName))
+                            {
+                                // Open Steam verification page
+                                CleanFilesVerifier.OpenSteamVerifyPage(appId);
+                            }
+                        }));
+
+                        return false;
                     }
+                    return true;
+                });
 
-                    return false;
-                }
-
-                // Files are clean, proceed with share
-                return true;
+                // Return the verification result
+                return isClean;
             }
             finally
             {

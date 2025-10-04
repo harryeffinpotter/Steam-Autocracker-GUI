@@ -3,9 +3,13 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
 using System.Linq;
+using System.Net.Http;
+using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.Diagnostics;
+using Newtonsoft.Json;
+using Timer = System.Windows.Forms.Timer;
 
 namespace SteamAppIdIdentifier
 {
@@ -15,7 +19,6 @@ namespace SteamAppIdIdentifier
         private Dictionary<string, RequestAPI.RequestedGame> allRequests;
         private Dictionary<string, SteamGame> userGames;
         private Dictionary<string, string> userActiveRequests; // Track user's active requests
-        private Timer pulseTimer;
         private Form mainForm;
         private Label lblHeader;
         private Label lblUserStats;
@@ -672,8 +675,9 @@ namespace SteamAppIdIdentifier
                 // Notify backend
                 string uploadType = cracked ? "cracked" : "clean";
                 string uploadUrl = $"https://example.com/{Guid.NewGuid()}";
+                long fileSize = 1048576; // Default 1MB for test/placeholder code
 
-                await RequestAPIEnhanced.CompleteUpload(appId, uploadType, uploadUrl);
+                await RequestAPIEnhanced.CompleteUpload(appId, uploadType, uploadUrl, fileSize);
 
                 row.Cells[btnColumn].Value = "✅ Shared!";
                 row.Cells[btnColumn].Style.BackColor = Color.FromArgb(0, 100, 0);
@@ -836,47 +840,8 @@ namespace SteamAppIdIdentifier
             return new List<RequestedGame>();
         }
 
-        public static async Task<bool> SubmitGameRequest(string appId, string gameName, string requestType)
-        {
-            try
-            {
-                // Check if user already has a request for this game
-                var userRequests = await GetUserActiveRequests(HWIDManager.GetUserId());
-                if (userRequests.Any(r => r.AppId == appId))
-                {
-                    return false; // Already requested
-                }
-
-                // Submit new request
-                var request = new
-                {
-                    appId = appId,
-                    gameName = gameName,
-                    requestType = requestType,
-                    userId = HWIDManager.GetUserId(),
-                    hwid = HWIDManager.GetHWID(),
-                    timestamp = DateTime.UtcNow
-                };
-
-                var json = JsonConvert.SerializeObject(request);
-                var content = new StringContent(json, Encoding.UTF8, "application/json");
-
-                var response = await client.PostAsync($"{API_BASE}/requests", content);
-
-                if (response.IsSuccessStatusCode)
-                {
-                    await HWIDManager.RecordRequest(appId, requestType);
-                    return true;
-                }
-
-                // Check if it's because they already requested
-                if (response.StatusCode == System.Net.HttpStatusCode.Conflict)
-                {
-                    return false;
-                }
-            }
-            catch { }
-            return false;
-        }
+        // Method moved to RequestAPI.cs to avoid duplication
+        // public static async Task<bool> SubmitGameRequest(string appId, string gameName, string requestType)
+        // { /* Implementation in RequestAPI.cs */ }
     }
 }
