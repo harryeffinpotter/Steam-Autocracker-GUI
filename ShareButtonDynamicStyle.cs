@@ -181,47 +181,6 @@ namespace SteamAppIdIdentifier
             return requested;
         }
 
-        protected override void OnMouseEnter(EventArgs e)
-        {
-            base.OnMouseEnter(e);
-
-            if (requestCount > 0)
-            {
-                // Make it even brighter on hover
-                if (currentStatus == ShareStatus.HasRequested)
-                {
-                    this.BackColor = Color.FromArgb(255, 69, 180); // Lighter pink
-                }
-                else if (currentStatus == ShareStatus.Urgent)
-                {
-                    this.BackColor = Color.FromArgb(255, 50, 50); // Brighter red
-                }
-            }
-            else
-            {
-                this.BackColor = Color.FromArgb(0, 180, 255); // Brighter blue
-            }
-        }
-
-        protected override void OnMouseLeave(EventArgs e)
-        {
-            base.OnMouseLeave(e);
-
-            // Restore original colors
-            if (currentStatus == ShareStatus.HasRequested)
-            {
-                this.BackColor = Color.FromArgb(255, 20, 147);
-            }
-            else if (currentStatus == ShareStatus.Urgent)
-            {
-                this.BackColor = Color.FromArgb(255, 0, 50);
-            }
-            else
-            {
-                this.BackColor = Color.FromArgb(0, 150, 255);
-            }
-        }
-
         private class RequestedGameInfo
         {
             public string AppId { get; set; }
