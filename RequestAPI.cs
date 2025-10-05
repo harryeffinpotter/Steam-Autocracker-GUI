@@ -82,13 +82,13 @@ namespace SteamAppIdIdentifier
         // Overload for backward compatibility
         public static async Task<bool> SubmitRequest(string userId, string appId, string gameName)
         {
-            return await SubmitRequest(appId, gameName, userId, HWIDManager.GetHWID());
+            return await SubmitRequest(appId, gameName, "anonymous", "anonymous");
         }
 
         // Overload for backward compatibility
         public static async Task<bool> SubmitRequest(string appId, string gameName)
         {
-            return await SubmitRequest(appId, gameName, HWIDManager.GetUserId(), HWIDManager.GetHWID());
+            return await SubmitRequest(appId, gameName, "anonymous", "anonymous");
         }
 
         // Submit a game request with type (Clean, Cracked, Both)
@@ -230,7 +230,7 @@ namespace SteamAppIdIdentifier
         // Overload for backward compatibility
         public static async Task RemoveRequest(string userId, string appId)
         {
-            await RemoveRequest(appId, userId, HWIDManager.GetHWID());
+            await RemoveRequest(appId, "anonymous", "anonymous");
         }
 
         // Get global stats

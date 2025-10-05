@@ -3,6 +3,7 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
+using System.Threading;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -85,7 +86,7 @@ namespace SAC_GUI
             }
         }
 
-        public async Task<UploadResult> UploadFileAsync(string filePath, IProgress<double> progressCallback = null)
+        public async Task<UploadResult> UploadFileAsync(string filePath, IProgress<double> progressCallback = null, IProgress<string> statusCallback = null)
         {
             try
             {
@@ -112,48 +113,90 @@ namespace SAC_GUI
                 System.Diagnostics.Debug.WriteLine($"[1FICHIER] File exists: {File.Exists(filePath)}");
                 System.Diagnostics.Debug.WriteLine($"[1FICHIER] File size: {new FileInfo(filePath).Length}");
 
+                // Create boundary and calculate total content length
+                string boundary = "----WebKitFormBoundary" + Guid.NewGuid().ToString("N");
+                var encoding = System.Text.Encoding.UTF8;
+
+                var domainHeader = encoding.GetBytes($"--{boundary}\r\nContent-Disposition: form-data; name=\"domain\"\r\n\r\n0\r\n");
+                var fileHeader = encoding.GetBytes($"--{boundary}\r\nContent-Disposition: form-data; name=\"file[]\"; filename=\"{Path.GetFileName(filePath)}\"\r\nContent-Type: application/octet-stream\r\n\r\n");
+                var closingBoundary = encoding.GetBytes($"\r\n--{boundary}--\r\n");
+
+                long contentLength = domainHeader.Length + fileHeader.Length + fileSize + closingBoundary.Length;
+
                 // Manual HTTP request to exactly match Python's requests library
                 var request = (HttpWebRequest)WebRequest.Create(uploadUrl);
                 request.Method = "POST";
                 request.AllowAutoRedirect = false;
                 request.Headers.Add("Authorization", $"Bearer {API_KEY}");
-
-                // Create boundary
-                string boundary = "----WebKitFormBoundary" + Guid.NewGuid().ToString("N");
+                request.Timeout = Timeout.Infinite; // No timeout for large file uploads
+                request.ReadWriteTimeout = Timeout.Infinite; // No timeout for reading/writing
+                request.AllowWriteStreamBuffering = false; // Stream directly without buffering (critical for large files)
+                request.ContentLength = contentLength; // Required when AllowWriteStreamBuffering = false
                 request.ContentType = $"multipart/form-data; boundary={boundary}";
+                request.SendChunked = false; // Use content-length instead of chunked encoding
 
-                progressCallback?.Report(0.1);
+                progressCallback?.Report(0.01); // Starting upload
 
                 using (var requestStream = request.GetRequestStream())
                 {
-                    var encoding = System.Text.Encoding.UTF8;
-
                     // Write domain field
-                    var domainHeader = encoding.GetBytes($"--{boundary}\r\nContent-Disposition: form-data; name=\"domain\"\r\n\r\n0\r\n");
                     requestStream.Write(domainHeader, 0, domainHeader.Length);
 
                     // Write file field header
-                    var fileHeader = encoding.GetBytes($"--{boundary}\r\nContent-Disposition: form-data; name=\"file[]\"; filename=\"{Path.GetFileName(filePath)}\"\r\nContent-Type: application/octet-stream\r\n\r\n");
                     requestStream.Write(fileHeader, 0, fileHeader.Length);
 
-                    // Write file content
-                    var fileBytes = File.ReadAllBytes(filePath);
-                    requestStream.Write(fileBytes, 0, fileBytes.Length);
+                    // Write file content by streaming (supports files > 2GB)
+                    // This now ACTUALLY uploads to network because AllowWriteStreamBuffering = false
+                    long totalBytesWritten = 0;
+                    var startTime = DateTime.Now;
+                    var lastUpdateTime = DateTime.Now;
+                    long lastBytesWritten = 0;
 
-                    System.Diagnostics.Debug.WriteLine($"[1FICHIER] Wrote {fileBytes.Length} bytes to request stream");
+                    using (var fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read, 81920))
+                    {
+                        byte[] buffer = new byte[81920]; // 80KB buffer
+                        int bytesRead;
+                        while ((bytesRead = fileStream.Read(buffer, 0, buffer.Length)) > 0)
+                        {
+                            requestStream.Write(buffer, 0, bytesRead);
+                            totalBytesWritten += bytesRead;
+
+                            // Calculate upload speed every second
+                            var now = DateTime.Now;
+                            var timeSinceLastUpdate = (now - lastUpdateTime).TotalSeconds;
+
+                            if (timeSinceLastUpdate >= 1.0) // Update every second
+                            {
+                                var bytesThisSecond = totalBytesWritten - lastBytesWritten;
+                                var speedMBps = (bytesThisSecond / (1024.0 * 1024.0)) / timeSinceLastUpdate;
+                                var totalElapsed = (now - startTime).TotalSeconds;
+                                var avgSpeedMBps = (totalBytesWritten / (1024.0 * 1024.0)) / totalElapsed;
+                                var bytesRemaining = fileSize - totalBytesWritten;
+                                var etaSeconds = avgSpeedMBps > 0 ? (bytesRemaining / (1024.0 * 1024.0)) / avgSpeedMBps : 0;
+
+                                // Report status with speed info
+                                statusCallback?.Report($"Uploading: {speedMBps:F2} MB/s (Avg: {avgSpeedMBps:F2} MB/s) - ETA: {TimeSpan.FromSeconds(etaSeconds):hh\\:mm\\:ss}");
+
+                                lastUpdateTime = now;
+                                lastBytesWritten = totalBytesWritten;
+                            }
+
+                            // Report progress during ACTUAL network upload (0% to 95%)
+                            double uploadProgress = 0.95 * ((double)totalBytesWritten / fileSize);
+                            progressCallback?.Report(uploadProgress);
+                        }
+                    }
+
+                    System.Diagnostics.Debug.WriteLine($"[1FICHIER] Wrote {totalBytesWritten} bytes to network stream");
 
                     // Write closing boundary
-                    var closingBoundary = encoding.GetBytes($"\r\n--{boundary}--\r\n");
                     requestStream.Write(closingBoundary, 0, closingBoundary.Length);
 
-                    // Debug: show exactly what we're sending
-                    var debugBody = encoding.GetString(domainHeader) + $"[{fileBytes.Length} file bytes]" + encoding.GetString(closingBoundary);
-                    System.Diagnostics.Debug.WriteLine($"[1FICHIER] Multipart body structure:\n{debugBody}");
+                    System.Diagnostics.Debug.WriteLine($"[1FICHIER] Multipart body structure: domain + file ({totalBytesWritten} bytes) + closing boundary");
                 }
 
                 System.Diagnostics.Debug.WriteLine($"[1FICHIER] Sending request to {uploadUrl}");
-
-                progressCallback?.Report(0.5);
+                progressCallback?.Report(0.95);  // Upload complete, waiting for server response
 
                 HttpWebResponse response = null;
                 try
@@ -162,10 +205,18 @@ namespace SAC_GUI
                 }
                 catch (WebException ex)
                 {
+                    System.Diagnostics.Debug.WriteLine($"[1FICHIER] WebException during upload: {ex.Message}");
+                    System.Diagnostics.Debug.WriteLine($"[1FICHIER] WebException Status: {ex.Status}");
                     response = (HttpWebResponse)ex.Response;
                 }
 
-                progressCallback?.Report(0.9);
+                if (response == null)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[1FICHIER] ERROR: Response is null after upload");
+                    throw new Exception("Upload failed: No response from server. The upload may have succeeded but we couldn't get confirmation. Check your 1fichier account.");
+                }
+
+                progressCallback?.Report(0.98);  // Got response from server
 
                 System.Diagnostics.Debug.WriteLine($"[1FICHIER] Upload response status: {response.StatusCode}");
 
@@ -198,7 +249,7 @@ namespace SAC_GUI
                     if (!string.IsNullOrEmpty(uploadId))
                     {
                         // Step 3: Get download links
-                        var downloadInfo = await GetDownloadLinksAsync(serverInfo.Url, uploadId);
+                        var downloadInfo = await GetDownloadLinksAsync(serverInfo.Url, uploadId, statusCallback);
 
                         progressCallback?.Report(1.0); // Complete
 
@@ -285,59 +336,102 @@ namespace SAC_GUI
             }
         }
 
-        private async Task<DownloadInfo> GetDownloadLinksAsync(string serverUrl, string uploadId)
+        private async Task<DownloadInfo> GetDownloadLinksAsync(string serverUrl, string uploadId, IProgress<string> statusCallback = null)
         {
-            try
+            // Retry for up to 5 minutes to wait for antivirus scan
+            int maxRetries = 10; // 10 retries x 30 seconds = 5 minutes
+            int retryDelay = 30000; // 30 seconds
+
+            for (int attempt = 1; attempt <= maxRetries; attempt++)
             {
-                var endUrl = $"https://{serverUrl}/end.pl?xid={uploadId}";
-                System.Diagnostics.Debug.WriteLine($"[1FICHIER] Getting download links from: {endUrl}");
-
-                var request = new HttpRequestMessage(HttpMethod.Get, endUrl);
-                request.Headers.Add("JSON", "1");
-
-                var response = await httpClient.SendAsync(request);
-
-                if (response.IsSuccessStatusCode)
+                try
                 {
-                    var contentType = response.Content.Headers.ContentType?.MediaType;
-                    var responseContent = await response.Content.ReadAsStringAsync();
+                    var endUrl = $"https://{serverUrl}/end.pl?xid={uploadId}";
+                    System.Diagnostics.Debug.WriteLine($"[1FICHIER] Getting download links from: {endUrl} (attempt {attempt}/{maxRetries})");
 
-                    if (contentType != null && contentType.Contains("application/json"))
+                    var request = new HttpRequestMessage(HttpMethod.Get, endUrl);
+                    request.Headers.Add("JSON", "1");
+
+                    var response = await httpClient.SendAsync(request);
+
+                    if (response.IsSuccessStatusCode)
                     {
-                        var data = JObject.Parse(responseContent);
-                        var links = data["links"]?.FirstOrDefault();
+                        var contentType = response.Content.Headers.ContentType?.MediaType;
+                        var responseContent = await response.Content.ReadAsStringAsync();
 
-                        if (links != null)
+                        // Check if still waiting for antivirus scan
+                        if (responseContent.Contains("Veuillez patienter") || responseContent.Contains("Please wait"))
                         {
-                            var downloadUrl = links["download"]?.ToString();
-                            System.Diagnostics.Debug.WriteLine($"[1FICHIER] Download URL: {downloadUrl}");
-
-                            return new DownloadInfo
+                            statusCallback?.Report($"1fichier is still processing upload... retrying ({attempt}/{maxRetries})");
+                            System.Diagnostics.Debug.WriteLine($"[1FICHIER] File still being scanned by antivirus, waiting {retryDelay/1000}s before retry...");
+                            if (attempt < maxRetries)
                             {
-                                DownloadUrl = downloadUrl,
-                                FileName = links["filename"]?.ToString(),
-                                Size = links["size"]?.ToObject<long>() ?? 0
-                            };
+                                await Task.Delay(retryDelay);
+                                continue;
+                            }
+                            else
+                            {
+                                System.Diagnostics.Debug.WriteLine($"[1FICHIER] Antivirus scan timeout after {maxRetries} attempts");
+                                statusCallback?.Report("1fichier processing timed out");
+                                return null;
+                            }
+                        }
+
+                        if (contentType != null && contentType.Contains("application/json"))
+                        {
+                            var data = JObject.Parse(responseContent);
+                            var links = data["links"]?.FirstOrDefault();
+
+                            if (links != null)
+                            {
+                                var downloadUrl = links["download"]?.ToString();
+                                System.Diagnostics.Debug.WriteLine($"[1FICHIER] Download URL: {downloadUrl}");
+
+                                return new DownloadInfo
+                                {
+                                    DownloadUrl = downloadUrl,
+                                    FileName = links["filename"]?.ToString(),
+                                    Size = links["size"]?.ToObject<long>() ?? 0
+                                };
+                            }
+                        }
+                        else
+                        {
+                            // Try to parse HTML response for download link
+                            System.Diagnostics.Debug.WriteLine($"[1FICHIER] Non-JSON response, trying to parse HTML");
+                            // For now, construct a basic download URL
+                            var downloadUrl = $"https://1fichier.com/?{uploadId}";
+                            return new DownloadInfo { DownloadUrl = downloadUrl };
                         }
                     }
-                    else
-                    {
-                        // Try to parse HTML response for download link
-                        System.Diagnostics.Debug.WriteLine($"[1FICHIER] Non-JSON response, trying to parse HTML");
-                        // For now, construct a basic download URL
-                        var downloadUrl = $"https://1fichier.com/?{uploadId}";
-                        return new DownloadInfo { DownloadUrl = downloadUrl };
-                    }
-                }
 
-                System.Diagnostics.Debug.WriteLine($"[1FICHIER] Failed to get download links: {response.StatusCode}");
-                return null;
+                    System.Diagnostics.Debug.WriteLine($"[1FICHIER] Failed to get download links: {response.StatusCode}");
+
+                    // Retry on failure
+                    if (attempt < maxRetries)
+                    {
+                        await Task.Delay(retryDelay);
+                        continue;
+                    }
+
+                    return null;
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[1FICHIER] Error getting download links (attempt {attempt}/{maxRetries}): {ex.Message}");
+
+                    // Retry on exception
+                    if (attempt < maxRetries)
+                    {
+                        await Task.Delay(retryDelay);
+                        continue;
+                    }
+
+                    return null;
+                }
             }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"[1FICHIER] Error getting download links: {ex.Message}");
-                return null;
-            }
+
+            return null;
         }
 
         private class DownloadInfo

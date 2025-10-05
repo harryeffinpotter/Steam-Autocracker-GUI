@@ -2,14 +2,18 @@ using System;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Windows.Forms;
+using System.Runtime.InteropServices;
 
 namespace SteamAutocrackGUI
 {
     public partial class CompressionSettingsForm : Form
     {
+        [DllImport("user32.dll")]
+        private static extern int SetWindowCompositionAttribute(IntPtr hwnd, ref APPID.WindowCompositionAttribData data);
         public string SelectedFormat { get; set; }
         public string SelectedLevel { get; set; }
         public bool RememberChoice { get; set; }
+        public bool UseRinPassword { get; set; }
         private Panel sliderPanel;
         private int sliderValue = 0;
 
@@ -17,21 +21,67 @@ namespace SteamAutocrackGUI
         {
             InitializeComponent();
 
+            // Set icon to match main app
+            try
+            {
+                this.Icon = System.Drawing.Icon.ExtractAssociatedIcon(System.Reflection.Assembly.GetExecutingAssembly().Location);
+            }
+            catch { }
+
             // Set defaults
             zipRadioButton.Checked = true;  // ZIP selected by default
             rememberCheckBox.Checked = false;
+
+            // Load saved password setting and set checkbox state
+            UseRinPassword = APPID.Properties.Settings.Default.UseRinPassword;
+            rinPasswordCheckBox.Checked = UseRinPassword;
 
             // Hide the default trackbar and create custom slider
             levelTrackBar.Visible = false;
             CreateCustomSlider();
             UpdateLevelDescription();
+
+            // Apply acrylic effect
+            this.Load += (s, e) => ApplyAcrylicEffect();
+        }
+
+        private void ApplyAcrylicEffect()
+        {
+            try
+            {
+                // Apply rounded corners (Windows 11)
+                int preference = 2; // DWMWCP_ROUND
+                APPID.NativeMethods.DwmSetWindowAttribute(this.Handle, 33, ref preference, sizeof(int));
+            }
+            catch { }
+
+            try
+            {
+                var accent = new APPID.AccentPolicy();
+                accent.AccentState = 4; // ACCENT_ENABLE_ACRYLICBLURBEHIND
+                accent.AccentFlags = APPID.ThemeConfig.BlurIntensity;
+                accent.GradientColor = APPID.ThemeConfig.AcrylicBlurColor;
+
+                int accentStructSize = Marshal.SizeOf(accent);
+                IntPtr accentPtr = Marshal.AllocHGlobal(accentStructSize);
+                Marshal.StructureToPtr(accent, accentPtr, false);
+
+                var data = new APPID.WindowCompositionAttribData();
+                data.Attribute = 19; // WCA_ACCENT_POLICY
+                data.SizeOfData = accentStructSize;
+                data.Data = accentPtr;
+
+                SetWindowCompositionAttribute(this.Handle, ref data);
+                Marshal.FreeHGlobal(accentPtr);
+            }
+            catch { }
         }
 
         private void CreateCustomSlider()
         {
             sliderPanel = new Panel
             {
-                Location = new Point(85, 83),
+                Location = new Point(55, 95),
                 Size = new Size(270, 40),
                 BackColor = Color.Transparent
             };
@@ -225,6 +275,11 @@ namespace SteamAutocrackGUI
             SelectedFormat = zipRadioButton.Checked ? "ZIP" : "7Z";
             SelectedLevel = sliderValue.ToString();
             RememberChoice = rememberCheckBox.Checked;
+            UseRinPassword = rinPasswordCheckBox.Checked;
+
+            // Save password preference
+            APPID.Properties.Settings.Default.UseRinPassword = UseRinPassword;
+            APPID.Properties.Settings.Default.Save();
 
             this.DialogResult = DialogResult.OK;
             this.Close();
@@ -242,5 +297,7 @@ namespace SteamAutocrackGUI
             UpdateLevelDescription();
             sliderPanel.Invalidate();
         }
+
+
     }
 }

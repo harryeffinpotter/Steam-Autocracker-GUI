@@ -214,7 +214,7 @@
     <value>On</value>
   </data>
   <data name="resinstruccZip.Location" type="System.Drawing.Point, System.Drawing">
-    <value>5, 325</value>
+    <value>2, 327</value>
   </data>
   <data name="resinstruccZip.Size" type="System.Drawing.Size, System.Drawing">
     <value>322, 54</value>
@@ -283,7 +283,268 @@ Enter to select top result.
     <value>mainPanel</value>
   </data>
   <data name="&gt;&gt;tgDisc.ZOrder" xml:space="preserve">
+    <value>7</value>
+  </data>
+  <data name="&gt;&gt;drgdropText.Name" xml:space="preserve">
+    <value>drgdropText</value>
+  </data>
+  <data name="&gt;&gt;drgdropText.Type" xml:space="preserve">
+    <value>System.Windows.Forms.Label, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;drgdropText.Parent" xml:space="preserve">
+    <value>mainPanel</value>
+  </data>
+  <data name="&gt;&gt;drgdropText.ZOrder" xml:space="preserve">
+    <value>0</value>
+  </data>
+  <data name="&gt;&gt;gitHub.Name" xml:space="preserve">
+    <value>gitHub</value>
+  </data>
+  <data name="&gt;&gt;gitHub.Type" xml:space="preserve">
+    <value>System.Windows.Forms.PictureBox, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;gitHub.Parent" xml:space="preserve">
+    <value>mainPanel</value>
+  </data>
+  <data name="&gt;&gt;gitHub.ZOrder" xml:space="preserve">
+    <value>1</value>
+  </data>
+  <data name="&gt;&gt;ShareButton.Name" xml:space="preserve">
+    <value>ShareButton</value>
+  </data>
+  <data name="&gt;&gt;ShareButton.Type" xml:space="preserve">
+    <value>System.Windows.Forms.Button, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;ShareButton.Parent" xml:space="preserve">
+    <value>mainPanel</value>
+  </data>
+  <data name="&gt;&gt;ShareButton.ZOrder" xml:space="preserve">
+    <value>2</value>
+  </data>
+  <data name="&gt;&gt;RequestButton.Name" xml:space="preserve">
+    <value>RequestButton</value>
+  </data>
+  <data name="&gt;&gt;RequestButton.Type" xml:space="preserve">
+    <value>System.Windows.Forms.Button, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;RequestButton.Parent" xml:space="preserve">
+    <value>mainPanel</value>
+  </data>
+  <data name="&gt;&gt;RequestButton.ZOrder" xml:space="preserve">
+    <value>3</value>
+  </data>
+  <data name="&gt;&gt;autoCrackOff.Name" xml:space="preserve">
+    <value>autoCrackOff</value>
+  </data>
+  <data name="&gt;&gt;autoCrackOff.Type" xml:space="preserve">
+    <value>System.Windows.Forms.PictureBox, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;autoCrackOff.Parent" xml:space="preserve">
+    <value>mainPanel</value>
+  </data>
+  <data name="&gt;&gt;autoCrackOff.ZOrder" xml:space="preserve">
+    <value>4</value>
+  </data>
+  <data name="&gt;&gt;autoCrackOn.Name" xml:space="preserve">
+    <value>autoCrackOn</value>
+  </data>
+  <data name="&gt;&gt;autoCrackOn.Type" xml:space="preserve">
+    <value>System.Windows.Forms.PictureBox, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;autoCrackOn.Parent" xml:space="preserve">
+    <value>mainPanel</value>
+  </data>
+  <data name="&gt;&gt;autoCrackOn.ZOrder" xml:space="preserve">
+    <value>5</value>
+  </data>
+  <data name="&gt;&gt;StatusLabel.Name" xml:space="preserve">
+    <value>StatusLabel</value>
+  </data>
+  <data name="&gt;&gt;StatusLabel.Type" xml:space="preserve">
+    <value>System.Windows.Forms.Label, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;StatusLabel.Parent" xml:space="preserve">
+    <value>mainPanel</value>
+  </data>
+  <data name="&gt;&gt;StatusLabel.ZOrder" xml:space="preserve">
     <value>6</value>
+  </data>
+  <data name="&gt;&gt;OpenDir.Name" xml:space="preserve">
+    <value>OpenDir</value>
+  </data>
+  <data name="&gt;&gt;OpenDir.Type" xml:space="preserve">
+    <value>System.Windows.Forms.Button, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;OpenDir.Parent" xml:space="preserve">
+    <value>mainPanel</value>
+  </data>
+  <data name="&gt;&gt;OpenDir.ZOrder" xml:space="preserve">
+    <value>8</value>
+  </data>
+  <data name="&gt;&gt;ZipToShare.Name" xml:space="preserve">
+    <value>ZipToShare</value>
+  </data>
+  <data name="&gt;&gt;ZipToShare.Type" xml:space="preserve">
+    <value>System.Windows.Forms.Button, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;ZipToShare.Parent" xml:space="preserve">
+    <value>mainPanel</value>
+  </data>
+  <data name="&gt;&gt;ZipToShare.ZOrder" xml:space="preserve">
+    <value>9</value>
+  </data>
+  <data name="&gt;&gt;pin.Name" xml:space="preserve">
+    <value>pin</value>
+  </data>
+  <data name="&gt;&gt;pin.Type" xml:space="preserve">
+    <value>System.Windows.Forms.PictureBox, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;pin.Parent" xml:space="preserve">
+    <value>mainPanel</value>
+  </data>
+  <data name="&gt;&gt;pin.ZOrder" xml:space="preserve">
+    <value>10</value>
+  </data>
+  <data name="&gt;&gt;unPin.Name" xml:space="preserve">
+    <value>unPin</value>
+  </data>
+  <data name="&gt;&gt;unPin.Type" xml:space="preserve">
+    <value>System.Windows.Forms.PictureBox, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;unPin.Parent" xml:space="preserve">
+    <value>mainPanel</value>
+  </data>
+  <data name="&gt;&gt;unPin.ZOrder" xml:space="preserve">
+    <value>11</value>
+  </data>
+  <data name="&gt;&gt;currDIrText.Name" xml:space="preserve">
+    <value>currDIrText</value>
+  </data>
+  <data name="&gt;&gt;currDIrText.Type" xml:space="preserve">
+    <value>System.Windows.Forms.Label, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;currDIrText.Parent" xml:space="preserve">
+    <value>mainPanel</value>
+  </data>
+  <data name="&gt;&gt;currDIrText.ZOrder" xml:space="preserve">
+    <value>12</value>
+  </data>
+  <data name="&gt;&gt;dllSelect.Name" xml:space="preserve">
+    <value>dllSelect</value>
+  </data>
+  <data name="&gt;&gt;dllSelect.Type" xml:space="preserve">
+    <value>APPID.TransparentComboBox, SACGUI, Version=1.3.0.0, Culture=neutral, PublicKeyToken=null</value>
+  </data>
+  <data name="&gt;&gt;dllSelect.Parent" xml:space="preserve">
+    <value>mainPanel</value>
+  </data>
+  <data name="&gt;&gt;dllSelect.ZOrder" xml:space="preserve">
+    <value>13</value>
+  </data>
+  <data name="&gt;&gt;lanMultiplayerCheckBox.Name" xml:space="preserve">
+    <value>lanMultiplayerCheckBox</value>
+  </data>
+  <data name="&gt;&gt;lanMultiplayerCheckBox.Type" xml:space="preserve">
+    <value>System.Windows.Forms.CheckBox, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;lanMultiplayerCheckBox.Parent" xml:space="preserve">
+    <value>mainPanel</value>
+  </data>
+  <data name="&gt;&gt;lanMultiplayerCheckBox.ZOrder" xml:space="preserve">
+    <value>14</value>
+  </data>
+  <data name="&gt;&gt;donePic.Name" xml:space="preserve">
+    <value>donePic</value>
+  </data>
+  <data name="&gt;&gt;donePic.Type" xml:space="preserve">
+    <value>System.Windows.Forms.PictureBox, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;donePic.Parent" xml:space="preserve">
+    <value>mainPanel</value>
+  </data>
+  <data name="&gt;&gt;donePic.ZOrder" xml:space="preserve">
+    <value>15</value>
+  </data>
+  <data name="&gt;&gt;startCrackPic.Name" xml:space="preserve">
+    <value>startCrackPic</value>
+  </data>
+  <data name="&gt;&gt;startCrackPic.Type" xml:space="preserve">
+    <value>System.Windows.Forms.PictureBox, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;startCrackPic.Parent" xml:space="preserve">
+    <value>mainPanel</value>
+  </data>
+  <data name="&gt;&gt;startCrackPic.ZOrder" xml:space="preserve">
+    <value>16</value>
+  </data>
+  <data name="&gt;&gt;selectDir.Name" xml:space="preserve">
+    <value>selectDir</value>
+  </data>
+  <data name="&gt;&gt;selectDir.Type" xml:space="preserve">
+    <value>System.Windows.Forms.PictureBox, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;selectDir.Parent" xml:space="preserve">
+    <value>mainPanel</value>
+  </data>
+  <data name="&gt;&gt;selectDir.ZOrder" xml:space="preserve">
+    <value>17</value>
+  </data>
+  <data name="&gt;&gt;label5.Name" xml:space="preserve">
+    <value>label5</value>
+  </data>
+  <data name="&gt;&gt;label5.Type" xml:space="preserve">
+    <value>System.Windows.Forms.Label, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;label5.Parent" xml:space="preserve">
+    <value>mainPanel</value>
+  </data>
+  <data name="&gt;&gt;label5.ZOrder" xml:space="preserve">
+    <value>18</value>
+  </data>
+  <data name="&gt;&gt;label1.Name" xml:space="preserve">
+    <value>label1</value>
+  </data>
+  <data name="&gt;&gt;label1.Type" xml:space="preserve">
+    <value>System.Windows.Forms.Label, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;label1.Parent" xml:space="preserve">
+    <value>mainPanel</value>
+  </data>
+  <data name="&gt;&gt;label1.ZOrder" xml:space="preserve">
+    <value>19</value>
+  </data>
+  <data name="&gt;&gt;selectDirLabel.Name" xml:space="preserve">
+    <value>selectDirLabel</value>
+  </data>
+  <data name="&gt;&gt;selectDirLabel.Type" xml:space="preserve">
+    <value>System.Windows.Forms.Label, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;selectDirLabel.Parent" xml:space="preserve">
+    <value>mainPanel</value>
+  </data>
+  <data name="&gt;&gt;selectDirLabel.ZOrder" xml:space="preserve">
+    <value>20</value>
+  </data>
+  <data name="mainPanel.Location" type="System.Drawing.Point, System.Drawing">
+    <value>3, 0</value>
+  </data>
+  <data name="mainPanel.Size" type="System.Drawing.Size, System.Drawing">
+    <value>681, 381</value>
+  </data>
+  <data name="mainPanel.TabIndex" type="System.Int32, mscorlib">
+    <value>8</value>
+  </data>
+  <data name="&gt;&gt;mainPanel.Name" xml:space="preserve">
+    <value>mainPanel</value>
+  </data>
+  <data name="&gt;&gt;mainPanel.Type" xml:space="preserve">
+    <value>System.Windows.Forms.Panel, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;mainPanel.Parent" xml:space="preserve">
+    <value>$this</value>
+  </data>
+  <data name="&gt;&gt;mainPanel.ZOrder" xml:space="preserve">
+    <value>2</value>
   </data>
   <data name="gitHub.Image" type="System.Drawing.Bitmap, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
     <value>
@@ -517,7 +778,7 @@ Enter to select top result.
     <value>On</value>
   </data>
   <data name="gitHub.Location" type="System.Drawing.Point, System.Drawing">
-    <value>630, 325</value>
+    <value>635, 325</value>
   </data>
   <data name="gitHub.Size" type="System.Drawing.Size, System.Drawing">
     <value>44, 40</value>
@@ -538,8 +799,11 @@ Enter to select top result.
     <value>mainPanel</value>
   </data>
   <data name="&gt;&gt;gitHub.ZOrder" xml:space="preserve">
-    <value>0</value>
+    <value>1</value>
   </data>
+  <metadata name="lanMultiplayerToolTip.TrayLocation" type="System.Drawing.Point, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
+    <value>17, 17</value>
+  </metadata>
   <data name="ShareButton.AutoSizeMode" type="System.Windows.Forms.AutoSizeMode, System.Windows.Forms">
     <value>GrowAndShrink</value>
   </data>
@@ -564,9 +828,6 @@ Enter to select top result.
   <data name="ShareButton.Text" xml:space="preserve">
     <value>🤝</value>
   </data>
-  <metadata name="lanMultiplayerToolTip.TrayLocation" type="System.Drawing.Point, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
-    <value>17, 17</value>
-  </metadata>
   <data name="ShareButton.ToolTip" xml:space="preserve">
     <value>Scan your Steam library and share game links with friends!</value>
   </data>
@@ -580,7 +841,7 @@ Enter to select top result.
     <value>mainPanel</value>
   </data>
   <data name="&gt;&gt;ShareButton.ZOrder" xml:space="preserve">
-    <value>1</value>
+    <value>2</value>
   </data>
   <data name="RequestButton.FlatStyle" type="System.Windows.Forms.FlatStyle, System.Windows.Forms">
     <value>Flat</value>
@@ -613,7 +874,7 @@ Enter to select top result.
     <value>mainPanel</value>
   </data>
   <data name="&gt;&gt;RequestButton.ZOrder" xml:space="preserve">
-    <value>2</value>
+    <value>3</value>
   </data>
   <data name="autoCrackOff.ImeMode" type="System.Windows.Forms.ImeMode, System.Windows.Forms">
     <value>On</value>
@@ -625,7 +886,7 @@ Enter to select top result.
     <value>2, 2, 2, 2</value>
   </data>
   <data name="autoCrackOff.Size" type="System.Drawing.Size, System.Drawing">
-    <value>28, 27</value>
+    <value>28, 24</value>
   </data>
   <data name="autoCrackOff.SizeMode" type="System.Windows.Forms.PictureBoxSizeMode, System.Windows.Forms">
     <value>Zoom</value>
@@ -651,7 +912,7 @@ from the search results.</value>
     <value>mainPanel</value>
   </data>
   <data name="&gt;&gt;autoCrackOff.ZOrder" xml:space="preserve">
-    <value>3</value>
+    <value>4</value>
   </data>
   <data name="autoCrackOn.ImeMode" type="System.Windows.Forms.ImeMode, System.Windows.Forms">
     <value>On</value>
@@ -663,7 +924,7 @@ from the search results.</value>
     <value>2, 2, 2, 2</value>
   </data>
   <data name="autoCrackOn.Size" type="System.Drawing.Size, System.Drawing">
-    <value>28, 27</value>
+    <value>28, 24</value>
   </data>
   <data name="autoCrackOn.SizeMode" type="System.Windows.Forms.PictureBoxSizeMode, System.Windows.Forms">
     <value>Zoom</value>
@@ -689,7 +950,7 @@ from the search results.</value>
     <value>mainPanel</value>
   </data>
   <data name="&gt;&gt;autoCrackOn.ZOrder" xml:space="preserve">
-    <value>4</value>
+    <value>5</value>
   </data>
   <data name="StatusLabel.Font" type="System.Drawing.Font, System.Drawing">
     <value>Consolas, 12pt</value>
@@ -698,7 +959,7 @@ from the search results.</value>
     <value>On</value>
   </data>
   <data name="StatusLabel.Location" type="System.Drawing.Point, System.Drawing">
-    <value>70, 274</value>
+    <value>70, 263</value>
   </data>
   <data name="StatusLabel.Size" type="System.Drawing.Size, System.Drawing">
     <value>540, 19</value>
@@ -719,7 +980,7 @@ from the search results.</value>
     <value>mainPanel</value>
   </data>
   <data name="&gt;&gt;StatusLabel.ZOrder" xml:space="preserve">
-    <value>5</value>
+    <value>6</value>
   </data>
   <data name="OpenDir.FlatStyle" type="System.Windows.Forms.FlatStyle, System.Windows.Forms">
     <value>Flat</value>
@@ -731,7 +992,7 @@ from the search results.</value>
     <value>On</value>
   </data>
   <data name="OpenDir.Location" type="System.Drawing.Point, System.Drawing">
-    <value>5, 359</value>
+    <value>5, 357</value>
   </data>
   <data name="OpenDir.Size" type="System.Drawing.Size, System.Drawing">
     <value>93, 22</value>
@@ -755,7 +1016,7 @@ from the search results.</value>
     <value>mainPanel</value>
   </data>
   <data name="&gt;&gt;OpenDir.ZOrder" xml:space="preserve">
-    <value>7</value>
+    <value>8</value>
   </data>
   <data name="ZipToShare.FlatStyle" type="System.Windows.Forms.FlatStyle, System.Windows.Forms">
     <value>Flat</value>
@@ -767,7 +1028,7 @@ from the search results.</value>
     <value>On</value>
   </data>
   <data name="ZipToShare.Location" type="System.Drawing.Point, System.Drawing">
-    <value>4, 333</value>
+    <value>5, 332</value>
   </data>
   <data name="ZipToShare.Size" type="System.Drawing.Size, System.Drawing">
     <value>93, 22</value>
@@ -794,7 +1055,7 @@ from the search results.</value>
     <value>mainPanel</value>
   </data>
   <data name="&gt;&gt;ZipToShare.ZOrder" xml:space="preserve">
-    <value>8</value>
+    <value>9</value>
   </data>
   <data name="pin.Image" type="System.Drawing.Bitmap, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
     <value>
@@ -945,7 +1206,7 @@ easier to drag files while browsing.</value>
     <value>mainPanel</value>
   </data>
   <data name="&gt;&gt;pin.ZOrder" xml:space="preserve">
-    <value>9</value>
+    <value>10</value>
   </data>
   <data name="unPin.Image" type="System.Drawing.Bitmap, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
     <value>
@@ -1070,7 +1331,7 @@ covered by other windows normally.</value>
     <value>mainPanel</value>
   </data>
   <data name="&gt;&gt;unPin.ZOrder" xml:space="preserve">
-    <value>10</value>
+    <value>11</value>
   </data>
   <data name="currDIrText.Font" type="System.Drawing.Font, System.Drawing">
     <value>Microsoft Sans Serif, 8.25pt</value>
@@ -1079,13 +1340,16 @@ covered by other windows normally.</value>
     <value>On</value>
   </data>
   <data name="currDIrText.Location" type="System.Drawing.Point, System.Drawing">
-    <value>104, 359</value>
+    <value>150, 282</value>
   </data>
   <data name="currDIrText.Size" type="System.Drawing.Size, System.Drawing">
-    <value>371, 23</value>
+    <value>380, 23</value>
   </data>
   <data name="currDIrText.TabIndex" type="System.Int32, mscorlib">
     <value>10</value>
+  </data>
+  <data name="currDIrText.TextAlign" type="System.Drawing.ContentAlignment, System.Drawing">
+    <value>MiddleCenter</value>
   </data>
   <data name="&gt;&gt;currDIrText.Name" xml:space="preserve">
     <value>currDIrText</value>
@@ -1097,44 +1361,11 @@ covered by other windows normally.</value>
     <value>mainPanel</value>
   </data>
   <data name="&gt;&gt;currDIrText.ZOrder" xml:space="preserve">
-    <value>11</value>
-  </data>
-  <data name="dllSelect.AutoCompleteCustomSource" xml:space="preserve">
-    <value>Goldberg (Default)</value>
-  </data>
-  <data name="dllSelect.AutoCompleteCustomSource1" xml:space="preserve">
-    <value>ALI213</value>
-  </data>
-  <data name="dllSelect.FlatStyle" type="System.Windows.Forms.FlatStyle, System.Windows.Forms">
-    <value>Flat</value>
-  </data>
-  <data name="dllSelect.Items" xml:space="preserve">
-    <value>Goldberg</value>
-  </data>
-  <data name="dllSelect.Items1" xml:space="preserve">
-    <value>ALI213</value>
-  </data>
-  <data name="dllSelect.Location" type="System.Drawing.Point, System.Drawing">
-    <value>289, 216</value>
-  </data>
-  <data name="dllSelect.Size" type="System.Drawing.Size, System.Drawing">
-    <value>103, 21</value>
-  </data>
-  <data name="dllSelect.TabIndex" type="System.Int32, mscorlib">
-    <value>8</value>
-  </data>
-  <data name="&gt;&gt;dllSelect.Name" xml:space="preserve">
-    <value>dllSelect</value>
-  </data>
-  <data name="&gt;&gt;dllSelect.Type" xml:space="preserve">
-    <value>APPID.TransparentComboBox, SACGUI, Version=1.3.0.0, Culture=neutral, PublicKeyToken=null</value>
-  </data>
-  <data name="&gt;&gt;dllSelect.Parent" xml:space="preserve">
-    <value>mainPanel</value>
-  </data>
-  <data name="&gt;&gt;dllSelect.ZOrder" xml:space="preserve">
     <value>12</value>
   </data>
+  <metadata name="lanMultiplayerToolTip.TrayLocation" type="System.Drawing.Point, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
+    <value>17, 17</value>
+  </metadata>
   <data name="lanMultiplayerCheckBox.AutoSize" type="System.Boolean, mscorlib">
     <value>True</value>
   </data>
@@ -1142,7 +1373,7 @@ covered by other windows normally.</value>
     <value>On</value>
   </data>
   <data name="lanMultiplayerCheckBox.Location" type="System.Drawing.Point, System.Drawing">
-    <value>296, 240</value>
+    <value>296, 244</value>
   </data>
   <data name="lanMultiplayerCheckBox.Size" type="System.Drawing.Size, System.Drawing">
     <value>95, 17</value>
@@ -1170,7 +1401,7 @@ Perfect for playing with friends on the same network!</value>
     <value>mainPanel</value>
   </data>
   <data name="&gt;&gt;lanMultiplayerCheckBox.ZOrder" xml:space="preserve">
-    <value>13</value>
+    <value>14</value>
   </data>
   <data name="donePic.Image" type="System.Drawing.Bitmap, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
     <value>
@@ -1400,7 +1631,7 @@ Perfect for playing with friends on the same network!</value>
     <value>mainPanel</value>
   </data>
   <data name="&gt;&gt;donePic.ZOrder" xml:space="preserve">
-    <value>14</value>
+    <value>15</value>
   </data>
   <data name="startCrackPic.Image" type="System.Drawing.Bitmap, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
     <value>
@@ -3590,7 +3821,7 @@ Perfect for playing with friends on the same network!</value>
     <value>mainPanel</value>
   </data>
   <data name="&gt;&gt;startCrackPic.ZOrder" xml:space="preserve">
-    <value>15</value>
+    <value>16</value>
   </data>
   <data name="selectDir.Image" type="System.Drawing.Bitmap, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
     <value>
@@ -3775,7 +4006,7 @@ Perfect for playing with friends on the same network!</value>
     <value>mainPanel</value>
   </data>
   <data name="&gt;&gt;selectDir.ZOrder" xml:space="preserve">
-    <value>16</value>
+    <value>17</value>
   </data>
   <data name="label5.AutoSize" type="System.Boolean, mscorlib">
     <value>True</value>
@@ -3812,7 +4043,7 @@ If you have permissions issues, run as Administrator.</value>
     <value>mainPanel</value>
   </data>
   <data name="&gt;&gt;label5.ZOrder" xml:space="preserve">
-    <value>17</value>
+    <value>18</value>
   </data>
   <data name="label1.AutoSize" type="System.Boolean, mscorlib">
     <value>True</value>
@@ -3824,7 +4055,7 @@ If you have permissions issues, run as Administrator.</value>
     <value>On</value>
   </data>
   <data name="label1.Location" type="System.Drawing.Point, System.Drawing">
-    <value>649, 55</value>
+    <value>650, 50</value>
   </data>
   <data name="label1.Size" type="System.Drawing.Size, System.Drawing">
     <value>29, 13</value>
@@ -3848,7 +4079,7 @@ If you have permissions issues, run as Administrator.</value>
     <value>mainPanel</value>
   </data>
   <data name="&gt;&gt;label1.ZOrder" xml:space="preserve">
-    <value>18</value>
+    <value>19</value>
   </data>
   <data name="selectDirLabel.AutoSize" type="System.Boolean, mscorlib">
     <value>True</value>
@@ -3884,7 +4115,7 @@ If you have permissions issues, run as Administrator.</value>
     <value>mainPanel</value>
   </data>
   <data name="&gt;&gt;selectDirLabel.ZOrder" xml:space="preserve">
-    <value>19</value>
+    <value>20</value>
   </data>
   <data name="drgdropText.Font" type="System.Drawing.Font, System.Drawing">
     <value>Microsoft Sans Serif, 26pt</value>
@@ -3896,17 +4127,16 @@ If you have permissions issues, run as Administrator.</value>
     <value>On</value>
   </data>
   <data name="drgdropText.Location" type="System.Drawing.Point, System.Drawing">
-    <value>7, 60</value>
+    <value>-2, 1</value>
   </data>
   <data name="drgdropText.Size" type="System.Drawing.Size, System.Drawing">
-    <value>667, 266</value>
+    <value>684, 378</value>
   </data>
   <data name="drgdropText.TabIndex" type="System.Int32, mscorlib">
     <value>9</value>
   </data>
   <data name="drgdropText.Text" xml:space="preserve">
-    <value>Drag &amp;&amp; Drop game's parent dir or exe.
-(NOTE: exe won't always work.)</value>
+    <value>Drag &amp;&amp; Drop Game Directory</value>
   </data>
   <data name="drgdropText.TextAlign" type="System.Drawing.ContentAlignment, System.Drawing">
     <value>MiddleCenter</value>
@@ -3924,28 +4154,7 @@ If you have permissions issues, run as Administrator.</value>
     <value>mainPanel</value>
   </data>
   <data name="&gt;&gt;drgdropText.ZOrder" xml:space="preserve">
-    <value>20</value>
-  </data>
-  <data name="mainPanel.Location" type="System.Drawing.Point, System.Drawing">
-    <value>3, 0</value>
-  </data>
-  <data name="mainPanel.Size" type="System.Drawing.Size, System.Drawing">
-    <value>681, 386</value>
-  </data>
-  <data name="mainPanel.TabIndex" type="System.Int32, mscorlib">
-    <value>8</value>
-  </data>
-  <data name="&gt;&gt;mainPanel.Name" xml:space="preserve">
-    <value>mainPanel</value>
-  </data>
-  <data name="&gt;&gt;mainPanel.Type" xml:space="preserve">
-    <value>System.Windows.Forms.Panel, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
-  </data>
-  <data name="&gt;&gt;mainPanel.Parent" xml:space="preserve">
-    <value>$this</value>
-  </data>
-  <data name="&gt;&gt;mainPanel.ZOrder" xml:space="preserve">
-    <value>2</value>
+    <value>0</value>
   </data>
   <data name="btnManualEntry.FlatStyle" type="System.Windows.Forms.FlatStyle, System.Windows.Forms">
     <value>Flat</value>
@@ -3982,6 +4191,72 @@ If you have permissions issues, run as Administrator.</value>
   </data>
   <data name="&gt;&gt;btnManualEntry.ZOrder" xml:space="preserve">
     <value>3</value>
+  </data>
+  <metadata name="lanMultiplayerToolTip.TrayLocation" type="System.Drawing.Point, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
+    <value>17, 17</value>
+  </metadata>
+  <data name="&gt;&gt;ManAppBox.Name" xml:space="preserve">
+    <value>ManAppBox</value>
+  </data>
+  <data name="&gt;&gt;ManAppBox.Type" xml:space="preserve">
+    <value>System.Windows.Forms.TextBox, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;ManAppBox.Parent" xml:space="preserve">
+    <value>ManAppPanel</value>
+  </data>
+  <data name="&gt;&gt;ManAppBox.ZOrder" xml:space="preserve">
+    <value>0</value>
+  </data>
+  <data name="&gt;&gt;ManAppBtn.Name" xml:space="preserve">
+    <value>ManAppBtn</value>
+  </data>
+  <data name="&gt;&gt;ManAppBtn.Type" xml:space="preserve">
+    <value>System.Windows.Forms.Button, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;ManAppBtn.Parent" xml:space="preserve">
+    <value>ManAppPanel</value>
+  </data>
+  <data name="&gt;&gt;ManAppBtn.ZOrder" xml:space="preserve">
+    <value>1</value>
+  </data>
+  <data name="&gt;&gt;ManAppLbl.Name" xml:space="preserve">
+    <value>ManAppLbl</value>
+  </data>
+  <data name="&gt;&gt;ManAppLbl.Type" xml:space="preserve">
+    <value>System.Windows.Forms.Label, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;ManAppLbl.Parent" xml:space="preserve">
+    <value>ManAppPanel</value>
+  </data>
+  <data name="&gt;&gt;ManAppLbl.ZOrder" xml:space="preserve">
+    <value>2</value>
+  </data>
+  <data name="ManAppPanel.Location" type="System.Drawing.Point, System.Drawing">
+    <value>215, 113</value>
+  </data>
+  <data name="ManAppPanel.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>2, 2, 2, 2</value>
+  </data>
+  <data name="ManAppPanel.Size" type="System.Drawing.Size, System.Drawing">
+    <value>245, 127</value>
+  </data>
+  <data name="ManAppPanel.TabIndex" type="System.Int32, mscorlib">
+    <value>13</value>
+  </data>
+  <data name="ManAppPanel.Visible" type="System.Boolean, mscorlib">
+    <value>False</value>
+  </data>
+  <data name="&gt;&gt;ManAppPanel.Name" xml:space="preserve">
+    <value>ManAppPanel</value>
+  </data>
+  <data name="&gt;&gt;ManAppPanel.Type" xml:space="preserve">
+    <value>System.Windows.Forms.Panel, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;ManAppPanel.Parent" xml:space="preserve">
+    <value>$this</value>
+  </data>
+  <data name="&gt;&gt;ManAppPanel.ZOrder" xml:space="preserve">
+    <value>5</value>
   </data>
   <data name="ManAppBox.Font" type="System.Drawing.Font, System.Drawing">
     <value>Microsoft Sans Serif, 12pt, style=Bold</value>
@@ -4082,33 +4357,6 @@ If you have permissions issues, run as Administrator.</value>
   <data name="&gt;&gt;ManAppLbl.ZOrder" xml:space="preserve">
     <value>2</value>
   </data>
-  <data name="ManAppPanel.Location" type="System.Drawing.Point, System.Drawing">
-    <value>215, 113</value>
-  </data>
-  <data name="ManAppPanel.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
-    <value>2, 2, 2, 2</value>
-  </data>
-  <data name="ManAppPanel.Size" type="System.Drawing.Size, System.Drawing">
-    <value>245, 127</value>
-  </data>
-  <data name="ManAppPanel.TabIndex" type="System.Int32, mscorlib">
-    <value>13</value>
-  </data>
-  <data name="ManAppPanel.Visible" type="System.Boolean, mscorlib">
-    <value>False</value>
-  </data>
-  <data name="&gt;&gt;ManAppPanel.Name" xml:space="preserve">
-    <value>ManAppPanel</value>
-  </data>
-  <data name="&gt;&gt;ManAppPanel.Type" xml:space="preserve">
-    <value>System.Windows.Forms.Panel, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
-  </data>
-  <data name="&gt;&gt;ManAppPanel.Parent" xml:space="preserve">
-    <value>$this</value>
-  </data>
-  <data name="&gt;&gt;ManAppPanel.ZOrder" xml:space="preserve">
-    <value>5</value>
-  </data>
   <data name="lblTitle.AutoSize" type="System.Boolean, mscorlib">
     <value>True</value>
   </data>
@@ -4122,13 +4370,13 @@ If you have permissions issues, run as Administrator.</value>
     <value>8, 7</value>
   </data>
   <data name="lblTitle.Size" type="System.Drawing.Size, System.Drawing">
-    <value>121, 15</value>
+    <value>71, 15</value>
   </data>
   <data name="lblTitle.TabIndex" type="System.Int32, mscorlib">
     <value>0</value>
   </data>
   <data name="lblTitle.Text" xml:space="preserve">
-    <value>Steam Auto-Cracker</value>
+    <value>SACGUI 2.0</value>
   </data>
   <data name="&gt;&gt;lblTitle.Name" xml:space="preserve">
     <value>lblTitle</value>
@@ -4155,10 +4403,10 @@ If you have permissions issues, run as Administrator.</value>
     <value>On</value>
   </data>
   <data name="btnMinimize.Location" type="System.Drawing.Point, System.Drawing">
-    <value>614, 0</value>
+    <value>613, 0</value>
   </data>
   <data name="btnMinimize.Size" type="System.Drawing.Size, System.Drawing">
-    <value>35, 23</value>
+    <value>35, 26</value>
   </data>
   <data name="btnMinimize.TabIndex" type="System.Int32, mscorlib">
     <value>2</value>
@@ -4191,10 +4439,10 @@ If you have permissions issues, run as Administrator.</value>
     <value>On</value>
   </data>
   <data name="btnClose.Location" type="System.Drawing.Point, System.Drawing">
-    <value>649, 1</value>
+    <value>649, 0</value>
   </data>
   <data name="btnClose.Size" type="System.Drawing.Size, System.Drawing">
-    <value>35, 23</value>
+    <value>35, 26</value>
   </data>
   <data name="btnClose.TabIndex" type="System.Int32, mscorlib">
     <value>1</value>
@@ -4238,11 +4486,47 @@ If you have permissions issues, run as Administrator.</value>
   <data name="&gt;&gt;titleBar.ZOrder" xml:space="preserve">
     <value>0</value>
   </data>
+  <data name="dllSelect.AutoCompleteCustomSource" xml:space="preserve">
+    <value>Goldberg (Default)</value>
+  </data>
+  <data name="dllSelect.AutoCompleteCustomSource1" xml:space="preserve">
+    <value>ALI213</value>
+  </data>
+  <data name="dllSelect.FlatStyle" type="System.Windows.Forms.FlatStyle, System.Windows.Forms">
+    <value>Flat</value>
+  </data>
+  <data name="dllSelect.Items" xml:space="preserve">
+    <value>Goldberg</value>
+  </data>
+  <data name="dllSelect.Items1" xml:space="preserve">
+    <value>ALI213</value>
+  </data>
+  <data name="dllSelect.Location" type="System.Drawing.Point, System.Drawing">
+    <value>289, 217</value>
+  </data>
+  <data name="dllSelect.Size" type="System.Drawing.Size, System.Drawing">
+    <value>103, 21</value>
+  </data>
+  <data name="dllSelect.TabIndex" type="System.Int32, mscorlib">
+    <value>8</value>
+  </data>
+  <data name="&gt;&gt;dllSelect.Name" xml:space="preserve">
+    <value>dllSelect</value>
+  </data>
+  <data name="&gt;&gt;dllSelect.Type" xml:space="preserve">
+    <value>APPID.TransparentComboBox, SACGUI, Version=1.3.0.0, Culture=neutral, PublicKeyToken=null</value>
+  </data>
+  <data name="&gt;&gt;dllSelect.Parent" xml:space="preserve">
+    <value>mainPanel</value>
+  </data>
+  <data name="&gt;&gt;dllSelect.ZOrder" xml:space="preserve">
+    <value>13</value>
+  </data>
   <metadata name="$this.Localizable" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
     <value>True</value>
   </metadata>
   <metadata name="$this.TrayHeight" type="System.Int32, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
-    <value>81</value>
+    <value>25</value>
   </metadata>
   <data name="$this.AutoScaleDimensions" type="System.Drawing.SizeF, System.Drawing">
     <value>6, 13</value>
