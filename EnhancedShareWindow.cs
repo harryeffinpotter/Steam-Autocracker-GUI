@@ -1,4 +1,5 @@
 using APPID;
+using SAC_GUI;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
@@ -13,22 +14,93 @@ namespace SteamAppIdIdentifier
 {
     public partial class EnhancedShareWindow : Form
     {
-        private DataGridView gamesGrid;
-        private Dictionary<string, RequestAPI.RequestedGame> requestedGames;
         private Form mainForm;
-        private System.Windows.Forms.Timer pulseTimer;
-        private List<DataGridViewRow> urgentRows = new List<DataGridViewRow>();
+        private Timer rgbTimer;
+        private int colorHue = 0;
 
         public EnhancedShareWindow(Form parent)
         {
             mainForm = parent;
-            requestedGames = new Dictionary<string, RequestAPI.RequestedGame>();
             InitializeComponent();  // Use the Designer.cs file instead!
-            SetupColumns();         // Setup columns after InitializeComponent
+
+            // Setup modern progress bar style
+            SetupModernProgressBar();
 
             // Hide main form and show again when this closes
             mainForm.Visible = false;
             this.FormClosed += (s, e) => mainForm.Visible = true;
+        }
+
+        private void SetupModernProgressBar()
+        {
+            // Start RGB animation timer
+            rgbTimer = new Timer();
+            rgbTimer.Interval = 30; // Smooth animation
+            rgbTimer.Tick += (s, e) =>
+            {
+                colorHue = (colorHue + 2) % 360;
+                if (progressBar.Visible)
+                {
+                    progressBar.Invalidate(); // Force redraw
+                }
+            };
+            rgbTimer.Start();
+
+            progressBar.Paint += (s, e) =>
+            {
+                Rectangle rec = e.ClipRectangle;
+                rec.Width = (int)(rec.Width * ((double)progressBar.Value / progressBar.Maximum)) - 4;
+                if (ProgressBarRenderer.IsSupported)
+                    rec.Height = rec.Height - 4;
+
+                // Draw dark background matching form
+                e.Graphics.Clear(Color.FromArgb(15, 15, 15));
+
+                // Draw RGB gradient progress bar
+                rec.Height = rec.Height - 4;
+                if (rec.Width > 0)
+                {
+                    using (var brush = new System.Drawing.Drawing2D.LinearGradientBrush(
+                        new Point(0, 0),
+                        new Point(rec.Width, 0),
+                        HSLToRGB(colorHue, 1.0, 0.5),
+                        HSLToRGB((colorHue + 60) % 360, 1.0, 0.5)))
+                    {
+                        e.Graphics.FillRectangle(brush, 2, 2, rec.Width, rec.Height);
+                    }
+                }
+            };
+        }
+
+        private Color HSLToRGB(double h, double s, double l)
+        {
+            double r, g, b;
+            h = h / 360.0;
+
+            if (s == 0)
+            {
+                r = g = b = l;
+            }
+            else
+            {
+                var q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+                var p = 2 * l - q;
+                r = HueToRGB(p, q, h + 1.0 / 3);
+                g = HueToRGB(p, q, h);
+                b = HueToRGB(p, q, h - 1.0 / 3);
+            }
+
+            return Color.FromArgb((int)(r * 255), (int)(g * 255), (int)(b * 255));
+        }
+
+        private double HueToRGB(double p, double q, double t)
+        {
+            if (t < 0) t += 1;
+            if (t > 1) t -= 1;
+            if (t < 1.0 / 6) return p + (q - p) * 6 * t;
+            if (t < 1.0 / 2) return q;
+            if (t < 2.0 / 3) return p + (q - p) * (2.0 / 3 - t) * 6;
+            return p;
         }
 
         private void InitializeWindow_OLD()  // Renamed - not used anymore since we use Designer.cs
@@ -92,114 +164,17 @@ namespace SteamAppIdIdentifier
             gamesGrid.ColumnHeadersDefaultCellStyle.BackColor = Color.FromArgb(25, 25, 25);
             gamesGrid.ColumnHeadersDefaultCellStyle.ForeColor = Color.White;
 
-            SetupColumns();
-
             mainPanel.Controls.Add(gamesGrid);
             this.Controls.Add(mainPanel);
             this.Controls.Add(headerPanel);
 
-            // Setup pulse effect for urgent games
-            SetupPulseEffect();
-
-            // Load games and requests
-            _ = LoadGamesAndRequests();
+            // Load games
+            _ = LoadGames();
         }
 
-        private void SetupColumns()
+
+        private async Task LoadGames()
         {
-            // Game name
-            gamesGrid.Columns.Add(new DataGridViewTextBoxColumn
-            {
-                Name = "GameName",
-                HeaderText = "Game",
-                Width = 250,
-                ReadOnly = true
-            });
-
-            // Build ID
-            gamesGrid.Columns.Add(new DataGridViewTextBoxColumn
-            {
-                Name = "BuildID",
-                HeaderText = "Your Build",
-                Width = 100,
-                ReadOnly = true
-            });
-
-            // Request status
-            gamesGrid.Columns.Add(new DataGridViewTextBoxColumn
-            {
-                Name = "RequestStatus",
-                HeaderText = "Community Needs",
-                Width = 150,
-                ReadOnly = true
-            });
-
-            // Request type
-            gamesGrid.Columns.Add(new DataGridViewTextBoxColumn
-            {
-                Name = "RequestType",
-                HeaderText = "Type Needed",
-                Width = 100,
-                ReadOnly = true
-            });
-
-            // Clean share button
-            var cleanBtn = new DataGridViewButtonColumn
-            {
-                Name = "ShareClean",
-                HeaderText = "Share Clean",
-                Text = "📦 Clean",
-                UseColumnTextForButtonValue = false,
-                Width = 100
-            };
-            gamesGrid.Columns.Add(cleanBtn);
-
-            // Cracked share button
-            var crackedBtn = new DataGridViewButtonColumn
-            {
-                Name = "ShareCracked",
-                HeaderText = "Share Cracked",
-                Text = "🎮 Cracked",
-                UseColumnTextForButtonValue = false,
-                Width = 100
-            };
-            gamesGrid.Columns.Add(crackedBtn);
-
-            // No request button - this is for sharing YOUR games
-            // Remove any Request column if it exists (cleanup from old version)
-            if (gamesGrid.Columns["Request"] != null)
-            {
-                gamesGrid.Columns.Remove("Request");
-            }
-
-            // Hidden columns
-            gamesGrid.Columns.Add(new DataGridViewTextBoxColumn { Name = "AppID", Visible = false });
-            gamesGrid.Columns.Add(new DataGridViewTextBoxColumn { Name = "InstallPath", Visible = false });
-
-            // Event handlers are already added in Designer.cs
-
-            // Additional cell formatting for button styling
-            gamesGrid.CellFormatting += (s, e) =>
-            {
-                if (e.ColumnIndex >= 0 && gamesGrid.Columns[e.ColumnIndex] is DataGridViewButtonColumn)
-                {
-                    var cell = gamesGrid.Rows[e.RowIndex].Cells[e.ColumnIndex];
-                    cell.Style.BackColor = Color.FromArgb(30, 30, 30);
-                    cell.Style.ForeColor = Color.FromArgb(150, 150, 150);
-                    cell.Style.SelectionBackColor = Color.FromArgb(40, 40, 40);
-                }
-            };
-        }
-
-        private async Task LoadGamesAndRequests()
-        {
-            // Get active requests first
-            var requests = await RequestAPI.GetActiveRequests();
-            foreach (var req in requests)
-            {
-                requestedGames[req.AppId] = req;
-            }
-
             // Update header
             if (this.IsHandleCreated)
             {
@@ -208,30 +183,16 @@ namespace SteamAppIdIdentifier
                     var lblHeader = this.Controls.Find("lblHeader", true).FirstOrDefault() as Label;
                     if (lblHeader != null)
                     {
-                        int urgentCount = requests.Count(r => r.RequestCount > 5);
-                        if (urgentCount > 0)
-                        {
-                            lblHeader.Text = $"🚨 {urgentCount} GAMES URGENTLY NEEDED BY COMMUNITY!";
-                            lblHeader.ForeColor = Color.FromArgb(255, 100, 100);
-                        }
-                        else if (requests.Count > 0)
-                        {
-                            lblHeader.Text = $"🔥 {requests.Count} games requested by community";
-                            lblHeader.ForeColor = Color.FromArgb(255, 200, 100);
-                        }
-                        else
-                        {
-                            lblHeader.Text = "Your Steam Library";
-                            lblHeader.ForeColor = Color.FromArgb(100, 200, 255);
-                        }
+                        lblHeader.Text = "Your Steam Library";
+                        lblHeader.ForeColor = Color.FromArgb(100, 200, 255);
                     }
                 }));
             }
 
-            // Scan Steam libraries
-            var games = ScanSteamLibraries();
+            // Scan Steam libraries on background thread to avoid blocking UI
+            var games = await Task.Run(() => ScanSteamLibraries());
 
-            // Add to grid with request highlighting
+            // Add to grid
             foreach (var game in games)
             {
                 var row = gamesGrid.Rows[gamesGrid.Rows.Add()];
@@ -243,83 +204,9 @@ namespace SteamAppIdIdentifier
                 // Default button texts
                 row.Cells["ShareClean"].Value = "📦 Clean";
                 row.Cells["ShareCracked"].Value = "🎮 Cracked";
-
-                // Check if requested
-                if (requestedGames.ContainsKey(game.AppId))
-                {
-                    var req = requestedGames[game.AppId];
-                    ApplyRequestStyling(row, req);
-                }
             }
         }
 
-        private void ApplyRequestStyling(DataGridViewRow row, RequestAPI.RequestedGame req)
-        {
-            // Update request status
-            if (req.RequestCount > 10)
-            {
-                row.Cells["RequestStatus"].Value = $"🚨 {req.RequestCount} REQUESTS!";
-                row.Cells["RequestStatus"].Style.ForeColor = Color.Red;
-                row.Cells["RequestStatus"].Style.Font = new Font("Segoe UI", 10, FontStyle.Bold);
-                row.DefaultCellStyle.BackColor = Color.FromArgb(40, 0, 0);
-                urgentRows.Add(row);
-            }
-            else if (req.RequestCount > 5)
-            {
-                row.Cells["RequestStatus"].Value = $"🔥 {req.RequestCount} requests";
-                row.Cells["RequestStatus"].Style.ForeColor = Color.FromArgb(255, 150, 0);
-                row.Cells["RequestStatus"].Style.Font = new Font("Segoe UI", 9, FontStyle.Bold);
-                row.DefaultCellStyle.BackColor = Color.FromArgb(40, 20, 0);
-            }
-            else
-            {
-                row.Cells["RequestStatus"].Value = $"{req.RequestCount} requests";
-                row.Cells["RequestStatus"].Style.ForeColor = Color.FromArgb(255, 255, 100);
-            }
-
-            // Show what type is needed
-            row.Cells["RequestType"].Value = req.RequestType;
-
-            // Color the appropriate share button
-            if (req.RequestType == "Clean" || req.RequestType == "Both")
-            {
-                row.Cells["ShareClean"].Value = "📦 NEEDED!";
-                row.Cells["ShareClean"].Style.BackColor = Color.FromArgb(255, 20, 147); // Hot pink
-                row.Cells["ShareClean"].Style.ForeColor = Color.White;
-                row.Cells["ShareClean"].Style.Font = new Font("Segoe UI", 9, FontStyle.Bold);
-            }
-
-            if (req.RequestType == "Cracked" || req.RequestType == "Both")
-            {
-                row.Cells["ShareCracked"].Value = "🎮 NEEDED!";
-                row.Cells["ShareCracked"].Style.BackColor = Color.FromArgb(255, 20, 147); // Hot pink
-                row.Cells["ShareCracked"].Style.ForeColor = Color.White;
-                row.Cells["ShareCracked"].Style.Font = new Font("Segoe UI", 9, FontStyle.Bold);
-            }
-        }
-
-        private void SetupPulseEffect()
-        {
-            pulseTimer = new System.Windows.Forms.Timer { Interval = 100 };
-            int pulseStep = 0;
-
-            pulseTimer.Tick += (s, e) =>
-            {
-                pulseStep = (pulseStep + 1) % 20;
-                double pulse = Math.Sin(pulseStep * Math.PI / 10) * 0.3 + 0.7;
-
-                foreach (var row in urgentRows)
-                {
-                    if (!row.IsNewRow && row.Visible)
-                    {
-                        int r = (int)(40 * pulse);
-                        row.DefaultCellStyle.BackColor = Color.FromArgb(r, 0, 0);
-                    }
-                }
-            };
-
-            pulseTimer.Start();
-        }
 
         private async void GamesGrid_CellClick(object sender, DataGridViewCellEventArgs e)
         {
@@ -353,6 +240,87 @@ namespace SteamAppIdIdentifier
             {
                 MessageBox.Show("Game installation path not found!", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return;
+            }
+
+            // If sharing cracked version, first crack the game
+            if (cracked)
+            {
+                var result = MessageBox.Show(
+                    $"This will crack {gameName} using Goldberg/ALI213 emulators.\n\n" +
+                    "The game files will be modified. A backup (.bak) will be created.\n\n" +
+                    "Continue?",
+                    "Crack Game First?",
+                    MessageBoxButtons.YesNo,
+                    MessageBoxIcon.Warning);
+
+                if (result != DialogResult.Yes)
+                {
+                    return;
+                }
+
+                // Call the main form's cracking method
+                var mainFormTyped = mainForm as SteamAppId;
+                if (mainFormTyped != null)
+                {
+                    // Set the game directory and app ID in the main form
+                    mainFormTyped.GameDirectory = installPath;
+                    SteamAppId.APPID = appId;
+
+                    // Show status
+                    row.Cells["ShareCracked"].Value = "⚙️ Cracking...";
+
+                    try
+                    {
+                        // Crack the game
+                        bool crackSuccess = await mainFormTyped.CrackAsync();
+
+                        if (!crackSuccess)
+                        {
+                            MessageBox.Show(
+                                "Failed to crack the game. This could be because:\n\n" +
+                                "• The game doesn't have steam_api.dll or steam_api64.dll\n" +
+                                "• The game is already cracked\n" +
+                                "• Missing required files in _bin folder\n\n" +
+                                "You can still share the game as Clean instead.",
+                                "Crack Failed",
+                                MessageBoxButtons.OK,
+                                MessageBoxIcon.Warning);
+                            row.Cells["ShareCracked"].Value = "🎮 Cracked";
+                            return;
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        // Write full error to file for debugging
+                        string errorLog = $"_ShareCrackError_{DateTime.Now:yyyyMMdd_HHmmss}.txt";
+                        File.WriteAllText(errorLog,
+                            $"=== Share Cracked Error ===\n" +
+                            $"Game: {gameName}\n" +
+                            $"AppID: {appId}\n" +
+                            $"Path: {installPath}\n" +
+                            $"Time: {DateTime.Now}\n\n" +
+                            $"Exception Type: {ex.GetType().Name}\n" +
+                            $"Message: {ex.Message}\n\n" +
+                            $"Stack Trace:\n{ex.StackTrace}\n\n" +
+                            $"Full Exception:\n{ex.ToString()}");
+
+                        // Show user-friendly error
+                        MessageBox.Show(
+                            $"Error during cracking process:\n\n{ex.Message}\n\n" +
+                            $"Full error details saved to:\n{errorLog}\n\n" +
+                            "You can still share the game as Clean instead.",
+                            "Crack Error",
+                            MessageBoxButtons.OK,
+                            MessageBoxIcon.Error);
+                        row.Cells["ShareCracked"].Value = "🎮 Cracked";
+                        return;
+                    }
+                }
+                else
+                {
+                    MessageBox.Show("Cannot access cracking functionality. Please use the main window to crack games.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return;
+                }
             }
 
             try
@@ -458,15 +426,19 @@ namespace SteamAppIdIdentifier
 
                         if (!string.IsNullOrEmpty(uploadUrl))
                         {
+                            // Convert the 1fichier link
+                            row.Cells[btnColumn].Value = "⏳ Converting link...";
+                            string convertedUrl = await Convert1FichierLink(uploadUrl);
+
                             row.Cells[btnColumn].Value = "✅ Shared!";
                             row.Cells[btnColumn].Style.BackColor = Color.FromArgb(0, 100, 0);
 
-                            // Notify backend about completion
+                            // Notify backend about completion with converted URL
                             long fileSize = new FileInfo(outputPath).Length;
                             string uploadType = cracked ? "cracked" : "clean";
-                            await NotifyBackendCompletion(appId, uploadType, uploadUrl, fileSize);
+                            await NotifyBackendCompletion(appId, uploadType, convertedUrl, fileSize);
 
-                            ShowUploadSuccess(uploadUrl, gameName, cracked);
+                            ShowUploadSuccess(convertedUrl, gameName, cracked);
                         }
                         else
                         {
@@ -594,17 +566,6 @@ namespace SteamAppIdIdentifier
 
                 progressForm.Complete(uploadUrl);
                 ShowUploadSuccess(uploadUrl, gameName, cracked);
-
-                // Check if this fulfilled a request
-                if (requestedGames.ContainsKey(appId))
-                {
-                    var req = requestedGames[appId];
-                    if ((cracked && (req.RequestType == "Cracked" || req.RequestType == "Both")) ||
-                        (!cracked && (req.RequestType == "Clean" || req.RequestType == "Both")))
-                    {
-                        ShowHonorNotification(gameName);
-                    }
-                }
             }
             catch (Exception ex)
             {
@@ -672,7 +633,7 @@ namespace SteamAppIdIdentifier
 
         private async Task<string> UploadFileWithProgress(string filePath, RGBProgressWindow progressWindow)
         {
-            System.Diagnostics.Debug.WriteLine($"[UPLOAD] === Starting upload from EnhancedShareWindow ===");
+            System.Diagnostics.Debug.WriteLine($"[UPLOAD] === Starting 1fichier upload from EnhancedShareWindow ===");
             System.Diagnostics.Debug.WriteLine($"[UPLOAD] File: {filePath}");
             System.Diagnostics.Debug.WriteLine($"[UPLOAD] File exists: {File.Exists(filePath)}");
             if (File.Exists(filePath))
@@ -681,114 +642,114 @@ namespace SteamAppIdIdentifier
                 System.Diagnostics.Debug.WriteLine($"[UPLOAD] File size: {fi.Length / (1024.0 * 1024.0):F2} MB");
             }
 
+            // Show the progress window
+            progressWindow.Show(this);
+            progressWindow.Refresh();
+
             try
             {
-                using (var client = new System.Net.Http.HttpClient())
+                var fileInfo = new FileInfo(filePath);
+                long fileSize = fileInfo.Length;
+
+                progressWindow.UpdateStatus($"Uploading to 1fichier... (0/{fileSize / 1024 / 1024}MB)");
+
+                // Create progress handler
+                var progress = new Progress<double>(value =>
                 {
-                    // Configure client for large uploads
-                    client.Timeout = TimeSpan.FromHours(2);
-                    client.DefaultRequestHeaders.Add("User-Agent", "SACGUI-Uploader/2.0");
+                    var mbUploaded = (long)(fileSize * value) / 1024 / 1024;
+                    var mbTotal = fileSize / 1024 / 1024;
+                    var percentage = (int)(value * 100);
+                    progressWindow.UpdateStatus($"Uploading to 1fichier... {percentage}% ({mbUploaded}/{mbTotal}MB)");
+                });
 
-                    var fileInfo = new FileInfo(filePath);
-                    long fileSize = fileInfo.Length;
+                // Use 1fichier uploader
+                using (var uploader = new OneFichierUploader())
+                {
+                    var result = await uploader.UploadFileAsync(filePath, progress);
 
-                    progressWindow.UpdateStatus($"Uploading... (0/{fileSize / 1024 / 1024}MB)");
-
-                    using (var content = new System.Net.Http.MultipartFormDataContent())
-                    using (var fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read))
+                    if (!string.IsNullOrEmpty(result.DownloadUrl))
                     {
-                        var fileContent = new System.Net.Http.StreamContent(fileStream);
-                        fileContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/octet-stream");
-                        content.Add(fileContent, "file", Path.GetFileName(filePath));
-
-                        // Add required form fields for SACGUI
-                        string hwid = HWIDManager.GetHWID(); // Get the hardware ID
-                        content.Add(new System.Net.Http.StringContent(hwid), "hwid");
-                        content.Add(new System.Net.Http.StringContent("SACGUI-2.0"), "version");
-                        System.Diagnostics.Debug.WriteLine($"[UPLOAD] Added HWID: {hwid}");
-                        System.Diagnostics.Debug.WriteLine($"[UPLOAD] Added Version: SACGUI-2.0");
-
-                        // Note: Progress tracking would require a custom HttpMessageHandler
-                        // For now, just show that upload is in progress
-                        progressWindow.UpdateStatus($"Uploading {fileSize / 1024 / 1024}MB to server...");
-
-                        // Use streaming upload endpoint for large files
-                        var retentionHours = 168; // 7 days
-                        var uploadUrl = $"https://pydrive.harryeffingpotter.com/upload/stream?retention_hours={retentionHours}";
-                        System.Diagnostics.Debug.WriteLine($"[UPLOAD] Sending POST to {uploadUrl}");
-
-                        // Create simpler content for streaming endpoint (only needs file)
-                        using (var streamContent = new System.Net.Http.MultipartFormDataContent())
-                        {
-                            fileStream.Position = 0;
-                            var streamFileContent = new System.Net.Http.StreamContent(fileStream);
-                            streamFileContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/octet-stream");
-                            streamContent.Add(streamFileContent, "file", Path.GetFileName(filePath));
-
-                            var response = await client.PostAsync(uploadUrl, streamContent);
-
-                            if (response.IsSuccessStatusCode)
-                            {
-                                var responseContent = await response.Content.ReadAsStringAsync();
-                                System.Diagnostics.Debug.WriteLine($"[UPLOAD] Response: {responseContent}");
-
-                                // Parse streaming endpoint response (returns JSON with share_url)
-                                try
-                                {
-                                    dynamic result = Newtonsoft.Json.JsonConvert.DeserializeObject(responseContent);
-
-                                    // Get the share URL from response
-                                    string shareUrl = result?.share_url?.ToString();
-
-                                    if (!string.IsNullOrEmpty(shareUrl))
-                                    {
-                                        System.Diagnostics.Debug.WriteLine($"[UPLOAD] Extracted share URL: {shareUrl}");
-                                        return shareUrl;
-                                    }
-
-                                    // Check for file_id to construct download URL
-                                    string fileId = result?.file_id?.ToString();
-                                    if (!string.IsNullOrEmpty(fileId))
-                                    {
-                                        shareUrl = $"https://pydrive.harryeffingpotter.com/download/{fileId}";
-                                        System.Diagnostics.Debug.WriteLine($"[UPLOAD] Constructed download URL: {shareUrl}");
-                                        return shareUrl;
-                                    }
-
-                                    throw new Exception($"Upload succeeded but no share_url or file_id was returned. Response: {responseContent}");
-                                }
-                                catch (Exception parseEx)
-                                {
-                                    throw new Exception($"Failed to parse upload response: {parseEx.Message}");
-                                }
-                            }
-                            else
-                            {
-                                string error = await response.Content.ReadAsStringAsync();
-                                System.Diagnostics.Debug.WriteLine($"[UPLOAD] Failed with status {response.StatusCode}: {error}");
-                                throw new Exception($"Upload failed: {response.StatusCode} - {error}");
-                            }
-                        }
+                        System.Diagnostics.Debug.WriteLine($"[UPLOAD] 1fichier upload successful. Download URL: {result.DownloadUrl}");
+                        progressWindow.UpdateStatus($"Upload complete!");
+                        await Task.Delay(1000); // Show completion briefly
+                        progressWindow.Close();
+                        return result.DownloadUrl;
+                    }
+                    else
+                    {
+                        progressWindow.Close();
+                        throw new Exception("Upload succeeded but no download URL was returned");
                     }
                 }
             }
             catch (HttpRequestException httpEx)
             {
+                progressWindow.Close();
                 System.Diagnostics.Debug.WriteLine($"[UPLOAD] HTTP Request Exception: {httpEx.Message}");
                 System.Diagnostics.Debug.WriteLine($"[UPLOAD] Inner Exception: {httpEx.InnerException?.Message}");
                 throw new Exception($"Upload failed (HTTP): {httpEx.Message}. Inner: {httpEx.InnerException?.Message}");
             }
             catch (TaskCanceledException tcEx)
             {
+                progressWindow.Close();
                 System.Diagnostics.Debug.WriteLine($"[UPLOAD] Task Cancelled/Timeout: {tcEx.Message}");
                 throw new Exception($"Upload timed out: {tcEx.Message}");
             }
             catch (Exception ex)
             {
+                progressWindow.Close();
                 System.Diagnostics.Debug.WriteLine($"[UPLOAD] General Exception: {ex.GetType().Name}: {ex.Message}");
                 System.Diagnostics.Debug.WriteLine($"[UPLOAD] Stack: {ex.StackTrace}");
                 throw new Exception($"Upload failed: {ex.Message}");
             }
+        }
+
+        private async Task<string> Convert1FichierLink(string oneFichierUrl)
+        {
+            try
+            {
+                using (var client = new HttpClient())
+                {
+                    client.Timeout = TimeSpan.FromSeconds(30);
+
+                    var requestBody = new
+                    {
+                        link = oneFichierUrl
+                    };
+
+                    var json = System.Text.Json.JsonSerializer.Serialize(requestBody);
+                    var content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
+
+                    System.Diagnostics.Debug.WriteLine($"[CONVERT] Converting 1fichier link: {oneFichierUrl}");
+                    var response = await client.PostAsync("https://pydrive.harryeffingpotter.com/convert-1fichier", content);
+
+                    if (response.IsSuccessStatusCode)
+                    {
+                        var responseJson = await response.Content.ReadAsStringAsync();
+                        System.Diagnostics.Debug.WriteLine($"[CONVERT] Response: {responseJson}");
+
+                        // Parse the response to get the converted link
+                        var jsonDoc = System.Text.Json.JsonDocument.Parse(responseJson);
+                        if (jsonDoc.RootElement.TryGetProperty("link", out var linkProperty))
+                        {
+                            string convertedLink = linkProperty.GetString();
+                            System.Diagnostics.Debug.WriteLine($"[CONVERT] Converted link: {convertedLink}");
+                            return convertedLink;
+                        }
+                    }
+                    else
+                    {
+                        System.Diagnostics.Debug.WriteLine($"[CONVERT] Failed with status: {response.StatusCode}");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[CONVERT] Exception: {ex.Message}");
+            }
+
+            // If conversion fails, return original link
+            return oneFichierUrl;
         }
 
         private async Task NotifyBackendCompletion(string appId, string uploadType, string uploadUrl = null, long fileSize = 0)
@@ -798,13 +759,6 @@ namespace SteamAppIdIdentifier
             await RequestAPIEnhanced.CompleteUpload(appId, uploadType, uploadUrl ?? "", fileSize);
         }
 
-        private void RequestButton_Click(object sender, EventArgs e)
-        {
-            // Open the Request window to search and request games
-            var requestForm = new RequestsWindow((SteamAppId)mainForm);
-            requestForm.Show();
-        }
-
         private void PulseTimer_Tick(object sender, EventArgs e)
         {
             // Timer tick implementation if needed
@@ -812,7 +766,14 @@ namespace SteamAppIdIdentifier
 
         private void GamesGrid_CellFormatting(object sender, DataGridViewCellFormattingEventArgs e)
         {
-            // Cell formatting implementation
+            // Additional cell formatting for button styling
+            if (e.ColumnIndex >= 0 && gamesGrid.Columns[e.ColumnIndex] is DataGridViewButtonColumn)
+            {
+                var cell = gamesGrid.Rows[e.RowIndex].Cells[e.ColumnIndex];
+                cell.Style.BackColor = Color.FromArgb(30, 30, 30);
+                cell.Style.ForeColor = Color.FromArgb(150, 150, 150);
+                cell.Style.SelectionBackColor = Color.FromArgb(40, 40, 40);
+            }
         }
 
         private void EnhancedShareWindow_FormClosed(object sender, FormClosedEventArgs e)
@@ -822,7 +783,7 @@ namespace SteamAppIdIdentifier
 
         private void EnhancedShareWindow_Load(object sender, EventArgs e)
         {
-            _ = LoadGamesAndRequests();
+            _ = LoadGames();
         }
 
         private void ShowUploadSuccess(string url, string gameName, bool cracked)
@@ -874,50 +835,6 @@ namespace SteamAppIdIdentifier
             successForm.ShowDialog(this);
         }
 
-        private void ShowHonorNotification(string gameName)
-        {
-            var toast = new Form
-            {
-                FormBorderStyle = FormBorderStyle.None,
-                StartPosition = FormStartPosition.Manual,
-                Size = new Size(400, 150),
-                BackColor = Color.FromArgb(0, 50, 0),
-                TopMost = true,
-                ShowInTaskbar = false
-            };
-
-            var screen = Screen.PrimaryScreen.WorkingArea;
-            toast.Location = new Point(screen.Width - 420, screen.Height - 170);
-
-            var lblTitle = new Label
-            {
-                Text = "🏆 REQUEST HONORED!",
-                Font = new Font("Segoe UI", 14, FontStyle.Bold),
-                ForeColor = Color.Gold,
-                Location = new Point(20, 20),
-                Size = new Size(360, 30)
-            };
-
-            var lblMessage = new Label
-            {
-                Text = $"Thank you for sharing {gameName}!\nThe community is grateful! 💚",
-                Font = new Font("Segoe UI", 10),
-                ForeColor = Color.White,
-                Location = new Point(20, 60),
-                Size = new Size(360, 60)
-            };
-
-            toast.Controls.AddRange(new Control[] { lblTitle, lblMessage });
-            toast.Show();
-
-            var timer = new Timer { Interval = 5000 };
-            timer.Tick += (s, e) =>
-            {
-                toast.Close();
-                timer.Stop();
-            };
-            timer.Start();
-        }
 
         private List<SteamGame> ScanSteamLibraries()
         {
@@ -1019,6 +936,86 @@ namespace SteamAppIdIdentifier
             public string InstallDir { get; set; }
             public string BuildId { get; set; }
         }
+
+        private void lblHeader_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        // Custom title bar drag functionality
+        private Point mouseDownPoint = Point.Empty;
+
+        private void TitleBar_MouseDown(object sender, MouseEventArgs e)
+        {
+            if (e.Button == MouseButtons.Left)
+            {
+                mouseDownPoint = new Point(e.X, e.Y);
+                this.Cursor = Cursors.SizeAll;
+
+                // Handle mouse move
+                var titleBarControl = sender as Control;
+                titleBarControl.MouseMove += TitleBar_MouseMove;
+                titleBarControl.MouseUp += TitleBar_MouseUp;
+            }
+        }
+
+        private void TitleBar_MouseMove(object sender, MouseEventArgs e)
+        {
+            if (e.Button == MouseButtons.Left && mouseDownPoint != Point.Empty)
+            {
+                this.Location = new Point(
+                    this.Location.X + e.X - mouseDownPoint.X,
+                    this.Location.Y + e.Y - mouseDownPoint.Y
+                );
+            }
+        }
+
+        private void TitleBar_MouseUp(object sender, MouseEventArgs e)
+        {
+            this.Cursor = Cursors.Default;
+            mouseDownPoint = Point.Empty;
+
+            var titleBarControl = sender as Control;
+            titleBarControl.MouseMove -= TitleBar_MouseMove;
+            titleBarControl.MouseUp -= TitleBar_MouseUp;
+        }
+
+        private void BtnClose_Click(object sender, EventArgs e)
+        {
+            this.Close();
+        }
+
+        private void BtnMinimize_Click(object sender, EventArgs e)
+        {
+            this.WindowState = FormWindowState.Minimized;
+        }
+
+        private void gamesGrid_CellContentClick(object sender, DataGridViewCellEventArgs e)
+        {
+
+        }
+    }
+
+    // Modern Progress Bar
+    public class ModernProgressBar : ProgressBar
+    {
+        public ModernProgressBar()
+        {
+            this.SetStyle(ControlStyles.UserPaint, true);
+        }
+
+        protected override void OnPaint(PaintEventArgs e)
+        {
+            Rectangle rec = e.ClipRectangle;
+
+            rec.Width = (int)(rec.Width * ((double)Value / Maximum)) - 4;
+            if (ProgressBarRenderer.IsSupported)
+                rec.Height = rec.Height - 4;
+
+            e.Graphics.FillRectangle(new SolidBrush(Color.FromArgb(20, 20, 20)), e.ClipRectangle);
+            rec.Height = rec.Height - 4;
+            e.Graphics.FillRectangle(new SolidBrush(Color.FromArgb(0, 150, 200)), 2, 2, rec.Width, rec.Height);
+        }
     }
 
     // RGB Progress Window
@@ -1048,7 +1045,7 @@ namespace SteamAppIdIdentifier
             {
                 Text = "Preparing...",
                 Font = new Font("Segoe UI", 11),
-                ForeColor = Color.White,
+                ForeColor = Color.Cyan,  // Start with a color, will be animated
                 Location = new Point(20, 30),
                 Size = new Size(450, 30)
             };
@@ -1073,7 +1070,17 @@ namespace SteamAppIdIdentifier
             {
                 colorStep = (colorStep + 5) % 360;
                 var color = HSLToRGB(colorStep, 1.0, 0.5);
-                this.BackColor = Color.FromArgb(30 + color.R / 10, 30 + color.G / 10, 30 + color.B / 10);
+                // Apply RGB effect to the text
+                lblStatus.ForeColor = color;
+
+                // Try to color the progress bar (might not work on all Windows versions)
+                try
+                {
+                    progressBar.ForeColor = color;
+                    // For Windows 10+, we can try to use visual styles
+                    progressBar.Style = ProgressBarStyle.Continuous;
+                }
+                catch { }
             };
             rgbTimer.Start();
         }
