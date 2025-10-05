@@ -7,6 +7,10 @@ namespace APPID
         /// Required designer variable.
         /// </summary>
         private System.ComponentModel.IContainer components = null;
+        private System.Windows.Forms.Panel titleBar;
+        private System.Windows.Forms.Label lblTitle;
+        private System.Windows.Forms.Button btnMinimize;
+        private System.Windows.Forms.Button btnClose;
 
         /// <summary>
         /// Clean up any resources being used.
@@ -42,19 +46,18 @@ namespace APPID
             this.resinstruccZip = new System.Windows.Forms.Label();
             this.tgDisc = new System.Windows.Forms.Label();
             this.mainPanel = new System.Windows.Forms.Panel();
+            this.gitHub = new System.Windows.Forms.PictureBox();
             this.ShareButton = new System.Windows.Forms.Button();
             this.RequestButton = new System.Windows.Forms.Button();
-            this.btnManualEntry = new System.Windows.Forms.Button();
             this.autoCrackOff = new System.Windows.Forms.PictureBox();
             this.autoCrackOn = new System.Windows.Forms.PictureBox();
             this.StatusLabel = new System.Windows.Forms.Label();
-            this.gitHub = new System.Windows.Forms.PictureBox();
             this.OpenDir = new System.Windows.Forms.Button();
             this.ZipToShare = new System.Windows.Forms.Button();
             this.pin = new System.Windows.Forms.PictureBox();
             this.unPin = new System.Windows.Forms.PictureBox();
             this.currDIrText = new System.Windows.Forms.Label();
-            this.dllSelect = new System.Windows.Forms.ComboBox();
+            this.dllSelect = new APPID.TransparentComboBox();
             this.lanMultiplayerCheckBox = new System.Windows.Forms.CheckBox();
             this.donePic = new System.Windows.Forms.PictureBox();
             this.startCrackPic = new System.Windows.Forms.PictureBox();
@@ -63,27 +66,33 @@ namespace APPID
             this.label1 = new System.Windows.Forms.Label();
             this.selectDirLabel = new System.Windows.Forms.Label();
             this.drgdropText = new System.Windows.Forms.Label();
+            this.btnManualEntry = new System.Windows.Forms.Button();
             this.lanMultiplayerToolTip = new System.Windows.Forms.ToolTip(this.components);
             this.ManAppPanel = new System.Windows.Forms.Panel();
             this.ManAppBox = new System.Windows.Forms.TextBox();
             this.ManAppBtn = new System.Windows.Forms.Button();
             this.ManAppLbl = new System.Windows.Forms.Label();
+            this.titleBar = new System.Windows.Forms.Panel();
+            this.lblTitle = new System.Windows.Forms.Label();
+            this.btnMinimize = new System.Windows.Forms.Button();
+            this.btnClose = new System.Windows.Forms.Button();
             ((System.ComponentModel.ISupportInitialize)(this.dataGridView1)).BeginInit();
             this.mainPanel.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.gitHub)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.autoCrackOff)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.autoCrackOn)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.gitHub)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.pin)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.unPin)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.donePic)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.startCrackPic)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.selectDir)).BeginInit();
             this.ManAppPanel.SuspendLayout();
+            this.titleBar.SuspendLayout();
             this.SuspendLayout();
             // 
             // searchTextBox
             // 
-            this.searchTextBox.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(10)))), ((int)(((byte)(35)))));
+            this.searchTextBox.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(8)))), ((int)(((byte)(8)))), ((int)(((byte)(12)))));
             resources.ApplyResources(this.searchTextBox, "searchTextBox");
             this.searchTextBox.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(192)))), ((int)(((byte)(255)))), ((int)(((byte)(255)))));
             this.searchTextBox.Name = "searchTextBox";
@@ -103,7 +112,7 @@ namespace APPID
             dataGridViewCellStyle1.SelectionForeColor = System.Drawing.Color.Black;
             this.dataGridView1.AlternatingRowsDefaultCellStyle = dataGridViewCellStyle1;
             this.dataGridView1.AutoSizeColumnsMode = System.Windows.Forms.DataGridViewAutoSizeColumnsMode.Fill;
-            this.dataGridView1.BackgroundColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(5)))), ((int)(((byte)(25)))));
+            this.dataGridView1.BackgroundColor = System.Drawing.Color.FromArgb(((int)(((byte)(5)))), ((int)(((byte)(10)))), ((int)(((byte)(30)))));
             this.dataGridView1.BorderStyle = System.Windows.Forms.BorderStyle.None;
             dataGridViewCellStyle2.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
             dataGridViewCellStyle2.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(25)))), ((int)(((byte)(75)))));
@@ -166,27 +175,28 @@ namespace APPID
             // resinstruccZip
             // 
             resources.ApplyResources(this.resinstruccZip, "resinstruccZip");
+            this.resinstruccZip.BackColor = System.Drawing.Color.Transparent;
             this.resinstruccZip.ForeColor = System.Drawing.Color.White;
             this.resinstruccZip.Name = "resinstruccZip";
+            this.resinstruccZip.Click += new System.EventHandler(this.resinstruccZip_Click);
             // 
             // tgDisc
             // 
             resources.ApplyResources(this.tgDisc, "tgDisc");
+            this.tgDisc.BackColor = System.Drawing.Color.Transparent;
             this.tgDisc.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(128)))), ((int)(((byte)(255)))), ((int)(((byte)(255)))));
             this.tgDisc.Name = "tgDisc";
             this.tgDisc.Click += new System.EventHandler(this.label2_Click);
             // 
             // mainPanel
             // 
-            this.mainPanel.Controls.Add(this.resinstruccZip);
+            this.mainPanel.Controls.Add(this.gitHub);
             this.mainPanel.Controls.Add(this.ShareButton);
             this.mainPanel.Controls.Add(this.RequestButton);
-            this.mainPanel.Controls.Add(this.btnManualEntry);
             this.mainPanel.Controls.Add(this.autoCrackOff);
             this.mainPanel.Controls.Add(this.autoCrackOn);
             this.mainPanel.Controls.Add(this.StatusLabel);
             this.mainPanel.Controls.Add(this.tgDisc);
-            this.mainPanel.Controls.Add(this.gitHub);
             this.mainPanel.Controls.Add(this.OpenDir);
             this.mainPanel.Controls.Add(this.ZipToShare);
             this.mainPanel.Controls.Add(this.pin);
@@ -203,46 +213,47 @@ namespace APPID
             this.mainPanel.Controls.Add(this.drgdropText);
             resources.ApplyResources(this.mainPanel, "mainPanel");
             this.mainPanel.Name = "mainPanel";
+            this.mainPanel.Click += new System.EventHandler(this.Form_Click);
             this.mainPanel.DragDrop += new System.Windows.Forms.DragEventHandler(this.mainPanel_DragDrop);
             this.mainPanel.DragEnter += new System.Windows.Forms.DragEventHandler(this.mainPanel_DragEnter);
             this.mainPanel.DragLeave += new System.EventHandler(this.mainPanel_DragLeave);
             // 
+            // gitHub
+            // 
+            this.gitHub.BackColor = System.Drawing.Color.Transparent;
+            this.gitHub.Cursor = System.Windows.Forms.Cursors.Hand;
+            resources.ApplyResources(this.gitHub, "gitHub");
+            this.gitHub.Name = "gitHub";
+            this.gitHub.TabStop = false;
+            this.gitHub.Click += new System.EventHandler(this.pictureBox1_Click);
+            // 
             // ShareButton
-            //
-            this.ShareButton.FlatAppearance.BorderSize = 0;
+            // 
             resources.ApplyResources(this.ShareButton, "ShareButton");
-            this.ShareButton.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(200)))), ((int)(((byte)(100)))));
+            this.ShareButton.BackColor = System.Drawing.Color.Transparent;
+            this.ShareButton.Cursor = System.Windows.Forms.Cursors.Hand;
+            this.ShareButton.FlatAppearance.BorderSize = 0;
+            this.ShareButton.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Transparent;
+            this.ShareButton.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(192)))), ((int)(((byte)(255)))), ((int)(((byte)(255)))));
             this.ShareButton.Name = "ShareButton";
             this.lanMultiplayerToolTip.SetToolTip(this.ShareButton, resources.GetString("ShareButton.ToolTip"));
-            this.ShareButton.UseVisualStyleBackColor = true;
+            this.ShareButton.UseVisualStyleBackColor = false;
             this.ShareButton.Click += new System.EventHandler(this.ShareButton_Click);
-            //
+            // 
             // RequestButton
-            //
-            this.RequestButton.FlatAppearance.BorderSize = 0;
+            // 
             this.RequestButton.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(50)))), ((int)(((byte)(50)))), ((int)(((byte)(50)))));
+            this.RequestButton.FlatAppearance.BorderSize = 0;
+            resources.ApplyResources(this.RequestButton, "RequestButton");
             this.RequestButton.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(150)))), ((int)(((byte)(150)))));
-            this.RequestButton.Location = new System.Drawing.Point(650, 450);
-            this.RequestButton.Size = new System.Drawing.Size(120, 30);
-            this.RequestButton.Text = "🔍 Request Games";
-            this.RequestButton.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
             this.RequestButton.Name = "RequestButton";
             this.RequestButton.UseVisualStyleBackColor = false;
-            this.RequestButton.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.RequestButton.Click += new System.EventHandler(this.RequestButton_Click);
-            // 
-            // btnManualEntry
-            // 
-            this.btnManualEntry.BackColor = System.Drawing.Color.Transparent;
-            resources.ApplyResources(this.btnManualEntry, "btnManualEntry");
-            this.btnManualEntry.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(192)))), ((int)(((byte)(255)))), ((int)(((byte)(255)))));
-            this.btnManualEntry.Name = "btnManualEntry";
-            this.btnManualEntry.UseVisualStyleBackColor = false;
-            this.btnManualEntry.Click += new System.EventHandler(this.btnManualEntry_Click);
             // 
             // autoCrackOff
             // 
             this.autoCrackOff.BackColor = System.Drawing.Color.Transparent;
+            this.autoCrackOff.Cursor = System.Windows.Forms.Cursors.Hand;
             this.autoCrackOff.Image = global::APPID.Properties.Resources._1111;
             resources.ApplyResources(this.autoCrackOff, "autoCrackOff");
             this.autoCrackOff.Name = "autoCrackOff";
@@ -252,6 +263,8 @@ namespace APPID
             // 
             // autoCrackOn
             // 
+            this.autoCrackOn.BackColor = System.Drawing.Color.Transparent;
+            this.autoCrackOn.Cursor = System.Windows.Forms.Cursors.Hand;
             this.autoCrackOn.Image = global::APPID.Properties.Resources._22222;
             resources.ApplyResources(this.autoCrackOn, "autoCrackOn");
             this.autoCrackOn.Name = "autoCrackOn";
@@ -270,34 +283,30 @@ namespace APPID
             this.StatusLabel.DragEnter += new System.Windows.Forms.DragEventHandler(this.mainPanel_DragEnter);
             this.StatusLabel.DragLeave += new System.EventHandler(this.mainPanel_DragLeave);
             // 
-            // gitHub
-            // 
-            this.gitHub.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(2)))), ((int)(((byte)(10)))));
-            resources.ApplyResources(this.gitHub, "gitHub");
-            this.gitHub.Name = "gitHub";
-            this.gitHub.TabStop = false;
-            this.gitHub.Click += new System.EventHandler(this.pictureBox1_Click);
-            // 
             // OpenDir
             // 
+            this.OpenDir.BackColor = System.Drawing.Color.Transparent;
             resources.ApplyResources(this.OpenDir, "OpenDir");
             this.OpenDir.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(192)))), ((int)(((byte)(255)))), ((int)(((byte)(255)))));
             this.OpenDir.Name = "OpenDir";
-            this.OpenDir.UseVisualStyleBackColor = true;
+            this.OpenDir.UseVisualStyleBackColor = false;
             this.OpenDir.Click += new System.EventHandler(this.OpenDir_Click);
             // 
             // ZipToShare
             // 
+            this.ZipToShare.BackColor = System.Drawing.Color.Transparent;
             this.ZipToShare.FlatAppearance.BorderColor = System.Drawing.Color.FromArgb(((int)(((byte)(210)))), ((int)(((byte)(255)))), ((int)(((byte)(210)))));
             resources.ApplyResources(this.ZipToShare, "ZipToShare");
             this.ZipToShare.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(210)))), ((int)(((byte)(255)))), ((int)(((byte)(210)))));
             this.ZipToShare.Name = "ZipToShare";
             this.lanMultiplayerToolTip.SetToolTip(this.ZipToShare, resources.GetString("ZipToShare.ToolTip"));
-            this.ZipToShare.UseVisualStyleBackColor = true;
+            this.ZipToShare.UseVisualStyleBackColor = false;
             this.ZipToShare.Click += new System.EventHandler(this.ZipToShare_Click);
             // 
             // pin
             // 
+            this.pin.BackColor = System.Drawing.Color.Transparent;
+            this.pin.Cursor = System.Windows.Forms.Cursors.Hand;
             resources.ApplyResources(this.pin, "pin");
             this.pin.Name = "pin";
             this.pin.TabStop = false;
@@ -306,6 +315,8 @@ namespace APPID
             // 
             // unPin
             // 
+            this.unPin.BackColor = System.Drawing.Color.Transparent;
+            this.unPin.Cursor = System.Windows.Forms.Cursors.Hand;
             resources.ApplyResources(this.unPin, "unPin");
             this.unPin.Name = "unPin";
             this.unPin.TabStop = false;
@@ -323,9 +334,11 @@ namespace APPID
             this.dllSelect.AutoCompleteCustomSource.AddRange(new string[] {
             resources.GetString("dllSelect.AutoCompleteCustomSource"),
             resources.GetString("dllSelect.AutoCompleteCustomSource1")});
-            this.dllSelect.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(2)))), ((int)(((byte)(10)))));
+            this.dllSelect.BorderColor = System.Drawing.Color.FromArgb(((int)(((byte)(100)))), ((int)(((byte)(150)))), ((int)(((byte)(200)))));
+            this.dllSelect.DrawMode = System.Windows.Forms.DrawMode.OwnerDrawFixed;
+            this.dllSelect.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             resources.ApplyResources(this.dllSelect, "dllSelect");
-            this.dllSelect.ForeColor = System.Drawing.SystemColors.Window;
+            this.dllSelect.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(192)))), ((int)(((byte)(255)))), ((int)(((byte)(255)))));
             this.dllSelect.FormattingEnabled = true;
             this.dllSelect.Items.AddRange(new object[] {
             resources.GetString("dllSelect.Items"),
@@ -336,15 +349,17 @@ namespace APPID
             // lanMultiplayerCheckBox
             // 
             resources.ApplyResources(this.lanMultiplayerCheckBox, "lanMultiplayerCheckBox");
+            this.lanMultiplayerCheckBox.BackColor = System.Drawing.Color.Transparent;
             this.lanMultiplayerCheckBox.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(192)))), ((int)(((byte)(255)))), ((int)(((byte)(255)))));
             this.lanMultiplayerCheckBox.Name = "lanMultiplayerCheckBox";
             this.lanMultiplayerToolTip.SetToolTip(this.lanMultiplayerCheckBox, resources.GetString("lanMultiplayerCheckBox.ToolTip"));
-            this.lanMultiplayerCheckBox.UseVisualStyleBackColor = true;
+            this.lanMultiplayerCheckBox.UseVisualStyleBackColor = false;
             this.lanMultiplayerCheckBox.CheckedChanged += new System.EventHandler(this.lanMultiplayerCheckBox_CheckedChanged);
             // 
             // donePic
             // 
-            this.donePic.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(2)))), ((int)(((byte)(10)))));
+            this.donePic.BackColor = System.Drawing.Color.Transparent;
+            this.donePic.Cursor = System.Windows.Forms.Cursors.Hand;
             resources.ApplyResources(this.donePic, "donePic");
             this.donePic.Name = "donePic";
             this.donePic.TabStop = false;
@@ -352,7 +367,8 @@ namespace APPID
             // 
             // startCrackPic
             // 
-            this.startCrackPic.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(2)))), ((int)(((byte)(10)))));
+            this.startCrackPic.BackColor = System.Drawing.Color.Transparent;
+            this.startCrackPic.Cursor = System.Windows.Forms.Cursors.Hand;
             resources.ApplyResources(this.startCrackPic, "startCrackPic");
             this.startCrackPic.Name = "startCrackPic";
             this.startCrackPic.TabStop = false;
@@ -364,7 +380,8 @@ namespace APPID
             // 
             // selectDir
             // 
-            this.selectDir.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(2)))), ((int)(((byte)(10)))));
+            this.selectDir.BackColor = System.Drawing.Color.Transparent;
+            this.selectDir.Cursor = System.Windows.Forms.Cursors.Hand;
             resources.ApplyResources(this.selectDir, "selectDir");
             this.selectDir.Name = "selectDir";
             this.selectDir.TabStop = false;
@@ -378,6 +395,7 @@ namespace APPID
             // 
             this.label5.AllowDrop = true;
             resources.ApplyResources(this.label5, "label5");
+            this.label5.BackColor = System.Drawing.Color.Transparent;
             this.label5.ForeColor = System.Drawing.Color.LightSteelBlue;
             this.label5.Name = "label5";
             this.label5.DragDrop += new System.Windows.Forms.DragEventHandler(this.mainPanel_DragDrop);
@@ -388,6 +406,8 @@ namespace APPID
             // 
             this.label1.AllowDrop = true;
             resources.ApplyResources(this.label1, "label1");
+            this.label1.BackColor = System.Drawing.Color.Transparent;
+            this.label1.Cursor = System.Windows.Forms.Cursors.Hand;
             this.label1.ForeColor = System.Drawing.Color.White;
             this.label1.Name = "label1";
             this.label1.DragDrop += new System.Windows.Forms.DragEventHandler(this.mainPanel_DragDrop);
@@ -398,6 +418,7 @@ namespace APPID
             // 
             this.selectDirLabel.AllowDrop = true;
             resources.ApplyResources(this.selectDirLabel, "selectDirLabel");
+            this.selectDirLabel.BackColor = System.Drawing.Color.Transparent;
             this.selectDirLabel.ForeColor = System.Drawing.Color.White;
             this.selectDirLabel.Name = "selectDirLabel";
             this.selectDirLabel.DragDrop += new System.Windows.Forms.DragEventHandler(this.mainPanel_DragDrop);
@@ -407,12 +428,22 @@ namespace APPID
             // drgdropText
             // 
             this.drgdropText.AllowDrop = true;
+            this.drgdropText.BackColor = System.Drawing.Color.Transparent;
             resources.ApplyResources(this.drgdropText, "drgdropText");
             this.drgdropText.ForeColor = System.Drawing.SystemColors.Control;
             this.drgdropText.Name = "drgdropText";
             this.drgdropText.DragDrop += new System.Windows.Forms.DragEventHandler(this.mainPanel_DragDrop);
             this.drgdropText.DragEnter += new System.Windows.Forms.DragEventHandler(this.mainPanel_DragEnter);
             this.drgdropText.DragLeave += new System.EventHandler(this.mainPanel_DragLeave);
+            // 
+            // btnManualEntry
+            // 
+            this.btnManualEntry.BackColor = System.Drawing.Color.Transparent;
+            resources.ApplyResources(this.btnManualEntry, "btnManualEntry");
+            this.btnManualEntry.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(192)))), ((int)(((byte)(255)))), ((int)(((byte)(255)))));
+            this.btnManualEntry.Name = "btnManualEntry";
+            this.btnManualEntry.UseVisualStyleBackColor = false;
+            this.btnManualEntry.Click += new System.EventHandler(this.btnManualEntry_Click);
             // 
             // lanMultiplayerToolTip
             // 
@@ -424,17 +455,18 @@ namespace APPID
             // 
             // ManAppPanel
             // 
-            this.ManAppPanel.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(20)))), ((int)(((byte)(50)))));
-            this.ManAppPanel.BorderStyle = System.Windows.Forms.BorderStyle.Fixed3D;
+            this.ManAppPanel.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(200)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
             this.ManAppPanel.Controls.Add(this.ManAppBox);
             this.ManAppPanel.Controls.Add(this.ManAppBtn);
             this.ManAppPanel.Controls.Add(this.ManAppLbl);
             resources.ApplyResources(this.ManAppPanel, "ManAppPanel");
             this.ManAppPanel.Name = "ManAppPanel";
+            this.ManAppPanel.Paint += new System.Windows.Forms.PaintEventHandler(this.ManAppPanel_Paint);
             // 
             // ManAppBox
             // 
-            this.ManAppBox.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(100)))));
+            this.ManAppBox.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(8)))), ((int)(((byte)(8)))), ((int)(((byte)(12)))));
+            this.ManAppBox.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             resources.ApplyResources(this.ManAppBox, "ManAppBox");
             this.ManAppBox.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(220)))), ((int)(((byte)(255)))), ((int)(((byte)(255)))));
             this.ManAppBox.Name = "ManAppBox";
@@ -443,47 +475,95 @@ namespace APPID
             // 
             // ManAppBtn
             // 
+            this.ManAppBtn.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(80)))), ((int)(((byte)(15)))), ((int)(((byte)(25)))), ((int)(((byte)(45)))));
+            this.ManAppBtn.FlatAppearance.BorderColor = System.Drawing.Color.FromArgb(((int)(((byte)(100)))), ((int)(((byte)(150)))), ((int)(((byte)(200)))));
+            this.ManAppBtn.FlatAppearance.MouseOverBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(120)))), ((int)(((byte)(30)))), ((int)(((byte)(50)))), ((int)(((byte)(80)))));
             resources.ApplyResources(this.ManAppBtn, "ManAppBtn");
             this.ManAppBtn.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(192)))), ((int)(((byte)(255)))), ((int)(((byte)(255)))));
             this.ManAppBtn.Name = "ManAppBtn";
-            this.ManAppBtn.UseVisualStyleBackColor = true;
+            this.ManAppBtn.UseVisualStyleBackColor = false;
             this.ManAppBtn.Click += new System.EventHandler(this.ManAppBtn_Click);
             // 
             // ManAppLbl
             // 
             this.ManAppLbl.AllowDrop = true;
             resources.ApplyResources(this.ManAppLbl, "ManAppLbl");
-            this.ManAppLbl.ForeColor = System.Drawing.Color.PaleTurquoise;
+            this.ManAppLbl.BackColor = System.Drawing.Color.Transparent;
+            this.ManAppLbl.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(200)))), ((int)(((byte)(220)))), ((int)(((byte)(255)))));
             this.ManAppLbl.Name = "ManAppLbl";
             this.ManAppLbl.DragDrop += new System.Windows.Forms.DragEventHandler(this.mainPanel_DragDrop);
             this.ManAppLbl.DragEnter += new System.Windows.Forms.DragEventHandler(this.mainPanel_DragEnter);
             this.ManAppLbl.DragLeave += new System.EventHandler(this.mainPanel_DragLeave);
+            // 
+            // titleBar
+            // 
+            this.titleBar.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(180)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
+            this.titleBar.Controls.Add(this.lblTitle);
+            this.titleBar.Controls.Add(this.btnMinimize);
+            this.titleBar.Controls.Add(this.btnClose);
+            resources.ApplyResources(this.titleBar, "titleBar");
+            this.titleBar.Name = "titleBar";
+            this.titleBar.MouseDown += new System.Windows.Forms.MouseEventHandler(this.TitleBar_MouseDown);
+            // 
+            // lblTitle
+            // 
+            resources.ApplyResources(this.lblTitle, "lblTitle");
+            this.lblTitle.BackColor = System.Drawing.Color.Transparent;
+            this.lblTitle.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(200)))), ((int)(((byte)(200)))), ((int)(((byte)(210)))));
+            this.lblTitle.Name = "lblTitle";
+            this.lblTitle.MouseDown += new System.Windows.Forms.MouseEventHandler(this.TitleBar_MouseDown);
+            // 
+            // btnMinimize
+            // 
+            resources.ApplyResources(this.btnMinimize, "btnMinimize");
+            this.btnMinimize.BackColor = System.Drawing.Color.Transparent;
+            this.btnMinimize.FlatAppearance.BorderSize = 0;
+            this.btnMinimize.FlatAppearance.MouseOverBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(120)))), ((int)(((byte)(40)))), ((int)(((byte)(40)))), ((int)(((byte)(45)))));
+            this.btnMinimize.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(200)))), ((int)(((byte)(200)))), ((int)(((byte)(210)))));
+            this.btnMinimize.Name = "btnMinimize";
+            this.btnMinimize.UseVisualStyleBackColor = false;
+            this.btnMinimize.Click += new System.EventHandler(this.BtnMinimize_Click);
+            // 
+            // btnClose
+            // 
+            resources.ApplyResources(this.btnClose, "btnClose");
+            this.btnClose.BackColor = System.Drawing.Color.Transparent;
+            this.btnClose.FlatAppearance.BorderSize = 0;
+            this.btnClose.FlatAppearance.MouseOverBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(180)))), ((int)(((byte)(150)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
+            this.btnClose.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(200)))), ((int)(((byte)(200)))), ((int)(((byte)(210)))));
+            this.btnClose.Name = "btnClose";
+            this.btnClose.UseVisualStyleBackColor = false;
+            this.btnClose.Click += new System.EventHandler(this.BtnClose_Click);
             // 
             // SteamAppId
             // 
             this.AllowDrop = true;
             resources.ApplyResources(this, "$this");
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(2)))), ((int)(((byte)(10)))));
+            this.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(5)))), ((int)(((byte)(8)))), ((int)(((byte)(20))));
+            this.Controls.Add(this.titleBar);
+            this.Controls.Add(this.resinstruccZip);
             this.Controls.Add(this.mainPanel);
+            this.Controls.Add(this.btnManualEntry);
             this.Controls.Add(this.dataGridView1);
             this.Controls.Add(this.ManAppPanel);
             this.Controls.Add(this.searchTextBox);
             this.Controls.Add(this.btnSearch);
             this.ForeColor = System.Drawing.SystemColors.ActiveCaptionText;
-            this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedToolWindow;
+            this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.None;
             this.Name = "SteamAppId";
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.SteamAppId_FormClosing);
             this.Load += new System.EventHandler(this.SteamAppId_Load);
+            this.Click += new System.EventHandler(this.Form_Click);
             this.DragDrop += new System.Windows.Forms.DragEventHandler(this.mainPanel_DragDrop);
             this.DragEnter += new System.Windows.Forms.DragEventHandler(this.mainPanel_DragEnter);
             this.DragLeave += new System.EventHandler(this.mainPanel_DragLeave);
             ((System.ComponentModel.ISupportInitialize)(this.dataGridView1)).EndInit();
             this.mainPanel.ResumeLayout(false);
             this.mainPanel.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.gitHub)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.autoCrackOff)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.autoCrackOn)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.gitHub)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.pin)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.unPin)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.donePic)).EndInit();
@@ -491,6 +571,8 @@ namespace APPID
             ((System.ComponentModel.ISupportInitialize)(this.selectDir)).EndInit();
             this.ManAppPanel.ResumeLayout(false);
             this.ManAppPanel.PerformLayout();
+            this.titleBar.ResumeLayout(false);
+            this.titleBar.PerformLayout();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -509,7 +591,7 @@ namespace APPID
         private System.Windows.Forms.Label label5;
         private System.Windows.Forms.PictureBox donePic;
         private System.Windows.Forms.PictureBox startCrackPic;
-        private System.Windows.Forms.ComboBox dllSelect;
+        private TransparentComboBox dllSelect;
         private System.Windows.Forms.CheckBox lanMultiplayerCheckBox;
         private System.Windows.Forms.ToolTip lanMultiplayerToolTip;
         private System.Windows.Forms.Label drgdropText;

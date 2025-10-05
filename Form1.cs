@@ -7,6 +7,7 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
@@ -26,6 +27,37 @@ namespace APPID
 {
     public partial class SteamAppId : Form
     {
+        #region Windows API for Acrylic Blur
+        [DllImport("user32.dll")]
+        private static extern int SetWindowCompositionAttribute(IntPtr hwnd, ref WindowCompositionAttribData data);
+
+        [DllImport("dwmapi.dll")]
+        private static extern int DwmSetWindowAttribute(IntPtr hwnd, int attr, ref int attrValue, int attrSize);
+
+        private const int DWMWA_WINDOW_CORNER_PREFERENCE = 33;
+        private const int DWMWCP_ROUND = 2;
+
+        [StructLayout(LayoutKind.Sequential)]
+        private struct WindowCompositionAttribData
+        {
+            public int Attribute;
+            public IntPtr Data;
+            public int SizeOfData;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        private struct AccentPolicy
+        {
+            public int AccentState;
+            public int AccentFlags;
+            public int GradientColor;
+            public int AnimationId;
+        }
+
+        private const int WCA_ACCENT_POLICY = 19;
+        private const int ACCENT_ENABLE_ACRYLICBLURBEHIND = 4;
+        #endregion
+
         protected DataTableGeneration dataTableGeneration;
         public static int CurrentCell = 0;
         public static string APPNAME = "";
@@ -39,8 +71,94 @@ namespace APPID
             InitializeComponent();
             InitializeTimers();
 
+            // Apply acrylic blur and rounded corners
+            this.Load += (s, e) => ApplyAcrylicEffect();
+
             // Initialize HWID and user tracking
             _ = InitializeUserTracking();
+        }
+
+        private void ApplyAcrylicEffect()
+        {
+            // Apply rounded corners (Windows 11)
+            try
+            {
+                int preference = DWMWCP_ROUND;
+                DwmSetWindowAttribute(this.Handle, DWMWA_WINDOW_CORNER_PREFERENCE, ref preference, sizeof(int));
+            }
+            catch { }
+
+            // Apply acrylic blur effect
+            try
+            {
+                var accent = new AccentPolicy();
+                accent.AccentState = ACCENT_ENABLE_ACRYLICBLURBEHIND;
+                accent.AccentFlags = 2;
+                // Dark tinted glass: ABGR format (Alpha, Blue, Green, Red)
+                // 0xBB = ~73% opacity, balanced blur and darkness
+                accent.GradientColor = unchecked((int)0xBB0A0A0F); // Dark with good blur
+
+                int accentStructSize = Marshal.SizeOf(accent);
+                IntPtr accentPtr = Marshal.AllocHGlobal(accentStructSize);
+                Marshal.StructureToPtr(accent, accentPtr, false);
+
+                var data = new WindowCompositionAttribData();
+                data.Attribute = WCA_ACCENT_POLICY;
+                data.SizeOfData = accentStructSize;
+                data.Data = accentPtr;
+
+                SetWindowCompositionAttribute(this.Handle, ref data);
+
+                Marshal.FreeHGlobal(accentPtr);
+            }
+            catch { }
+        }
+
+        // Custom title bar drag functionality
+        private Point mouseDownPoint = Point.Empty;
+
+        private void TitleBar_MouseDown(object sender, MouseEventArgs e)
+        {
+            if (e.Button == MouseButtons.Left)
+            {
+                mouseDownPoint = new Point(e.X, e.Y);
+                this.Cursor = Cursors.SizeAll;
+
+                var titleBarControl = sender as Control;
+                titleBarControl.MouseMove += TitleBar_MouseMove;
+                titleBarControl.MouseUp += TitleBar_MouseUp;
+            }
+        }
+
+        private void TitleBar_MouseMove(object sender, MouseEventArgs e)
+        {
+            if (e.Button == MouseButtons.Left && mouseDownPoint != Point.Empty)
+            {
+                this.Location = new Point(
+                    this.Location.X + e.X - mouseDownPoint.X,
+                    this.Location.Y + e.Y - mouseDownPoint.Y
+                );
+            }
+        }
+
+        private void TitleBar_MouseUp(object sender, MouseEventArgs e)
+        {
+            this.Cursor = Cursors.Default;
+            mouseDownPoint = Point.Empty;
+
+            var titleBarControl = sender as Control;
+            titleBarControl.MouseMove -= TitleBar_MouseMove;
+            titleBarControl.MouseUp -= TitleBar_MouseUp;
+        }
+
+        private void BtnClose_Click(object sender, EventArgs e)
+        {
+            this.Close();
+        }
+
+        private void BtnMinimize_Click(object sender, EventArgs e)
+        {
+            this.WindowState = FormWindowState.Minimized;
         }
 
         private async Task InitializeUserTracking()
@@ -2632,6 +2750,15 @@ oLink3.Save";
             }
         }
 
+        private void ManAppPanel_Paint(object sender, PaintEventArgs e)
+        {
+            // Draw modern border with subtle glow
+            using (Pen borderPen = new Pen(Color.FromArgb(180, 100, 150, 200), 2))
+            {
+                e.Graphics.DrawRectangle(borderPen, 0, 0, ManAppPanel.Width - 1, ManAppPanel.Height - 1);
+            }
+        }
+
         private void ManAppBtn_Click(object sender, EventArgs e)
         {
             if (ManAppBox.Text.Length > 2 && isnumeric)
@@ -2766,12 +2893,25 @@ oLink3.Save";
                 {
                     MessageBox.Show("Enter APPID or press ESC to cancel!");
                 }
-             
+
             }
             if (e.KeyCode == Keys.Escape) {
-                ManAppBox.Clear();
-                ManAppPanel.Visible = false;
-                searchTextBox.Focus();
+                CloseManAppPanel();
+            }
+        }
+
+        private void CloseManAppPanel()
+        {
+            ManAppBox.Clear();
+            ManAppPanel.Visible = false;
+            searchTextBox.Focus();
+        }
+
+        private void Form_Click(object sender, EventArgs e)
+        {
+            if (ManAppPanel.Visible)
+            {
+                CloseManAppPanel();
             }
         }
 
@@ -3389,6 +3529,11 @@ oLink3.Save";
                     row.Cells["RINStatus"].Style.ForeColor = Color.FromArgb(150, 150, 255);
                 }
             }
+        }
+
+        private void resinstruccZip_Click(object sender, EventArgs e)
+        {
+
         }
     }
 }

@@ -7,6 +7,7 @@ using System.IO;
 using System.IO.Compression;
 using System.Linq;
 using System.Net.Http;
+using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
@@ -14,6 +15,37 @@ namespace SteamAppIdIdentifier
 {
     public partial class EnhancedShareWindow : Form
     {
+        #region Windows API for Acrylic Blur
+        [DllImport("user32.dll")]
+        private static extern int SetWindowCompositionAttribute(IntPtr hwnd, ref WindowCompositionAttribData data);
+
+        [DllImport("dwmapi.dll")]
+        private static extern int DwmSetWindowAttribute(IntPtr hwnd, int attr, ref int attrValue, int attrSize);
+
+        private const int DWMWA_WINDOW_CORNER_PREFERENCE = 33;
+        private const int DWMWCP_ROUND = 2;
+
+        [StructLayout(LayoutKind.Sequential)]
+        private struct WindowCompositionAttribData
+        {
+            public int Attribute;
+            public IntPtr Data;
+            public int SizeOfData;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        private struct AccentPolicy
+        {
+            public int AccentState;
+            public int AccentFlags;
+            public int GradientColor;
+            public int AnimationId;
+        }
+
+        private const int WCA_ACCENT_POLICY = 19;
+        private const int ACCENT_ENABLE_ACRYLICBLURBEHIND = 4;
+        #endregion
+
         private Form mainForm;
         private Timer rgbTimer;
         private int colorHue = 0;
@@ -26,9 +58,48 @@ namespace SteamAppIdIdentifier
             // Setup modern progress bar style
             SetupModernProgressBar();
 
+            // Apply acrylic blur and rounded corners
+            this.Load += (s, e) => ApplyAcrylicEffect();
+
             // Hide main form and show again when this closes
             mainForm.Visible = false;
             this.FormClosed += (s, e) => mainForm.Visible = true;
+        }
+
+        private void ApplyAcrylicEffect()
+        {
+            // Apply rounded corners (Windows 11)
+            try
+            {
+                int preference = DWMWCP_ROUND;
+                DwmSetWindowAttribute(this.Handle, DWMWA_WINDOW_CORNER_PREFERENCE, ref preference, sizeof(int));
+            }
+            catch { }
+
+            // Apply acrylic blur effect
+            try
+            {
+                var accent = new AccentPolicy();
+                accent.AccentState = ACCENT_ENABLE_ACRYLICBLURBEHIND;
+                accent.AccentFlags = 2;
+                // Dark tinted glass: ABGR format (Alpha, Blue, Green, Red)
+                // 0xBB = ~73% opacity, balanced blur and darkness
+                accent.GradientColor = unchecked((int)0xBB0A0A0F); // Dark with good blur
+
+                int accentStructSize = Marshal.SizeOf(accent);
+                IntPtr accentPtr = Marshal.AllocHGlobal(accentStructSize);
+                Marshal.StructureToPtr(accent, accentPtr, false);
+
+                var data = new WindowCompositionAttribData();
+                data.Attribute = WCA_ACCENT_POLICY;
+                data.SizeOfData = accentStructSize;
+                data.Data = accentPtr;
+
+                SetWindowCompositionAttribute(this.Handle, ref data);
+
+                Marshal.FreeHGlobal(accentPtr);
+            }
+            catch { }
         }
 
         private void SetupModernProgressBar()
@@ -766,13 +837,29 @@ namespace SteamAppIdIdentifier
 
         private void GamesGrid_CellFormatting(object sender, DataGridViewCellFormattingEventArgs e)
         {
-            // Additional cell formatting for button styling
-            if (e.ColumnIndex >= 0 && gamesGrid.Columns[e.ColumnIndex] is DataGridViewButtonColumn)
+            // Format both button columns and text columns
+            if (e.ColumnIndex >= 0)
             {
+                var colName = gamesGrid.Columns[e.ColumnIndex].Name;
                 var cell = gamesGrid.Rows[e.RowIndex].Cells[e.ColumnIndex];
-                cell.Style.BackColor = Color.FromArgb(30, 30, 30);
-                cell.Style.ForeColor = Color.FromArgb(150, 150, 150);
-                cell.Style.SelectionBackColor = Color.FromArgb(40, 40, 40);
+
+                // Style the Share columns
+                if (colName == "ShareClean")
+                {
+                    // Green tint for clean - transparent background
+                    cell.Style.BackColor = Color.FromArgb(8, 8, 12);
+                    cell.Style.ForeColor = Color.FromArgb(100, 255, 150);
+                    cell.Style.SelectionBackColor = Color.FromArgb(15, 25, 20);
+                    cell.Style.SelectionForeColor = Color.FromArgb(150, 255, 200);
+                }
+                else if (colName == "ShareCracked")
+                {
+                    // Purple/magenta tint for cracked - transparent background
+                    cell.Style.BackColor = Color.FromArgb(8, 8, 12);
+                    cell.Style.ForeColor = Color.FromArgb(255, 100, 255);
+                    cell.Style.SelectionBackColor = Color.FromArgb(20, 15, 25);
+                    cell.Style.SelectionForeColor = Color.FromArgb(255, 150, 255);
+                }
             }
         }
 
@@ -993,6 +1080,23 @@ namespace SteamAppIdIdentifier
         private void gamesGrid_CellContentClick(object sender, DataGridViewCellEventArgs e)
         {
 
+        }
+
+        private void GamesGrid_CellMouseEnter(object sender, DataGridViewCellEventArgs e)
+        {
+            if (e.RowIndex >= 0 && e.ColumnIndex >= 0)
+            {
+                var colName = gamesGrid.Columns[e.ColumnIndex].Name;
+                if (colName == "ShareClean" || colName == "ShareCracked")
+                {
+                    gamesGrid.Cursor = Cursors.Hand;
+                }
+            }
+        }
+
+        private void GamesGrid_CellMouseLeave(object sender, DataGridViewCellEventArgs e)
+        {
+            gamesGrid.Cursor = Cursors.Default;
         }
     }
 
