@@ -14,6 +14,7 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using CliWrap;
 using CliWrap.Buffered;
+using SAC_GUI;
 using SteamAppIdIdentifier;
 using SteamAutocrackGUI;
 using Clipboard = System.Windows.Forms.Clipboard;
@@ -1084,16 +1085,22 @@ namespace APPID
             bool steamlessUnpacked = false;  // Track if Steamless unpacked anything
             string originalGameDir = gameDir;  // Keep track of original location
 
+            System.Diagnostics.Debug.WriteLine($"[CRACK] === Starting CrackCoreAsync ===");
+            System.Diagnostics.Debug.WriteLine($"[CRACK] Game Directory: {gameDir}");
+            System.Diagnostics.Debug.WriteLine($"[CRACK] AppID: {APPID}");
+            System.Diagnostics.Debug.WriteLine($"[CRACK] Current Directory: {Environment.CurrentDirectory}");
+
             try
             {
                 var files = Directory.GetFiles(gameDir, "*.*", SearchOption.AllDirectories);
+                System.Diagnostics.Debug.WriteLine($"[CRACK] Found {files.Length} files total");
 
 
                 foreach (string file in files)
                 {
                     if (file.EndsWith("steam_api64.dll"))
                     {
-                        
+                        System.Diagnostics.Debug.WriteLine($"[CRACK] Found steam_api64.dll: {file}");
                         steam64count++;
                         parentdir = Directory.GetParent(file).FullName;
                         string steam = $"{parentdir}\\steam_settings";
@@ -1150,6 +1157,7 @@ namespace APPID
                     }
                     if (file.EndsWith("steam_api.dll"))
                     {
+                        System.Diagnostics.Debug.WriteLine($"[CRACK] Found steam_api.dll: {file}");
                         steamcount++;
                         parentdir = Directory.GetParent(file).FullName;
                         string steam = $"{parentdir}\\steam_settings";
@@ -1220,6 +1228,20 @@ namespace APPID
 
                     if (Path.GetExtension(file) == ".exe")
                     {
+                        // Check if Steamless exists before trying to use it
+                        string steamlessPath = $"{Environment.CurrentDirectory}\\_bin\\Steamless\\Steamless.CLI.exe";
+                        System.Diagnostics.Debug.WriteLine($"[CRACK] Checking for Steamless at: {steamlessPath}");
+                        System.Diagnostics.Debug.WriteLine($"[CRACK] Steamless exists: {File.Exists(steamlessPath)}");
+
+                        if (!File.Exists(steamlessPath))
+                        {
+                            System.Diagnostics.Debug.WriteLine($"[CRACK] Steamless not found, skipping EXE unpacking for: {file}");
+                            Tit($"Steamless not found at {steamlessPath}, skipping EXE unpacking", Color.Yellow);
+                            continue;
+                        }
+
+                        System.Diagnostics.Debug.WriteLine($"[CRACK] Processing EXE: {file}");
+
                         if (File.Exists($"{file}.bak"))
                         {
                             File.Delete(file);
@@ -1236,17 +1258,31 @@ namespace APPID
                         pro.RedirectStandardOutput = true;
                         pro.WorkingDirectory = parentdir;
                         pro.FileName = @"C:\Windows\System32\cmd.exe";
-                        pro.Arguments = $"/c start /B \"\" \"{Environment.CurrentDirectory}\\_bin\\Steamless\\Steamless.CLI.exe\" \"{file}\"";
+                        pro.Arguments = $"/c start /B \"\" \"{steamlessPath}\" \"{file}\"";
+
+                        System.Diagnostics.Debug.WriteLine($"[CRACK] Starting Steamless process");
+                        System.Diagnostics.Debug.WriteLine($"[CRACK] Working Directory: {parentdir}");
+                        System.Diagnostics.Debug.WriteLine($"[CRACK] Command: {pro.Arguments}");
+
                         x2.StartInfo = pro;
                         x2.Start();
                         string Output = x2.StandardError.ReadToEnd() + x2.StandardOutput.ReadToEnd();
                         x2.WaitForExit();
+
+                        System.Diagnostics.Debug.WriteLine($"[CRACK] Steamless output: {Output}");
+                        System.Diagnostics.Debug.WriteLine($"[CRACK] Steamless exit code: {x2.ExitCode}");
+
                         if (File.Exists($"{file}.unpacked.exe"))
                         {
+                            System.Diagnostics.Debug.WriteLine($"[CRACK] Successfully unpacked: {file}");
                             Tit($"Unpacked {file} successfully!", Color.LightSkyBlue);
                             File.Move(file, file + ".bak");
                             File.Move($"{file}.unpacked.exe", file);
                             steamlessUnpacked = true;  // Mark that we unpacked something
+                        }
+                        else
+                        {
+                            System.Diagnostics.Debug.WriteLine($"[CRACK] No unpacked file created for: {file}");
                         }
 
                     }
@@ -1577,8 +1613,23 @@ oLink3.Save";
                     }
                 }
             }
-            catch (Exception ex){ File.WriteAllText("_CRASHlog.txt", ex.StackTrace + "\n" + ex.Message); }
+            catch (UnauthorizedAccessException ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[CRACK] UnauthorizedAccessException: {ex.Message}");
+                File.WriteAllText("_CRASHlog.txt", $"[UnauthorizedAccessException]\n{ex.StackTrace}\n{ex.Message}");
+                Tit($"Permission denied. Try running as administrator or copy game to desktop.", Color.Red);
+                return false;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[CRACK] Exception: {ex.GetType().Name}: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"[CRACK] Stack trace: {ex.StackTrace}");
+                File.WriteAllText("_CRASHlog.txt", $"[{ex.GetType().Name}]\n{ex.StackTrace}\n{ex.Message}\n\nFull Exception:\n{ex.ToString()}");
+                throw; // Re-throw to let caller handle it
+            }
 
+            System.Diagnostics.Debug.WriteLine($"[CRACK] === Crack Complete ===");
+            System.Diagnostics.Debug.WriteLine($"[CRACK] Cracked: {cracked}, Steamless Unpacked: {steamlessUnpacked}");
             // Return true only if we actually cracked something
             return cracked || steamlessUnpacked;
         }
@@ -1599,6 +1650,13 @@ oLink3.Save";
         private string parentOfSelection;
         private string gameDir;
         private string gameDirName;
+
+        // Public property to allow EnhancedShareWindow to set game directory
+        public string GameDirectory
+        {
+            get { return gameDir; }
+            set { gameDir = value; }
+        }
         private void pictureBox2_Click(object sender, EventArgs e)
         {
             OpenDir.Visible = false;
@@ -2204,67 +2262,40 @@ oLink3.Save";
                                 progressClient.Timeout = TimeSpan.FromHours(2);
                                 progressClient.DefaultRequestHeaders.Add("User-Agent", "SACGUI-Uploader/2.0");
 
-                                // Use streaming upload endpoint for large files
-                                var retentionHours = 168; // 7 days
-                                var uploadUrl = $"https://pydrive.harryeffingpotter.com/upload/stream?retention_hours={retentionHours}";
-                                System.Diagnostics.Debug.WriteLine($"[UPLOAD] Sending POST request to {uploadUrl}");
-                                System.Diagnostics.Debug.WriteLine("[UPLOAD] Using streaming upload for large file support");
+                                // Use 1fichier upload
+                                System.Diagnostics.Debug.WriteLine("[UPLOAD] Using 1fichier for file upload");
                                 System.Diagnostics.Debug.WriteLine("[UPLOAD] Request starting...");
 
-                                // Create new multipart content for streaming endpoint (only needs file)
-                                using (var streamContent = new MultipartFormDataContent())
+                                // Create progress handler for 1fichier upload
+                                var progress = new Progress<double>(value =>
                                 {
-                                    fileStream.Position = 0;
-                                    var streamFileContent = new StreamContent(fileStream);
-                                    streamFileContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/octet-stream");
-                                    streamContent.Add(streamFileContent, "file", Path.GetFileName(filePath));
-
-                                    var response = await progressClient.PostAsync(uploadUrl, streamContent);
-                                System.Diagnostics.Debug.WriteLine($"[UPLOAD] Response received: Status={response.StatusCode} ({(int)response.StatusCode})");
-
-                                    if (response.IsSuccessStatusCode)
+                                    int percentage = (int)(value * 100);
+                                    if (parentForm.IsHandleCreated)
                                     {
-                                        var responseText = await response.Content.ReadAsStringAsync();
-                                        System.Diagnostics.Debug.WriteLine($"[UPLOAD] Success! Response: {responseText}");
+                                        parentForm.Invoke(new Action(() => {
+                                            Tit($"Uploading to 1fichier... {percentage}%", Color.Magenta);
+                                        }));
+                                    }
+                                });
 
-                                        // Parse streaming endpoint response
-                                        try
-                                        {
-                                            dynamic result = Newtonsoft.Json.JsonConvert.DeserializeObject(responseText);
+                                // Use 1fichier uploader
+                                using (var uploader = new OneFichierUploader())
+                                {
+                                    var uploadResult = await uploader.UploadFileAsync(filePath, progress);
 
-                                            // Get the share URL from response
-                                            string shareUrl = result?.share_url?.ToString();
+                                    System.Diagnostics.Debug.WriteLine($"[UPLOAD] 1fichier upload successful!");
 
-                                            if (!string.IsNullOrEmpty(shareUrl))
-                                            {
-                                                System.Diagnostics.Debug.WriteLine($"[UPLOAD] Extracted share URL: {shareUrl}");
-                                                return shareUrl;
-                                            }
-
-                                            // Check for file_id to construct download URL
-                                            string fileId = result?.file_id?.ToString();
-                                            if (!string.IsNullOrEmpty(fileId))
-                                            {
-                                                shareUrl = $"https://pydrive.harryeffingpotter.com/download/{fileId}";
-                                                System.Diagnostics.Debug.WriteLine($"[UPLOAD] Constructed download URL: {shareUrl}");
-                                                return shareUrl;
-                                            }
-
-                                            // The streaming endpoint should return either share_url or file_id
-                                            System.Diagnostics.Debug.WriteLine($"[UPLOAD] Error: No share_url or file_id in response");
-                                        }
-                                        catch (Exception parseEx)
-                                        {
-                                            System.Diagnostics.Debug.WriteLine($"[UPLOAD] Failed to parse response: {parseEx.Message}");
-                                        }
-
-                                        System.Diagnostics.Debug.WriteLine("[UPLOAD] WARNING: Could not extract URL from response");
+                                    if (!string.IsNullOrEmpty(uploadResult.DownloadUrl))
+                                    {
+                                        string shareUrl = uploadResult.DownloadUrl;
+                                        System.Diagnostics.Debug.WriteLine($"[UPLOAD] Download URL: {shareUrl}");
+                                        System.Diagnostics.Debug.WriteLine($"[UPLOAD] Extracted share URL: {shareUrl}");
+                                        return shareUrl;
                                     }
                                     else
                                     {
-                                        var errorContent = await response.Content.ReadAsStringAsync();
-                                        System.Diagnostics.Debug.WriteLine($"[UPLOAD] Request failed with status {response.StatusCode}");
-                                        System.Diagnostics.Debug.WriteLine($"[UPLOAD] Error response: {errorContent}");
+                                        System.Diagnostics.Debug.WriteLine("[UPLOAD] WARNING: Upload succeeded but no URL was returned");
+                                        throw new Exception("Upload succeeded but no download URL was returned");
                                     }
                                 }
                             }
