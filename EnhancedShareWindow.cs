@@ -15,91 +15,57 @@ namespace SteamAppIdIdentifier
 {
     public partial class EnhancedShareWindow : Form
     {
-        #region Windows API for Acrylic Blur
-        [DllImport("user32.dll")]
-        private static extern int SetWindowCompositionAttribute(IntPtr hwnd, ref WindowCompositionAttribData data);
 
-        [DllImport("dwmapi.dll")]
-        private static extern int DwmSetWindowAttribute(IntPtr hwnd, int attr, ref int attrValue, int attrSize);
-
-        private const int DWMWA_WINDOW_CORNER_PREFERENCE = 33;
-        private const int DWMWCP_ROUND = 2;
-
-        [StructLayout(LayoutKind.Sequential)]
-        private struct WindowCompositionAttribData
-        {
-            public int Attribute;
-            public IntPtr Data;
-            public int SizeOfData;
-        }
-
-        [StructLayout(LayoutKind.Sequential)]
-        private struct AccentPolicy
-        {
-            public int AccentState;
-            public int AccentFlags;
-            public int GradientColor;
-            public int AnimationId;
-        }
-
-        private const int WCA_ACCENT_POLICY = 19;
-        private const int ACCENT_ENABLE_ACRYLICBLURBEHIND = 4;
-        #endregion
-
-        private Form mainForm;
+        private Form parentForm;
         private Timer rgbTimer;
         private int colorHue = 0;
 
         public EnhancedShareWindow(Form parent)
         {
-            mainForm = parent;
+            parentForm = parent;
             InitializeComponent();  // Use the Designer.cs file instead!
 
             // Setup modern progress bar style
             SetupModernProgressBar();
 
-            // Apply acrylic blur and rounded corners
-            this.Load += (s, e) => ApplyAcrylicEffect();
+            // Add custom sort for GameSize column
+            gamesGrid.SortCompare += GamesGrid_SortCompare;
 
-            // Hide main form and show again when this closes
-            mainForm.Visible = false;
-            this.FormClosed += (s, e) => mainForm.Visible = true;
+            // Apply acrylic blur and rounded corners
+            this.Load += (s, e) =>
+            {
+                ApplyAcrylicEffect();
+                // Center over parent when loaded
+                CenterToParent();
+            };
+        }
+
+        private void GamesGrid_SortCompare(object sender, DataGridViewSortCompareEventArgs e)
+        {
+            // Sort GameSize column by actual byte value stored in Tag
+            if (e.Column.Name == "GameSize")
+            {
+                long size1 = gamesGrid.Rows[e.RowIndex1].Cells["GameSize"].Tag as long? ?? 0;
+                long size2 = gamesGrid.Rows[e.RowIndex2].Cells["GameSize"].Tag as long? ?? 0;
+
+                e.SortResult = size1.CompareTo(size2);
+                e.Handled = true;
+            }
+        }
+
+        private void CenterToParent()
+        {
+            if (parentForm != null && parentForm.IsHandleCreated)
+            {
+                int x = parentForm.Left + (parentForm.Width - this.Width) / 2;
+                int y = parentForm.Top + (parentForm.Height - this.Height) / 2;
+                this.Location = new Point(x, y);
+            }
         }
 
         private void ApplyAcrylicEffect()
         {
-            // Apply rounded corners (Windows 11)
-            try
-            {
-                int preference = DWMWCP_ROUND;
-                DwmSetWindowAttribute(this.Handle, DWMWA_WINDOW_CORNER_PREFERENCE, ref preference, sizeof(int));
-            }
-            catch { }
-
-            // Apply acrylic blur effect
-            try
-            {
-                var accent = new AccentPolicy();
-                accent.AccentState = ACCENT_ENABLE_ACRYLICBLURBEHIND;
-                accent.AccentFlags = 2;
-                // Dark tinted glass: ABGR format (Alpha, Blue, Green, Red)
-                // 0xBB = ~73% opacity, balanced blur and darkness
-                accent.GradientColor = unchecked((int)0xBB0A0A0F); // Dark with good blur
-
-                int accentStructSize = Marshal.SizeOf(accent);
-                IntPtr accentPtr = Marshal.AllocHGlobal(accentStructSize);
-                Marshal.StructureToPtr(accent, accentPtr, false);
-
-                var data = new WindowCompositionAttribData();
-                data.Attribute = WCA_ACCENT_POLICY;
-                data.SizeOfData = accentStructSize;
-                data.Data = accentPtr;
-
-                SetWindowCompositionAttribute(this.Handle, ref data);
-
-                Marshal.FreeHGlobal(accentPtr);
-            }
-            catch { }
+            APPID.AcrylicHelper.ApplyAcrylic(this, roundedCorners: true);
         }
 
         private void SetupModernProgressBar()
@@ -182,10 +148,6 @@ namespace SteamAppIdIdentifier
             this.BackColor = Color.FromArgb(15, 15, 15);
             this.ForeColor = Color.White;
 
-            // Hide main form
-            mainForm.Visible = false;
-            this.FormClosed += (s, e) => mainForm.Visible = true;
-
             // Create main panel
             var mainPanel = new Panel
             {
@@ -263,7 +225,7 @@ namespace SteamAppIdIdentifier
             // Scan Steam libraries on background thread to avoid blocking UI
             var games = await Task.Run(() => ScanSteamLibraries());
 
-            // Add to grid
+            // Add to grid with placeholders, calculate sizes async
             foreach (var game in games)
             {
                 var row = gamesGrid.Rows[gamesGrid.Rows.Add()];
@@ -271,13 +233,54 @@ namespace SteamAppIdIdentifier
                 row.Cells["BuildID"].Value = game.BuildId;
                 row.Cells["AppID"].Value = game.AppId;
                 row.Cells["InstallPath"].Value = game.InstallDir;
+                row.Cells["GameSize"].Value = "...";
 
                 // Default button texts
                 row.Cells["ShareClean"].Value = "📦 Clean";
                 row.Cells["ShareCracked"].Value = "🎮 Cracked";
+
+                // Calculate size asynchronously for each game
+                int rowIndex = row.Index;
+                _ = Task.Run(() =>
+                {
+                    long dirSize = 0;
+                    try
+                    {
+                        if (Directory.Exists(game.InstallDir))
+                        {
+                            dirSize = new DirectoryInfo(game.InstallDir)
+                                .EnumerateFiles("*", SearchOption.AllDirectories)
+                                .Sum(file => file.Length);
+                        }
+                    }
+                    catch { }
+
+                    // Update UI on main thread
+                    this.Invoke(new Action(() =>
+                    {
+                        if (rowIndex < gamesGrid.Rows.Count)
+                        {
+                            gamesGrid.Rows[rowIndex].Cells["GameSize"].Value = FormatFileSize(dirSize);
+                            gamesGrid.Rows[rowIndex].Cells["GameSize"].Tag = dirSize; // Store actual bytes for sorting
+                        }
+                    }));
+                });
             }
         }
 
+
+        private string FormatFileSize(long bytes)
+        {
+            string[] sizes = { "B", "KB", "MB", "GB", "TB" };
+            double len = bytes;
+            int order = 0;
+            while (len >= 1024 && order < sizes.Length - 1)
+            {
+                order++;
+                len = len / 1024;
+            }
+            return $"{len:0.##} {sizes[order]}";
+        }
 
         private async void GamesGrid_CellClick(object sender, DataGridViewCellEventArgs e)
         {
@@ -313,6 +316,43 @@ namespace SteamAppIdIdentifier
                 return;
             }
 
+            // If sharing clean files, restore all .bak files first
+            if (!cracked)
+            {
+                try
+                {
+                    var parentFormTyped = parentForm as SteamAppId;
+                    if (parentFormTyped != null)
+                    {
+                        // Use the RestoreAllBakFiles method from Form1
+                        var bakFiles = Directory.GetFiles(installPath, "*.bak", SearchOption.AllDirectories);
+                        if (bakFiles.Length > 0)
+                        {
+                            System.Diagnostics.Debug.WriteLine($"[SHARE CLEAN] Found {bakFiles.Length} .bak files, restoring clean files...");
+                            foreach (var bakFile in bakFiles)
+                            {
+                                var originalFile = bakFile.Substring(0, bakFile.Length - 4); // Remove .bak
+                                try
+                                {
+                                    if (File.Exists(originalFile))
+                                        File.Delete(originalFile);
+                                    File.Move(bakFile, originalFile);
+                                    System.Diagnostics.Debug.WriteLine($"[SHARE CLEAN] Restored {Path.GetFileName(bakFile)}");
+                                }
+                                catch (Exception ex)
+                                {
+                                    System.Diagnostics.Debug.WriteLine($"[SHARE CLEAN] Failed to restore {bakFile}: {ex.Message}");
+                                }
+                            }
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[SHARE CLEAN] Error restoring .bak files: {ex.Message}");
+                }
+            }
+
             // If sharing cracked version, first crack the game
             if (cracked)
             {
@@ -330,20 +370,65 @@ namespace SteamAppIdIdentifier
                 }
 
                 // Call the main form's cracking method
-                var mainFormTyped = mainForm as SteamAppId;
-                if (mainFormTyped != null)
+                var parentFormTyped = parentForm as SteamAppId;
+                if (parentFormTyped != null)
                 {
                     // Set the game directory and app ID in the main form
-                    mainFormTyped.GameDirectory = installPath;
+                    parentFormTyped.GameDirectory = installPath;
                     SteamAppId.APPID = appId;
 
-                    // Show status
+                    // Show status with visual indicator
                     row.Cells["ShareCracked"].Value = "⚙️ Cracking...";
+                    row.Cells["ShareCracked"].Style.BackColor = Color.FromArgb(30, 30, 0); // Subtle yellow tint
+
+                    // Create translucent overlay
+                    var overlay = new Panel
+                    {
+                        Size = this.ClientSize,
+                        Location = new Point(0, 0),
+                        BackColor = Color.FromArgb(180, 5, 8, 20), // Semi-transparent dark
+                        Visible = true
+                    };
+                    var lblCracking = new Label
+                    {
+                        Text = $"⚙️ Cracking {gameName}...\n\nInitializing...",
+                        Font = new Font("Segoe UI", 14, FontStyle.Bold),
+                        ForeColor = Color.FromArgb(100, 200, 255),
+                        TextAlign = ContentAlignment.MiddleCenter,
+                        Dock = DockStyle.Fill
+                    };
+                    overlay.Controls.Add(lblCracking);
+                    this.Controls.Add(overlay);
+                    overlay.BringToFront();
+                    Application.DoEvents(); // Force UI update
+
+                    // Helper to update crack progress
+                    Action<string> updateProgress = (status) =>
+                    {
+                        if (lblCracking.IsHandleCreated)
+                        {
+                            lblCracking.Invoke(new Action(() =>
+                            {
+                                lblCracking.Text = $"⚙️ Cracking {gameName}...\n\n{status}";
+                            }));
+                        }
+                    };
+
+                    // Subscribe to main form's status updates
+                    EventHandler<string> statusHandler = (s, status) => updateProgress(status);
+                    parentFormTyped.CrackStatusChanged += statusHandler;
 
                     try
                     {
                         // Crack the game
-                        bool crackSuccess = await mainFormTyped.CrackAsync();
+                        bool crackSuccess = await parentFormTyped.CrackAsync();
+
+                        // Unsubscribe
+                        parentFormTyped.CrackStatusChanged -= statusHandler;
+
+                        // Remove overlay
+                        this.Controls.Remove(overlay);
+                        overlay.Dispose();
 
                         if (!crackSuccess)
                         {
@@ -357,11 +442,16 @@ namespace SteamAppIdIdentifier
                                 MessageBoxButtons.OK,
                                 MessageBoxIcon.Warning);
                             row.Cells["ShareCracked"].Value = "🎮 Cracked";
+                            row.Cells["ShareCracked"].Style.BackColor = Color.FromArgb(8, 8, 12); // Reset to default
                             return;
                         }
                     }
                     catch (Exception ex)
                     {
+                        // Remove overlay
+                        this.Controls.Remove(overlay);
+                        overlay.Dispose();
+
                         // Write full error to file for debugging
                         string errorLog = $"_ShareCrackError_{DateTime.Now:yyyyMMdd_HHmmss}.txt";
                         File.WriteAllText(errorLog,
@@ -384,6 +474,7 @@ namespace SteamAppIdIdentifier
                             MessageBoxButtons.OK,
                             MessageBoxIcon.Error);
                         row.Cells["ShareCracked"].Value = "🎮 Cracked";
+                        row.Cells["ShareCracked"].Style.BackColor = Color.FromArgb(8, 8, 12); // Reset to default
                         return;
                     }
                 }
@@ -400,7 +491,7 @@ namespace SteamAppIdIdentifier
                 using (var compressionForm = new SteamAutocrackGUI.CompressionSettingsForm())
                 {
                     compressionForm.StartPosition = FormStartPosition.CenterParent;
-                    compressionForm.TopMost = true;
+                    compressionForm.ShowInTaskbar = false;  // Don't show in taskbar
 
                     if (compressionForm.ShowDialog(this) != DialogResult.OK)
                     {
@@ -415,20 +506,28 @@ namespace SteamAppIdIdentifier
                     // Get selected settings
                     string format = compressionForm.SelectedFormat;
                     string level = compressionForm.SelectedLevel;
+                    bool usePassword = compressionForm.UseRinPassword;
 
                     // Build output path
                     string desktopPath = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
                     string prefix = cracked ? "[SACGUI] CRACKED" : "[SACGUI] CLEAN";
-                    string zipName = $"{prefix} {gameName}.{format.ToLower()}";
+                    // Sanitize filename - remove invalid characters but keep spaces
+                    string safeGameName = gameName;
+                    foreach (char c in Path.GetInvalidFileNameChars())
+                    {
+                        safeGameName = safeGameName.Replace(c.ToString(), "");
+                    }
+                    string zipName = $"{prefix} {safeGameName}.{format.ToLower()}";
                     string outputPath = Path.Combine(desktopPath, zipName);
 
                     // Show progress window
                     var progressForm = new RGBProgressWindow(gameName, cracked ? "Cracked" : "Clean");
                     progressForm.Show(this);
-                    progressForm.UpdateStatus($"Compressing with {format.ToUpper()} level {level}...");
+                    progressForm.CenterOverParent(this);
+                    progressForm.UpdateStatus($"Compressing with {format.ToUpper()} level {level}..." + (usePassword ? " (Password protected)" : ""));
 
-                    // Compress the game using the real compression (not placeholder!)
-                    bool compressionSuccess = await Task.Run(() => CompressGameProper(installPath, outputPath, format, level));
+                    // Compress the game using the real compression with optional password
+                    bool compressionSuccess = await Task.Run(() => CompressGameProper(installPath, outputPath, format, level, usePassword ? "cs.rin.ru" : null, progressForm));
 
                     progressForm.Close();
 
@@ -447,8 +546,14 @@ namespace SteamAppIdIdentifier
                         Text = "Compression Complete!",
                         Size = new Size(400, 200),
                         StartPosition = FormStartPosition.CenterParent,
-                        FormBorderStyle = FormBorderStyle.FixedDialog,
-                        BackColor = Color.FromArgb(20, 20, 30)
+                        FormBorderStyle = FormBorderStyle.None,
+                        BackColor = Color.FromArgb(5, 8, 20)
+                    };
+
+                    // Apply acrylic to completion dialog
+                    completionDialog.Load += (s, e) =>
+                    {
+                        APPID.AcrylicHelper.ApplyAcrylic(completionDialog, roundedCorners: true);
                     };
 
                     var label = new Label
@@ -493,13 +598,21 @@ namespace SteamAppIdIdentifier
                         // User chose to upload
                         row.Cells[btnColumn].Value = "⏳ Uploading...";
 
-                        string uploadUrl = await UploadFileWithProgress(outputPath, new RGBProgressWindow(gameName, "Uploading"));
+                        var uploadProgress = new RGBProgressWindow(gameName, "Uploading");
+                        string uploadUrl = await UploadFileWithProgress(outputPath, uploadProgress);
+
+                        // Check if cancelled
+                        if (uploadProgress.WasCancelled)
+                        {
+                            row.Cells[btnColumn].Value = cracked ? "🎮 Cracked" : "📦 Clean";
+                            MessageBox.Show("Upload cancelled.", "Cancelled", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                            return;
+                        }
 
                         if (!string.IsNullOrEmpty(uploadUrl))
                         {
-                            // Convert the 1fichier link
-                            row.Cells[btnColumn].Value = "⏳ Converting link...";
-                            string convertedUrl = await Convert1FichierLink(uploadUrl);
+                            // uploadUrl is already the converted pydrive link from UploadFileWithProgress
+                            System.Diagnostics.Debug.WriteLine($"[SHARE] Final upload URL to show user: {uploadUrl}");
 
                             row.Cells[btnColumn].Value = "✅ Shared!";
                             row.Cells[btnColumn].Style.BackColor = Color.FromArgb(0, 100, 0);
@@ -507,9 +620,8 @@ namespace SteamAppIdIdentifier
                             // Notify backend about completion with converted URL
                             long fileSize = new FileInfo(outputPath).Length;
                             string uploadType = cracked ? "cracked" : "clean";
-                            await NotifyBackendCompletion(appId, uploadType, convertedUrl, fileSize);
 
-                            ShowUploadSuccess(convertedUrl, gameName, cracked);
+                            ShowUploadSuccess(uploadUrl, gameName, cracked);
                         }
                         else
                         {
@@ -531,7 +643,7 @@ namespace SteamAppIdIdentifier
             }
         }
 
-        private bool CompressGameProper(string sourcePath, string outputPath, string format, string level)
+        private bool CompressGameProper(string sourcePath, string outputPath, string format, string level, string password = null, RGBProgressWindow progressWindow = null)
         {
             try
             {
@@ -560,7 +672,12 @@ namespace SteamAppIdIdentifier
                         compressionSwitch = "-mx9";  // Ultra
 
                     string archiveType = format.ToLower() == "7z" ? "7z" : "zip";
-                    string arguments = $"a -t{archiveType} {compressionSwitch} \"{outputPath}\" \"{sourcePath}\\*\" -r";
+
+                    // Add password if provided
+                    string passwordSwitch = !string.IsNullOrEmpty(password) ? $"-p\"{password}\"" : "";
+
+                    // Add progress reporting (-bsp1 shows percentage progress)
+                    string arguments = $"a -t{archiveType} {compressionSwitch} {passwordSwitch} -bsp1 \"{outputPath}\" \"{sourcePath}\\*\" -r";
 
                     var psi = new System.Diagnostics.ProcessStartInfo
                     {
@@ -574,6 +691,30 @@ namespace SteamAppIdIdentifier
 
                     using (var process = System.Diagnostics.Process.Start(psi))
                     {
+                        // Read output asynchronously to capture progress
+                        process.OutputDataReceived += (sender, e) =>
+                        {
+                            if (!string.IsNullOrEmpty(e.Data) && progressWindow != null && progressWindow.IsHandleCreated)
+                            {
+                                // 7-Zip outputs progress like "5%" or " 42%"
+                                var match = System.Text.RegularExpressions.Regex.Match(e.Data, @"(\d+)%");
+                                if (match.Success)
+                                {
+                                    int percentage = int.Parse(match.Groups[1].Value);
+                                    try
+                                    {
+                                        progressWindow.Invoke(new Action(() =>
+                                        {
+                                            progressWindow.progressBar.Value = Math.Min(percentage, 100);
+                                            progressWindow.lblStatus.Text = $"Compressing... {percentage}%";
+                                        }));
+                                    }
+                                    catch { }
+                                }
+                            }
+                        };
+
+                        process.BeginOutputReadLine();
                         process.WaitForExit();
                         return process.ExitCode == 0;
                     }
@@ -611,6 +752,7 @@ namespace SteamAppIdIdentifier
         {
             var progressForm = new RGBProgressWindow(gameName, cracked ? "Cracked" : "Clean");
             progressForm.Show(this);
+            progressForm.CenterOverParent(this);
 
             try
             {
@@ -628,7 +770,6 @@ namespace SteamAppIdIdentifier
                 // Notify backend
                 progressForm.UpdateStatus("Notifying community...");
                 string uploadType = cracked ? "cracked" : "clean";
-                await NotifyBackendCompletion(appId, uploadType, uploadUrl, fileSize);
 
                 // Update UI
                 var btnColumn = cracked ? "ShareCracked" : "ShareClean";
@@ -652,7 +793,12 @@ namespace SteamAppIdIdentifier
                 string tempPath = Path.Combine(Path.GetTempPath(), "SteamAutoCracker");
                 Directory.CreateDirectory(tempPath);
 
-                string cleanName = string.Join("_", gameName.Split(Path.GetInvalidFileNameChars()));
+                // Sanitize filename - remove invalid characters but keep spaces
+                string cleanName = gameName;
+                foreach (char c in Path.GetInvalidFileNameChars())
+                {
+                    cleanName = cleanName.Replace(c.ToString(), "");
+                }
                 string zipFileName = $"[SACGUI] {(cracked ? "CRACKED" : "CLEAN")} {cleanName}.zip";
                 string outputPath = Path.Combine(tempPath, zipFileName);
 
@@ -713,9 +859,11 @@ namespace SteamAppIdIdentifier
                 System.Diagnostics.Debug.WriteLine($"[UPLOAD] File size: {fi.Length / (1024.0 * 1024.0):F2} MB");
             }
 
-            // Show the progress window
+            // Show the progress window centered over parent
             progressWindow.Show(this);
-            progressWindow.Refresh();
+            progressWindow.CenterOverParent(this);
+            progressWindow.BringToFront();
+            Application.DoEvents(); // Allow UI to update
 
             try
             {
@@ -724,33 +872,111 @@ namespace SteamAppIdIdentifier
 
                 progressWindow.UpdateStatus($"Uploading to 1fichier... (0/{fileSize / 1024 / 1024}MB)");
 
-                // Create progress handler
+                // Create progress handler that updates UI thread
                 var progress = new Progress<double>(value =>
                 {
                     var mbUploaded = (long)(fileSize * value) / 1024 / 1024;
                     var mbTotal = fileSize / 1024 / 1024;
                     var percentage = (int)(value * 100);
-                    progressWindow.UpdateStatus($"Uploading to 1fichier... {percentage}% ({mbUploaded}/{mbTotal}MB)");
+
+                    // Safely update progress window on UI thread
+                    if (progressWindow != null && !progressWindow.IsDisposed && progressWindow.IsHandleCreated)
+                    {
+                        try
+                        {
+                            progressWindow.BeginInvoke(new Action(() =>
+                            {
+                                // Update directly without calling SetProgress to avoid nested Invoke
+                                progressWindow.lblStatus.Text = $"Uploading to 1fichier... {percentage}% ({mbUploaded}/{mbTotal}MB)";
+                                progressWindow.progressBar.Value = Math.Max(0, Math.Min(100, percentage));
+                            }));
+                        }
+                        catch { }
+                    }
                 });
 
-                // Use 1fichier uploader
-                using (var uploader = new OneFichierUploader())
+                // Status callback for retry messages
+                var statusProgress = new Progress<string>(status =>
                 {
-                    var result = await uploader.UploadFileAsync(filePath, progress);
+                    try
+                    {
+                        if (progressWindow != null && progressWindow.IsHandleCreated)
+                        {
+                            progressWindow.Invoke(new Action(() =>
+                            {
+                                progressWindow.lblStatus.Text = status;
+                            }));
+                        }
+                    }
+                    catch { }
+                });
 
-                    if (!string.IsNullOrEmpty(result.DownloadUrl))
+                // Run upload on background thread to avoid UI lock
+                OneFichierUploader.UploadResult result = null;
+                var uploadTask = Task.Run(async () =>
+                {
+                    using (var uploader = new OneFichierUploader())
                     {
-                        System.Diagnostics.Debug.WriteLine($"[UPLOAD] 1fichier upload successful. Download URL: {result.DownloadUrl}");
-                        progressWindow.UpdateStatus($"Upload complete!");
-                        await Task.Delay(1000); // Show completion briefly
-                        progressWindow.Close();
-                        return result.DownloadUrl;
+                        result = await uploader.UploadFileAsync(filePath, progress, statusProgress);
                     }
-                    else
+                });
+
+                // Wait for upload or cancellation
+                while (!uploadTask.IsCompleted && !progressWindow.WasCancelled)
+                {
+                    await Task.Delay(100);
+                }
+
+                // If cancelled, close window and return null
+                if (progressWindow.WasCancelled)
+                {
+                    progressWindow.Close();
+                    return null;
+                }
+
+                await uploadTask; // Ensure task completes
+
+                if (result != null && !string.IsNullOrEmpty(result.DownloadUrl))
+                {
+                    System.Diagnostics.Debug.WriteLine($"[UPLOAD] 1fichier upload successful. Download URL: {result.DownloadUrl}");
+                    progressWindow.UpdateStatus($"Upload complete! Waiting for 1fichier to process...");
+
+                    // Wait a few seconds for 1fichier to process the file
+                    await Task.Delay(3000);
+
+                    progressWindow.UpdateStatus($"Converting link...");
+
+                    // Convert the 1fichier link to pydrive
+                    string convertedLink = null;
+                    try
                     {
-                        progressWindow.Close();
-                        throw new Exception("Upload succeeded but no download URL was returned");
+                        convertedLink = await Convert1FichierLink(result.DownloadUrl, progressWindow);
+                        System.Diagnostics.Debug.WriteLine($"[UPLOAD] Conversion result: {convertedLink ?? "NULL"}");
                     }
+                    catch (Exception convEx)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"[UPLOAD] Conversion FAILED: {convEx.Message}");
+                        System.Diagnostics.Debug.WriteLine($"[UPLOAD] Conversion stack trace: {convEx.StackTrace}");
+                    }
+
+                    if (progressWindow != null && progressWindow.IsHandleCreated)
+                    {
+                        progressWindow.Invoke(new Action(() =>
+                        {
+                            progressWindow.lblStatus.Text = "Conversion complete!";
+                        }));
+                    }
+                    await Task.Delay(500);
+                    progressWindow.Close();
+
+                    string finalUrl = convertedLink ?? result.DownloadUrl;
+                    System.Diagnostics.Debug.WriteLine($"[UPLOAD] Returning final URL: {finalUrl}");
+                    return finalUrl; // Return converted link or fallback to original
+                }
+                else
+                {
+                    progressWindow.Close();
+                    throw new Exception("Upload succeeded but no download URL was returned");
                 }
             }
             catch (HttpRequestException httpEx)
@@ -775,60 +1001,110 @@ namespace SteamAppIdIdentifier
             }
         }
 
-        private async Task<string> Convert1FichierLink(string oneFichierUrl)
+        private async Task<string> Convert1FichierLink(string oneFichierUrl, RGBProgressWindow progressWindow = null)
         {
-            try
+            // Force HTTPS - AllDebrid requires it
+            if (oneFichierUrl.StartsWith("http://", StringComparison.OrdinalIgnoreCase))
             {
-                using (var client = new HttpClient())
+                oneFichierUrl = "https://" + oneFichierUrl.Substring(7);
+                System.Diagnostics.Debug.WriteLine($"[CONVERT] Converted HTTP to HTTPS: {oneFichierUrl}");
+            }
+
+            int maxRetries = 10; // 10 retries x 30 seconds = 5 minutes
+            int retryDelay = 30000; // 30 seconds
+
+            for (int attempt = 1; attempt <= maxRetries; attempt++)
+            {
+                try
                 {
-                    client.Timeout = TimeSpan.FromSeconds(30);
-
-                    var requestBody = new
+                    using (var client = new HttpClient())
                     {
-                        link = oneFichierUrl
-                    };
+                        client.Timeout = TimeSpan.FromSeconds(30);
 
-                    var json = System.Text.Json.JsonSerializer.Serialize(requestBody);
-                    var content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
-
-                    System.Diagnostics.Debug.WriteLine($"[CONVERT] Converting 1fichier link: {oneFichierUrl}");
-                    var response = await client.PostAsync("https://pydrive.harryeffingpotter.com/convert-1fichier", content);
-
-                    if (response.IsSuccessStatusCode)
-                    {
-                        var responseJson = await response.Content.ReadAsStringAsync();
-                        System.Diagnostics.Debug.WriteLine($"[CONVERT] Response: {responseJson}");
-
-                        // Parse the response to get the converted link
-                        var jsonDoc = System.Text.Json.JsonDocument.Parse(responseJson);
-                        if (jsonDoc.RootElement.TryGetProperty("link", out var linkProperty))
+                        var requestBody = new
                         {
-                            string convertedLink = linkProperty.GetString();
-                            System.Diagnostics.Debug.WriteLine($"[CONVERT] Converted link: {convertedLink}");
-                            return convertedLink;
+                            link = oneFichierUrl
+                        };
+
+                        var json = System.Text.Json.JsonSerializer.Serialize(requestBody);
+                        var content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
+
+                        System.Diagnostics.Debug.WriteLine($"[CONVERT] Converting 1fichier link (attempt {attempt}/{maxRetries}): {oneFichierUrl}");
+
+                        if (progressWindow != null && progressWindow.IsHandleCreated)
+                        {
+                            progressWindow.Invoke(new Action(() =>
+                            {
+                                progressWindow.lblStatus.Text = $"Converting to direct link (attempt {attempt}/{maxRetries})...";
+                            }));
+                        }
+
+                        var response = await client.PostAsync("https://pydrive.harryeffingpotter.com/convert-1fichier", content);
+
+                        if (response.IsSuccessStatusCode)
+                        {
+                            var responseJson = await response.Content.ReadAsStringAsync();
+                            System.Diagnostics.Debug.WriteLine($"[CONVERT] Response: {responseJson}");
+
+                            // Parse the response to get the converted link
+                            var jsonDoc = System.Text.Json.JsonDocument.Parse(responseJson);
+                            if (jsonDoc.RootElement.TryGetProperty("link", out var linkProperty))
+                            {
+                                string convertedLink = linkProperty.GetString();
+                                System.Diagnostics.Debug.WriteLine($"[CONVERT] Converted link: {convertedLink}");
+                                return convertedLink;
+                            }
+                        }
+                        else
+                        {
+                            var responseContent = await response.Content.ReadAsStringAsync();
+                            System.Diagnostics.Debug.WriteLine($"[CONVERT] Failed with status: {response.StatusCode}, Content: {responseContent}");
+
+                            // Check if it's a "still processing" error
+                            if (responseContent.Contains("LINK_DOWN") || responseContent.Contains("wait"))
+                            {
+                                if (attempt < maxRetries)
+                                {
+                                    System.Diagnostics.Debug.WriteLine($"[CONVERT] 1fichier still processing, waiting {retryDelay/1000}s before retry...");
+
+                                    if (progressWindow != null && progressWindow.IsHandleCreated)
+                                    {
+                                        progressWindow.Invoke(new Action(() =>
+                                        {
+                                            progressWindow.lblStatus.Text = $"1fichier still processing... retrying ({attempt}/{maxRetries})";
+                                        }));
+                                    }
+
+                                    await Task.Delay(retryDelay);
+                                    continue;
+                                }
+                            }
                         }
                     }
-                    else
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[CONVERT] Exception (attempt {attempt}/{maxRetries}): {ex.Message}");
+
+                    if (attempt < maxRetries)
                     {
-                        System.Diagnostics.Debug.WriteLine($"[CONVERT] Failed with status: {response.StatusCode}");
+                        await Task.Delay(retryDelay);
+                        continue;
                     }
                 }
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"[CONVERT] Exception: {ex.Message}");
+
+                // If we get here and haven't returned, retry unless it's the last attempt
+                if (attempt < maxRetries)
+                {
+                    await Task.Delay(retryDelay);
+                }
             }
 
-            // If conversion fails, return original link
+            System.Diagnostics.Debug.WriteLine($"[CONVERT] All retry attempts exhausted, returning original link");
+            // If conversion fails after all retries, return original link
             return oneFichierUrl;
         }
 
-        private async Task NotifyBackendCompletion(string appId, string uploadType, string uploadUrl = null, long fileSize = 0)
-        {
-            // Use the proper RequestAPIEnhanced.CompleteUpload method
-            // This will send the data in the correct format to /sacgui/api/uploadcomplete
-            await RequestAPIEnhanced.CompleteUpload(appId, uploadType, uploadUrl ?? "", fileSize);
-        }
 
         private void PulseTimer_Tick(object sender, EventArgs e)
         {
@@ -865,7 +1141,7 @@ namespace SteamAppIdIdentifier
 
         private void EnhancedShareWindow_FormClosed(object sender, FormClosedEventArgs e)
         {
-            mainForm.Visible = true;
+            // Main form stays visible
         }
 
         private void EnhancedShareWindow_Load(object sender, EventArgs e)
@@ -875,50 +1151,85 @@ namespace SteamAppIdIdentifier
 
         private void ShowUploadSuccess(string url, string gameName, bool cracked)
         {
+            // Auto-copy link to clipboard immediately
+            Clipboard.SetText(url);
+
             var successForm = new Form
             {
                 Text = "Upload Complete!",
-                Size = new Size(500, 300),
+                Size = new Size(500, 250),
                 StartPosition = FormStartPosition.CenterParent,
-                BackColor = Color.FromArgb(30, 30, 30),
-                ForeColor = Color.White
+                FormBorderStyle = FormBorderStyle.None,  // Remove title bar
+                BackColor = Color.FromArgb(5, 8, 20),
+                ForeColor = Color.White,
+                TopMost = true,
+                ShowInTaskbar = false  // Don't show in taskbar
             };
+
+            // Apply acrylic effect and rounded corners
+            successForm.Load += (s, e) =>
+            {
+                APPID.AcrylicHelper.ApplyAcrylic(successForm, roundedCorners: true);
+            };
+
+            // Click off to close
+            successForm.Deactivate += (s, e) => successForm.Close();
 
             var lblSuccess = new Label
             {
-                Text = $"✅ {gameName} ({(cracked ? "Cracked" : "Clean")}) uploaded successfully!",
-                Font = new Font("Segoe UI", 12, FontStyle.Bold),
-                ForeColor = Color.Lime,
+                Text = $"✅ {gameName} ({(cracked ? "Cracked" : "Clean")}) uploaded successfully!\n\nLink copied to clipboard!",
+                Font = new Font("Segoe UI", 11, FontStyle.Bold),
+                ForeColor = Color.FromArgb(100, 255, 150),
                 Location = new Point(20, 20),
-                Size = new Size(450, 30)
+                Size = new Size(460, 60),
+                TextAlign = ContentAlignment.MiddleCenter
             };
 
             var txtUrl = new TextBox
             {
                 Text = url,
-                Location = new Point(20, 60),
-                Size = new Size(450, 25),
+                Location = new Point(20, 90),
+                Size = new Size(460, 30),
                 ReadOnly = true,
-                BackColor = Color.FromArgb(50, 50, 50),
-                ForeColor = Color.Cyan
+                BackColor = Color.FromArgb(10, 15, 25),
+                ForeColor = Color.Cyan,
+                BorderStyle = BorderStyle.FixedSingle,
+                Font = new Font("Segoe UI", 9),
+                TextAlign = HorizontalAlignment.Center
             };
 
             var btnCopy = new Button
             {
-                Text = "📋 Copy URL",
-                Location = new Point(150, 100),
-                Size = new Size(200, 40),
-                BackColor = Color.FromArgb(0, 120, 215),
+                Text = "📋 Copy Link",
+                Location = new Point(100, 140),
+                Size = new Size(140, 40),
+                BackColor = Color.FromArgb(0, 80, 120),
                 ForeColor = Color.White,
-                FlatStyle = FlatStyle.Flat
+                FlatStyle = FlatStyle.Flat,
+                Font = new Font("Segoe UI", 10, FontStyle.Bold)
             };
+            btnCopy.FlatAppearance.BorderColor = Color.FromArgb(100, 200, 255);
             btnCopy.Click += (s, e) =>
             {
                 Clipboard.SetText(url);
                 btnCopy.Text = "✓ Copied!";
+                btnCopy.BackColor = Color.FromArgb(0, 100, 0);
             };
 
-            successForm.Controls.AddRange(new Control[] { lblSuccess, txtUrl, btnCopy });
+            var btnClose = new Button
+            {
+                Text = "✓ Close",
+                Location = new Point(260, 140),
+                Size = new Size(140, 40),
+                BackColor = Color.FromArgb(0, 100, 0),
+                ForeColor = Color.White,
+                FlatStyle = FlatStyle.Flat,
+                Font = new Font("Segoe UI", 10, FontStyle.Bold)
+            };
+            btnClose.FlatAppearance.BorderColor = Color.FromArgb(100, 255, 150);
+            btnClose.Click += (s, e) => successForm.Close();
+
+            successForm.Controls.AddRange(new Control[] { lblSuccess, txtUrl, btnCopy, btnClose });
             successForm.ShowDialog(this);
         }
 
@@ -1100,71 +1411,146 @@ namespace SteamAppIdIdentifier
         }
     }
 
-    // Modern Progress Bar
+    // Modern Progress Bar with cool blue gradient
     public class ModernProgressBar : ProgressBar
     {
         public ModernProgressBar()
         {
             this.SetStyle(ControlStyles.UserPaint, true);
+            this.SetStyle(ControlStyles.AllPaintingInWmPaint, true);
+            this.SetStyle(ControlStyles.OptimizedDoubleBuffer, true);
         }
 
         protected override void OnPaint(PaintEventArgs e)
         {
-            Rectangle rec = e.ClipRectangle;
+            e.Graphics.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
 
-            rec.Width = (int)(rec.Width * ((double)Value / Maximum)) - 4;
-            if (ProgressBarRenderer.IsSupported)
-                rec.Height = rec.Height - 4;
+            // Draw dark background
+            e.Graphics.FillRectangle(new SolidBrush(Color.FromArgb(15, 15, 15)), e.ClipRectangle);
 
-            e.Graphics.FillRectangle(new SolidBrush(Color.FromArgb(20, 20, 20)), e.ClipRectangle);
-            rec.Height = rec.Height - 4;
-            e.Graphics.FillRectangle(new SolidBrush(Color.FromArgb(0, 150, 200)), 2, 2, rec.Width, rec.Height);
+            // Calculate progress bar fill width
+            int progressWidth = (int)(e.ClipRectangle.Width * ((double)Value / Maximum));
+
+            if (progressWidth > 0)
+            {
+                // Create gradient brush for cool blue effect (like the slider)
+                var progressRect = new Rectangle(0, 0, progressWidth, e.ClipRectangle.Height);
+                using (var brush = new System.Drawing.Drawing2D.LinearGradientBrush(
+                    progressRect,
+                    Color.FromArgb(60, 140, 230),   // Light blue
+                    Color.FromArgb(30, 100, 200),   // Darker blue
+                    System.Drawing.Drawing2D.LinearGradientMode.Vertical))
+                {
+                    e.Graphics.FillRectangle(brush, progressRect);
+                }
+
+                // Add subtle highlight on top for depth
+                var highlightRect = new Rectangle(0, 0, progressWidth, e.ClipRectangle.Height / 3);
+                using (var highlightBrush = new SolidBrush(Color.FromArgb(40, 255, 255, 255)))
+                {
+                    e.Graphics.FillRectangle(highlightBrush, highlightRect);
+                }
+            }
         }
     }
 
     // RGB Progress Window
     public class RGBProgressWindow : Form
     {
-        private ProgressBar progressBar;
-        private Label lblStatus;
+        internal ProgressBar progressBar;
+        internal Label lblStatus;
         private Timer rgbTimer;
         private int colorStep = 0;
+        private Button btnCancel;
+        public bool WasCancelled { get; private set; } = false;
 
         public RGBProgressWindow(string gameName, string type)
         {
             InitializeWindow(gameName, type);
         }
 
+        public void CenterOverParent(Form parent)
+        {
+            if (parent != null && parent.IsHandleCreated)
+            {
+                // Calculate center position
+                int x = parent.Left + (parent.Width - this.Width) / 2;
+                int y = parent.Top + (parent.Height - this.Height) / 2;
+                this.Location = new Point(x, y);
+            }
+        }
+
         private void InitializeWindow(string gameName, string type)
         {
             this.Text = $"Sharing {gameName} ({type})";
-            this.Size = new Size(500, 200);
-            this.StartPosition = FormStartPosition.CenterParent;
-            this.FormBorderStyle = FormBorderStyle.FixedDialog;
-            this.MaximizeBox = false;
-            this.MinimizeBox = false;
-            this.BackColor = Color.FromArgb(30, 30, 30);
+            this.Size = new Size(500, 240);  // Increased height for cancel button
+            this.StartPosition = FormStartPosition.Manual;  // We'll set position manually
+            this.FormBorderStyle = FormBorderStyle.None;
+            this.BackColor = Color.FromArgb(5, 8, 20);
+            this.TopMost = true;
+            this.ShowInTaskbar = false;  // Don't show in taskbar
+
+            // Apply rounded corners when form loads
+            this.Load += (s, e) =>
+            {
+                try
+                {
+                    int preference = APPID.NativeMethods.DWMWCP_ROUND;
+                    APPID.NativeMethods.DwmSetWindowAttribute(this.Handle, APPID.NativeMethods.DWMWA_WINDOW_CORNER_PREFERENCE, ref preference, sizeof(int));
+                }
+                catch { }
+            };
 
             lblStatus = new Label
             {
                 Text = "Preparing...",
                 Font = new Font("Segoe UI", 11),
                 ForeColor = Color.Cyan,  // Start with a color, will be animated
-                Location = new Point(20, 30),
+                Location = new Point(25, 50),
                 Size = new Size(450, 30)
             };
 
-            progressBar = new ProgressBar
+            progressBar = new ModernProgressBar
             {
-                Location = new Point(20, 70),
+                Location = new Point(25, 90),
                 Size = new Size(450, 30),
-                Style = ProgressBarStyle.Continuous
+                Style = ProgressBarStyle.Continuous,
+                BackColor = Color.FromArgb(15, 15, 15)
             };
 
-            this.Controls.AddRange(new Control[] { lblStatus, progressBar });
+            btnCancel = new Button
+            {
+                Text = "✖ Cancel",
+                Location = new Point(175, 140),
+                Size = new Size(150, 40),
+                BackColor = Color.FromArgb(100, 0, 0),
+                ForeColor = Color.White,
+                FlatStyle = FlatStyle.Flat,
+                Font = new Font("Segoe UI", 10, FontStyle.Bold)
+            };
+            btnCancel.FlatAppearance.BorderColor = Color.FromArgb(255, 100, 100);
+            btnCancel.Click += (s, e) =>
+            {
+                WasCancelled = true;
+                lblStatus.Text = "Cancelled by user";
+                lblStatus.ForeColor = Color.Orange;
+                btnCancel.Enabled = false;
+                rgbTimer?.Stop();
+                this.Close();
+            };
+
+            this.Controls.AddRange(new Control[] { lblStatus, progressBar, btnCancel });
 
             // RGB effect
             SetupRGBEffect();
+
+            // Apply acrylic on load
+            this.Load += (s, e) => ApplyAcrylicToProgressWindow();
+        }
+
+        private void ApplyAcrylicToProgressWindow()
+        {
+            APPID.AcrylicHelper.ApplyAcrylic(this, roundedCorners: false);
         }
 
         private void SetupRGBEffect()
@@ -1228,6 +1614,18 @@ namespace SteamAppIdIdentifier
                 {
                     lblStatus.Text = status;
                     progressBar.Value = Math.Min(progressBar.Value + 20, 100);
+                }));
+            }
+        }
+
+        public void SetProgress(int percentage, string status)
+        {
+            if (this.IsHandleCreated)
+            {
+                this.Invoke(new Action(() =>
+                {
+                    lblStatus.Text = status;
+                    progressBar.Value = Math.Max(0, Math.Min(100, percentage));
                 }));
             }
         }

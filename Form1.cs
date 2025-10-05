@@ -27,6 +27,9 @@ namespace APPID
 {
     public partial class SteamAppId : Form
     {
+        // Event for crack status updates
+        public event EventHandler<string> CrackStatusChanged;
+
         #region Windows API for Acrylic Blur
         [DllImport("user32.dll")]
         private static extern int SetWindowCompositionAttribute(IntPtr hwnd, ref WindowCompositionAttribData data);
@@ -66,16 +69,29 @@ namespace APPID
         {
             ServicePointManager.ServerCertificateValidationCallback =
             (s, certificate, chain, sslPolicyErrors) => true;
+
+            // Load auto-crack setting FIRST before anything else - directly assign the value
+            autoCrackEnabled = Properties.Settings.Default.AutoCrack;
+            System.Diagnostics.Debug.WriteLine($"[CONSTRUCTOR] Loaded autoCrackEnabled = {autoCrackEnabled} from Settings");
+
             dataTableGeneration = new DataTableGeneration();
             Task.Run(async () => await dataTableGeneration.GetDataTableAsync(dataTableGeneration)).Wait();
             InitializeComponent();
+
+            // Set auto-crack UI immediately after InitializeComponent so it's ready BEFORE Form_Load
+            if (autoCrackEnabled)
+            {
+                autoCrackOn.BringToFront();
+            }
+            else
+            {
+                autoCrackOff.BringToFront();
+            }
+
             InitializeTimers();
 
             // Apply acrylic blur and rounded corners
             this.Load += (s, e) => ApplyAcrylicEffect();
-
-            // Initialize HWID and user tracking
-            _ = InitializeUserTracking();
         }
 
         private void ApplyAcrylicEffect()
@@ -93,10 +109,9 @@ namespace APPID
             {
                 var accent = new AccentPolicy();
                 accent.AccentState = ACCENT_ENABLE_ACRYLICBLURBEHIND;
-                accent.AccentFlags = 2;
-                // Dark tinted glass: ABGR format (Alpha, Blue, Green, Red)
-                // 0xBB = ~73% opacity, balanced blur and darkness
-                accent.GradientColor = unchecked((int)0xBB0A0A0F); // Dark with good blur
+                accent.AccentFlags = ThemeConfig.BlurIntensity;
+                // Get acrylic color from ThemeConfig.cs - EDIT THAT FILE TO CHANGE COLORS!
+                accent.GradientColor = ThemeConfig.AcrylicBlurColor;
 
                 int accentStructSize = Marshal.SizeOf(accent);
                 IntPtr accentPtr = Marshal.AllocHGlobal(accentStructSize);
@@ -161,35 +176,7 @@ namespace APPID
             this.WindowState = FormWindowState.Minimized;
         }
 
-        private async Task InitializeUserTracking()
-        {
-            try
-            {
-                var userId = await HWIDManager.InitializeHWID();
-                System.Diagnostics.Debug.WriteLine($"[USER] Initialized with ID: {userId}");
-                System.Diagnostics.Debug.WriteLine($"[USER] Current Honor Score: {HWIDManager.GetHonorScore()}");
-
-                // Update UI with honor score
-                this.Invoke(new Action(() =>
-                {
-                    UpdateHonorDisplay();
-                }));
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"[USER] Failed to initialize tracking: {ex.Message}");
-            }
-        }
-
-        private void UpdateHonorDisplay()
-        {
-            var honorScore = HWIDManager.GetHonorScore();
-            if (honorScore > 0)
-            {
-                // Update the window title with honor score
-                this.Text = $"{this.Text.Split('-')[0].Trim()} - ⭐Honor: {honorScore}";
-            }
-        }
+        // User tracking removed - anonymous sharing now
 
         private void InitializeTimers()
         {
@@ -301,14 +288,23 @@ namespace APPID
                 btnManualEntry.Visible = false;
                 mainPanel.Visible = true;
                 startCrackPic.Visible = true;
-                Tit("READY! Click skull folder above to perform crack!", Color.HotPink);
                 resinstruccZip.Visible = false;
 
                 // Auto-crack if enabled
+                System.Diagnostics.Debug.WriteLine($"[AUTO-CRACK CHECK] autoCrackEnabled={autoCrackEnabled}, gameDir='{gameDir ?? "NULL"}'");
                 if (autoCrackEnabled && !string.IsNullOrEmpty(gameDir))
                 {
+                    System.Diagnostics.Debug.WriteLine("[AUTO-CRACK] Triggering auto-crack NOW!");
+                    // Auto-cracking - show different message
+                    Tit("Auto-cracking...", Color.Lime);
                     // Trigger crack just like clicking the button
                     startCrackPic_Click(null, null);
+                }
+                else
+                {
+                    System.Diagnostics.Debug.WriteLine("[AUTO-CRACK] NOT triggering - showing manual message");
+                    // Manual mode - show ready message
+                    Tit("READY! Click skull folder above to perform crack!", Color.HotPink);
                 }
             }
         }
@@ -370,27 +366,26 @@ namespace APPID
         }
         public async void SteamAppId_Load(object sender, EventArgs e)
         {
+            // Load LAN multiplayer setting
+            enableLanMultiplayer = Properties.Settings.Default.LANMultiplayer;
             lanMultiplayerCheckBox.Checked = enableLanMultiplayer;
+
             if (Properties.Settings.Default.Pinned)
             {
                 this.TopMost = true;
                 unPin.BringToFront();
             }
 
-            // Load auto-crack setting
-            // Check saved preference, but default to ON if not saved
-            if (!Properties.Settings.Default.AutoCrack)
+            // Update UI for auto-crack setting (value already loaded in constructor)
+            // When enabled, show the green ON button. When disabled, show the red OFF button.
+            System.Diagnostics.Debug.WriteLine($"[FORM_LOAD] autoCrackEnabled = {autoCrackEnabled}, bringing {(autoCrackEnabled ? "autoCrackOn" : "autoCrackOff")} to front");
+            if (autoCrackEnabled)
             {
-                autoCrackEnabled = false;
-                autoCrackOff.BringToFront();
+                autoCrackOn.BringToFront();  // Show green button when enabled
             }
             else
             {
-                // Default to ON
-                autoCrackEnabled = true;
-                autoCrackOn.BringToFront();
-                Properties.Settings.Default.AutoCrack = true;
-                Properties.Settings.Default.Save();
+                autoCrackOff.BringToFront();  // Show red button when disabled
             }
 
             if (Properties.Settings.Default.Goldy)
@@ -932,6 +927,9 @@ namespace APPID
                     }
                 }
 
+                // Check if DataSource is ready
+                if (dataGridView1.DataSource == null) return;
+
                 string Search = RemoveSpecialCharacters(searchTextBox.Text.ToLower()).Trim();
                 string SplitSearch = SplitCamelCase(RemoveSpecialCharacters(searchTextBox.Text)).Trim();
                 ((DataTable)dataGridView1.DataSource).DefaultView.RowFilter = String.Format("Name like '" + Search.Replace("_", "").Trim() + "'");
@@ -1192,6 +1190,83 @@ namespace APPID
             return false;
         }
 
+        /// <summary>
+        /// Compares two files byte-by-byte to see if they are identical
+        /// </summary>
+        private bool AreFilesIdentical(string file1, string file2)
+        {
+            try
+            {
+                if (!File.Exists(file1) || !File.Exists(file2))
+                    return false;
+
+                var fileInfo1 = new FileInfo(file1);
+                var fileInfo2 = new FileInfo(file2);
+
+                // Quick check: if sizes differ, files are different
+                if (fileInfo1.Length != fileInfo2.Length)
+                    return false;
+
+                // Byte-by-byte comparison
+                using (var fs1 = new FileStream(file1, FileMode.Open, FileAccess.Read))
+                using (var fs2 = new FileStream(file2, FileMode.Open, FileAccess.Read))
+                {
+                    byte[] buffer1 = new byte[4096];
+                    byte[] buffer2 = new byte[4096];
+                    int read1, read2;
+
+                    while ((read1 = fs1.Read(buffer1, 0, buffer1.Length)) > 0)
+                    {
+                        read2 = fs2.Read(buffer2, 0, buffer2.Length);
+                        if (read1 != read2)
+                            return false;
+
+                        for (int i = 0; i < read1; i++)
+                        {
+                            if (buffer1[i] != buffer2[i])
+                                return false;
+                        }
+                    }
+                }
+
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Restores all .bak files in a directory (recursive)
+        /// </summary>
+        private void RestoreAllBakFiles(string directory)
+        {
+            try
+            {
+                var bakFiles = Directory.GetFiles(directory, "*.bak", SearchOption.AllDirectories);
+                foreach (var bakFile in bakFiles)
+                {
+                    var originalFile = bakFile.Substring(0, bakFile.Length - 4); // Remove .bak
+                    try
+                    {
+                        if (File.Exists(originalFile))
+                            File.Delete(originalFile);
+                        File.Move(bakFile, originalFile);
+                        System.Diagnostics.Debug.WriteLine($"[CRACK] Restored {Path.GetFileName(bakFile)} -> {Path.GetFileName(originalFile)}");
+                    }
+                    catch (Exception ex)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"[CRACK] Failed to restore {bakFile}: {ex.Message}");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[CRACK] Error in RestoreAllBakFiles: {ex.Message}");
+            }
+        }
+
         private async Task<bool> CrackCoreAsync()  // Core cracking logic moved to separate method
         {
             int execount = -20;
@@ -1231,26 +1306,43 @@ namespace APPID
                             }
                             Directory.Delete(steam, true);
                         }
+
+                        // Restore .bak if it exists (get clean file first)
                         if (File.Exists($"{file}.bak"))
                         {
+                            System.Diagnostics.Debug.WriteLine($"[CRACK] Found existing .bak, restoring clean file first");
                             File.Delete(file);
                             File.Move($"{file}.bak", file);
                         }
+
                         Tit("Replacing steam_api64.dll.", Color.LightSkyBlue);
+                        string emulatorName = goldy ? "Goldberg" : "ALI213";
+                        CrackStatusChanged?.Invoke(this, $"Applying {emulatorName} emulator...");
 
                         try
                         {
-                            File.Move(file, $"{file}.bak");
-                            if (goldy)
+                            string sourceEmulatorDll = goldy
+                                ? $"{Environment.CurrentDirectory}\\_bin\\Goldberg\\steam_api64.dll"
+                                : $"{Environment.CurrentDirectory}\\_bin\\ALI213\\steam_api64.dll";
+
+                            // Check if current file is already the emulator DLL
+                            if (AreFilesIdentical(file, sourceEmulatorDll))
                             {
-                                Directory.CreateDirectory(steam);
-                                File.Copy($"{Environment.CurrentDirectory}\\_bin\\Goldberg\\steam_api64.dll", file);
+                                System.Diagnostics.Debug.WriteLine($"[CRACK] steam_api64.dll is already {emulatorName}, skipping replacement to preserve clean .bak");
+                                Tit($"steam_api64.dll already {emulatorName}, skipped", Color.Yellow);
+                                cracked = true;
                             }
                             else
                             {
-                                File.Copy($"{Environment.CurrentDirectory}\\_bin\\ALI213\\steam_api64.dll", file);
+                                // Create backup and replace with emulator
+                                File.Move(file, $"{file}.bak");
+                                if (goldy)
+                                {
+                                    Directory.CreateDirectory(steam);
+                                }
+                                File.Copy(sourceEmulatorDll, file);
+                                cracked = true;
                             }
-                            cracked = true;
                         }
                         catch (UnauthorizedAccessException ex)
                         {
@@ -1288,27 +1380,43 @@ namespace APPID
                             }
                             Directory.Delete(steam, true);
                         }
+
+                        // Restore .bak if it exists (get clean file first)
                         if (File.Exists($"{file}.bak"))
                         {
+                            System.Diagnostics.Debug.WriteLine($"[CRACK] Found existing .bak, restoring clean file first");
                             File.Delete(file);
                             File.Move($"{file}.bak", file);
                         }
+
                         Tit("Replacing steam_api.dll.", Color.LightSkyBlue);
                         parentdir = Directory.GetParent(file).FullName;
 
                         try
                         {
-                            File.Move(file, $"{file}.bak");
-                            if (goldy)
+                            string sourceEmulatorDll = goldy
+                                ? $"{Environment.CurrentDirectory}\\_bin\\Goldberg\\steam_api.dll"
+                                : $"{Environment.CurrentDirectory}\\_bin\\ALI213\\steam_api.dll";
+
+                            // Check if current file is already the emulator DLL
+                            string emulatorName = goldy ? "Goldberg" : "ALI213";
+                            if (AreFilesIdentical(file, sourceEmulatorDll))
                             {
-                                Directory.CreateDirectory(steam);
-                                File.Copy($"{Environment.CurrentDirectory}\\_bin\\Goldberg\\steam_api.dll", file);
+                                System.Diagnostics.Debug.WriteLine($"[CRACK] steam_api.dll is already {emulatorName}, skipping replacement to preserve clean .bak");
+                                Tit($"steam_api.dll already {emulatorName}, skipped", Color.Yellow);
+                                cracked = true;
                             }
                             else
                             {
-                                File.Copy($"{Environment.CurrentDirectory}\\_bin\\ALI213\\steam_api.dll", file);
+                                // Create backup and replace with emulator
+                                File.Move(file, $"{file}.bak");
+                                if (goldy)
+                                {
+                                    Directory.CreateDirectory(steam);
+                                }
+                                File.Copy(sourceEmulatorDll, file);
+                                cracked = true;
                             }
-                            cracked = true;
                         }
                         catch (UnauthorizedAccessException ex)
                         {
@@ -1347,7 +1455,7 @@ namespace APPID
                     if (Path.GetExtension(file) == ".exe")
                     {
                         // Check if Steamless exists before trying to use it
-                        string steamlessPath = $"{Environment.CurrentDirectory}\\_bin\\Steamless\\Steamless.CLI.exe";
+                        string steamlessPath = $"{Environment.CurrentDirectory}\\_bin\\Steamless\\Steamless.exe";
                         System.Diagnostics.Debug.WriteLine($"[CRACK] Checking for Steamless at: {steamlessPath}");
                         System.Diagnostics.Debug.WriteLine($"[CRACK] Steamless exists: {File.Exists(steamlessPath)}");
 
@@ -1359,9 +1467,12 @@ namespace APPID
                         }
 
                         System.Diagnostics.Debug.WriteLine($"[CRACK] Processing EXE: {file}");
+                        CrackStatusChanged?.Invoke(this, $"Attempting to apply Steamless to {Path.GetFileName(file)}...");
 
+                        // Restore .bak if it exists (apply Steamless to clean exe)
                         if (File.Exists($"{file}.bak"))
                         {
+                            System.Diagnostics.Debug.WriteLine($"[CRACK] Found existing .bak, restoring clean exe first");
                             File.Delete(file);
                             File.Move($"{file}.bak", file);
                         }
@@ -1867,6 +1978,8 @@ oLink3.Save";
         private void lanMultiplayerCheckBox_CheckedChanged(object sender, EventArgs e)
         {
             enableLanMultiplayer = lanMultiplayerCheckBox.Checked;
+            Properties.Settings.Default.LANMultiplayer = enableLanMultiplayer;
+            Properties.Settings.Default.Save();
         }
         private void dllSelect_SelectedIndexChanged(object sender, EventArgs e)
         {
@@ -2239,7 +2352,8 @@ oLink3.Save";
                 string archiveType = format.ToLower() == "7z" ? "7z" : "zip";
                 string passwordArg = encryptForRIN ? "-p\"cs.rin.ru\" -mhe=on" : "";
 
-                string arguments = $"a -t{archiveType} {compressionSwitch} {passwordArg} \"{outputPath}\" \"{sourcePath}\\*\" -r";
+                // Add -bsp1 to get progress percentage output
+                string arguments = $"a -t{archiveType} {compressionSwitch} {passwordArg} -bsp1 \"{outputPath}\" \"{sourcePath}\\*\" -r";
 
                 // Execute 7-zip
                 var processInfo = new ProcessStartInfo
@@ -2254,6 +2368,30 @@ oLink3.Save";
 
                 using (var process = Process.Start(processInfo))
                 {
+                    // Read output asynchronously to capture progress
+                    process.OutputDataReceived += (sender, e) =>
+                    {
+                        if (!string.IsNullOrEmpty(e.Data))
+                        {
+                            // 7-Zip outputs progress like "5%" or " 42%"
+                            var match = System.Text.RegularExpressions.Regex.Match(e.Data, @"(\d+)%");
+                            if (match.Success)
+                            {
+                                int percentage = int.Parse(match.Groups[1].Value);
+                                try
+                                {
+                                    // Update the RGB text with actual progress
+                                    this.Invoke(new Action(() =>
+                                    {
+                                        Tit($"Compressing... {percentage}%", Color.Cyan);
+                                    }));
+                                }
+                                catch { }
+                            }
+                        }
+                    };
+
+                    process.BeginOutputReadLine();
                     await Task.Run(() => process.WaitForExit());
                     return process.ExitCode == 0;
                 }
@@ -2333,8 +2471,7 @@ oLink3.Save";
                             content.Add(fileContent, "file", Path.GetFileName(filePath));
 
                             // Add required form fields for SACGUI
-                            string hwid = HWIDManager.GetHWID(); // Get the hardware ID
-                            content.Add(new StringContent(hwid), "hwid");
+                            content.Add(new StringContent("anonymous"), "hwid"); // Anonymous sharing
                             content.Add(new StringContent("SACGUI-2.0"), "version");
 
                             // Extract game name from filename (remove prefix and extension)
@@ -2356,8 +2493,6 @@ oLink3.Save";
                             }
                             catch { }
                             content.Add(new StringContent(clientIp), "client_ip");
-
-                            System.Diagnostics.Debug.WriteLine($"[UPLOAD] Added HWID: {hwid}");
                             System.Diagnostics.Debug.WriteLine($"[UPLOAD] Added Version: SACGUI-2.0");
                             System.Diagnostics.Debug.WriteLine($"[UPLOAD] Added Game Name: {gameName}");
                             System.Diagnostics.Debug.WriteLine($"[UPLOAD] Added Client IP: {clientIp}");
@@ -2544,10 +2679,40 @@ oLink3.Save";
             successForm.ShowDialog();
         }
 
+        private System.Threading.CancellationTokenSource zipCancellationTokenSource;
+
         private async void ZipToShare_Click(object sender, EventArgs e)
         {
-            ZipToShare.Enabled = false;
-            ZipToShare.Text = "Zip Dir";  // Ensure text stays visible
+            // If button says "Show Zip", reveal the file instead
+            if (ZipToShare.Text == "Show Zip" && ZipToShare.Tag != null)
+            {
+                string savedZipPath = ZipToShare.Tag.ToString();
+                if (File.Exists(savedZipPath))
+                {
+                    Process.Start("explorer.exe", $"/select,\"{savedZipPath}\"");
+                }
+                // Don't reset - stays as "Show Zip" until next crack
+                return;
+            }
+
+            // If button says "Cancel", cancel the compression
+            if (ZipToShare.Text == "Cancel")
+            {
+                zipCancellationTokenSource?.Cancel();
+                ZipToShare.BackColor = SystemColors.Control;
+                ZipToShare.Text = "Zip Dir";
+                Tit("Compression cancelled", Color.Orange);
+                return;
+            }
+
+            // Start compression - change button to Cancel
+            zipCancellationTokenSource = new System.Threading.CancellationTokenSource();
+            ZipToShare.Enabled = true;  // Keep enabled so it can be clicked to cancel
+            ZipToShare.BackColor = Color.FromArgb(255, 200, 100);  // Light orange
+            ZipToShare.Text = "Cancel";
+
+            string zipPath = "";  // Declare outside try block so finally can access it
+            bool compressionCancelled = false;
 
             try
             {
@@ -2617,8 +2782,15 @@ oLink3.Save";
                 else
                     compressionLevel = System.IO.Compression.CompressionLevel.Fastest; // Medium
 
-                string zipName = use7z ? $"[SACGUI] {gameName}.7z" : $"[SACGUI] {gameName}.zip";
-                string zipPath = Path.Combine(desktopPath, zipName);
+                // Sanitize game name for filename
+                string safeGameName = gameName;
+                foreach (char c in Path.GetInvalidFileNameChars())
+                {
+                    safeGameName = safeGameName.Replace(c.ToString(), "");
+                }
+
+                string zipName = use7z ? $"[SACGUI] {safeGameName}.7z" : $"[SACGUI] {safeGameName}.zip";
+                zipPath = Path.Combine(desktopPath, zipName);
 
                 // RGB color array - pastel and neon colors
                 Color[] rgbColors = new Color[]
@@ -2642,16 +2814,23 @@ oLink3.Save";
 
                 if (use7z)
                 {
-                    // Use 7zip for ultra compression
+                    // Use 7zip with selected compression level
                     await Task.Run(async () =>
                     {
                         int colorIndex = 0;
 
+                        // Check if cancelled before starting
+                        if (zipCancellationTokenSource.Token.IsCancellationRequested)
+                        {
+                            compressionCancelled = true;
+                            return;
+                        }
+
                         // Use 7za.exe from _bin folder
                         string sevenZipPath = $"{Environment.CurrentDirectory}\\_bin\\7z\\7za.exe";
 
-                        // Build 7z command - mx9 for maximum compression
-                        string args = $"a -mx9 -t7z \"{zipPath}\" \"{gameDir}\\*\" -r";
+                        // Build 7z command with actual compression level and progress output
+                        string args = $"a -mx{levelNum} -t7z -bsp1 \"{zipPath}\" \"{gameDir}\\*\" -r";
 
                         ProcessStartInfo psi = new ProcessStartInfo
                         {
@@ -2665,20 +2844,44 @@ oLink3.Save";
                         using (Process p = Process.Start(psi))
                         {
                             string line;
+                            string lastProgressText = $"Compressing with 7z (level {levelNum})...";
+
                             while ((line = p.StandardOutput.ReadLine()) != null)
                             {
-                                // RGB cycling while 7z works
-                                Color currentColor = rgbColors[colorIndex % rgbColors.Length];
-                                colorIndex++;
-
-                                this.Invoke(new Action(() =>
+                                // Check if cancelled
+                                if (zipCancellationTokenSource.Token.IsCancellationRequested)
                                 {
-                                    Tit($"Ultra compressing with 7z...", currentColor);
-                                }));
+                                    p.Kill();
+                                    compressionCancelled = true;
+                                    break;
+                                }
 
-                                await Task.Delay(100);
+                                System.Diagnostics.Debug.WriteLine($"[7Z OUTPUT] {line}");
+
+                                // Parse percentage from 7z output if available
+                                var percentMatch = System.Text.RegularExpressions.Regex.Match(line, @"(\d+)%");
+                                if (percentMatch.Success)
+                                {
+                                    lastProgressText = $"Compressing with 7z... {percentMatch.Groups[1].Value}%";
+                                    System.Diagnostics.Debug.WriteLine($"[7Z PROGRESS] Updated to: {lastProgressText}");
+
+                                    // RGB cycling while 7z works
+                                    Color currentColor = rgbColors[colorIndex % rgbColors.Length];
+                                    colorIndex++;
+
+                                    this.Invoke(new Action(() =>
+                                    {
+                                        Tit(lastProgressText, currentColor);
+                                    }));
+
+                                    await Task.Delay(50);
+                                }
                             }
-                            p.WaitForExit();
+
+                            if (!compressionCancelled)
+                            {
+                                p.WaitForExit();
+                            }
                         }
                     });
                 }
@@ -2743,7 +2946,32 @@ oLink3.Save";
             finally
             {
                 ZipToShare.Enabled = true;
-                ZipToShare.Text = "Zip Dir";  // Ensure text stays visible
+                ZipToShare.BackColor = SystemColors.Control;  // Reset color
+
+                // If cancelled, reset to Zip Dir
+                if (compressionCancelled)
+                {
+                    ZipToShare.Text = "Zip Dir";
+                    ZipToShare.Tag = null;
+                    // Delete partial zip file if it exists
+                    if (!string.IsNullOrEmpty(zipPath) && File.Exists(zipPath))
+                    {
+                        try { File.Delete(zipPath); } catch { }
+                    }
+                }
+                // Only change to "Show Zip" if the file actually exists
+                else if (!string.IsNullOrEmpty(zipPath) && File.Exists(zipPath))
+                {
+                    ZipToShare.Text = "Show Zip";
+                    ZipToShare.Tag = zipPath;
+                }
+                else
+                {
+                    // Compression failed, keep it as Zip Dir
+                    ZipToShare.Text = "Zip Dir";
+                    ZipToShare.Tag = null;
+                }
+
                 // Keep both buttons visible after zipping
                 ZipToShare.Visible = true;
                 OpenDir.Visible = true;
@@ -2925,18 +3153,49 @@ oLink3.Save";
             }
         }
 
+        private EnhancedShareWindow shareWindow = null;
+
         private void ShareButton_Click(object sender, EventArgs e)
         {
+            // Prevent multiple share windows - reuse existing one
+            if (shareWindow != null && !shareWindow.IsDisposed)
+            {
+                shareWindow.BringToFront();
+                shareWindow.Activate();
+                return;
+            }
+
             // Show the enhanced share window with your Steam games
-            var shareForm = new EnhancedShareWindow(this);
-            shareForm.Show();
+            shareWindow = new EnhancedShareWindow(this);
+            shareWindow.Owner = this;  // Set owner so it stays above main window
+            shareWindow.FormClosed += (s, args) => shareWindow = null;  // Clear reference when closed
+
+            // Sync window state - restoring either window restores both
+            shareWindow.Resize += ShareWindow_Resize;
+
+            shareWindow.Show();
+            shareWindow.BringToFront();
+            shareWindow.Activate();
         }
 
-        private void RequestButton_Click(object sender, EventArgs e)
+        private void ShareWindow_Resize(object sender, EventArgs e)
         {
-            // Show the requests window for browsing and requesting games
-            var requestForm = new RequestsWindow(this);
-            requestForm.Show();
+            // When share window is restored, restore main window too
+            if (shareWindow != null && shareWindow.WindowState == FormWindowState.Normal && this.WindowState == FormWindowState.Minimized)
+            {
+                this.WindowState = FormWindowState.Normal;
+            }
+        }
+
+        protected override void OnResize(EventArgs e)
+        {
+            base.OnResize(e);
+
+            // When main window is restored, restore share window too
+            if (this.WindowState == FormWindowState.Normal && shareWindow != null && !shareWindow.IsDisposed && shareWindow.WindowState == FormWindowState.Minimized)
+            {
+                shareWindow.WindowState = FormWindowState.Normal;
+            }
         }
 
         public System.Data.DataTable GetDataTable()
@@ -3053,104 +3312,14 @@ oLink3.Save";
                     try
                     {
                         // Update status to show we're searching
+                        // RIN scraping removed - just set status to N/A
                         gamesForm.Invoke(new Action(() => {
                             if (rowIndex < gamesGrid.Rows.Count)
                             {
-                                gamesGrid.Rows[rowIndex].Cells["RINStatus"].Value = "Searching...";
+                                gamesGrid.Rows[rowIndex].Cells["RINStatus"].Value = "N/A";
+                                gamesGrid.Rows[rowIndex].Cells["RINStatus"].Style.ForeColor = Color.Gray;
                             }
                         }));
-
-                        // Search for the game on RIN - get multiple results
-                        var searchResults = await SearchRinForGameAsync(game.Name);
-                        RinCleanInfo rinInfo = null;
-                        string successfulThreadUrl = null;
-
-                        // Check each search result until we find clean files
-                        foreach (var threadUrl in searchResults)
-                        {
-                            System.Diagnostics.Debug.WriteLine($"[CHECKING THREAD] {threadUrl}");
-                            rinInfo = await ScrapeRinThreadAsync(threadUrl, game.Name);
-                            if (rinInfo != null)
-                            {
-                                successfulThreadUrl = threadUrl;
-                                System.Diagnostics.Debug.WriteLine($"[SUCCESS] Found clean files in this thread!");
-                                break;
-                            }
-                            else
-                            {
-                                System.Diagnostics.Debug.WriteLine($"[SKIP] No clean files in this thread, trying next...");
-                            }
-                        }
-
-                        if (rinInfo != null)
-                        {
-                            // Update the status cell on UI thread with actual info
-                            gamesForm.Invoke(new Action(() => {
-                                if (rowIndex < gamesGrid.Rows.Count)
-                                {
-                                    var row = gamesGrid.Rows[rowIndex];
-                                    if (!string.IsNullOrEmpty(rinInfo.BuildId))
-                                    {
-                                        // Show the actual RIN build number
-                                        row.Cells["RINStatus"].Value = $"RIN: {rinInfo.BuildId}";
-                                        row.Cells["RINStatus"].Tag = rinInfo.PostUrl; // Store URL for later
-
-                                        // Compare builds
-                                        if (long.TryParse(game.BuildId, out long local) &&
-                                            long.TryParse(rinInfo.BuildId, out long rin))
-                                        {
-                                            if (local > rin)
-                                            {
-                                                row.Cells["RINStatus"].Style.ForeColor = Color.FromArgb(100, 255, 100);
-                                                row.Cells["RINStatus"].Style.Font = new Font("Segoe UI", 9, FontStyle.Bold);
-                                                row.DefaultCellStyle.BackColor = Color.FromArgb(0, 40, 20);
-                                            }
-                                            else if (local == rin)
-                                            {
-                                                row.Cells["RINStatus"].Style.ForeColor = Color.FromArgb(150, 150, 150);
-                                            }
-                                            else
-                                            {
-                                                row.Cells["RINStatus"].Style.ForeColor = Color.FromArgb(200, 150, 100);
-                                            }
-                                        }
-                                    }
-                                    else
-                                    {
-                                        // Found thread but no build number
-                                        row.Cells["RINStatus"].Value = "RIN: No build";
-                                        row.Cells["RINStatus"].Tag = successfulThreadUrl;
-                                        row.Cells["RINStatus"].Style.ForeColor = Color.FromArgb(255, 255, 100);
-                                    }
-                                }
-                            }));
-                        }
-                        else
-                        {
-                            // No clean files found after checking 20 pages - THEY NEED IT BAD!
-                            gamesForm.Invoke(new Action(() => {
-                                if (rowIndex < gamesGrid.Rows.Count)
-                                {
-                                    var row = gamesGrid.Rows[rowIndex];
-
-                                    if (searchResults.Count > 0)
-                                    {
-                                        // Thread exists but no clean files in 20 pages!
-                                        row.Cells["RINStatus"].Value = "NEEDS CLEAN FILES!";
-                                        row.Cells["RINStatus"].Style.BackColor = Color.Red;
-                                        row.Cells["RINStatus"].Style.ForeColor = Color.White;
-                                        row.Cells["RINStatus"].Style.Font = new Font("Segoe UI", 9, FontStyle.Bold);
-                                        row.DefaultCellStyle.BackColor = Color.FromArgb(40, 0, 0);
-                                    }
-                                    else
-                                    {
-                                        // Not on RIN at all
-                                        row.Cells["RINStatus"].Value = "NOT ON RIN";
-                                        row.Cells["RINStatus"].Style.ForeColor = Color.Gray;
-                                    }
-                                }
-                            }));
-                        }
                     }
                     catch (Exception ex)
                     {
@@ -3363,175 +3532,14 @@ oLink3.Save";
             public string BuildId { get; set; }
         }
 
-        private class RinCleanInfo
-        {
-            public string BuildId { get; set; }
-            public string BuildNumber { get; set; }
-            public DateTime PostDate { get; set; }
-            public string PostUrl { get; set; }
-            public bool HasCleanFiles { get; set; }
-            public string Status { get; set; }
-        }
-
-        private RinSeleniumScraper rinScraper;
-
-        private async Task<List<string>> SearchRinForGameAsync(string gameName)
-        {
-            var results = new List<string>();
-            try
-            {
-                System.Diagnostics.Debug.WriteLine($"\n{'='*80}");
-                System.Diagnostics.Debug.WriteLine($"SEARCHING RIN FOR: {gameName}");
-                System.Diagnostics.Debug.WriteLine($"{'='*80}");
-
-                // Initialize Selenium scraper if needed
-                if (rinScraper == null)
-                {
-                    rinScraper = new RinSeleniumScraper();
-                    if (!await rinScraper.Initialize(this))
-                    {
-                        System.Diagnostics.Debug.WriteLine("[ERROR] Failed to initialize Selenium scraper");
-                        return results;
-                    }
-                }
-
-                // Search using Selenium
-                var gameInfo = await rinScraper.SearchAndScrapeGame(gameName);
-                if (gameInfo != null && !string.IsNullOrEmpty(gameInfo.ThreadUrl))
-                {
-                    results.Add(gameInfo.ThreadUrl);
-                }
-                System.Diagnostics.Debug.WriteLine($"[SELENIUM] Found {results.Count} results for '{gameName}'");
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"[EXCEPTION] {ex.GetType().Name}: {ex.Message}");
-                System.Diagnostics.Debug.WriteLine($"[STACK] {ex.StackTrace}");
-            }
-            return results;
-        }
-
-        private async Task<RinCleanInfo> ScrapeRinThreadAsync(string threadUrl, string gameName)
-        {
-            try
-            {
-                System.Diagnostics.Debug.WriteLine($"\n{'='*80}");
-                System.Diagnostics.Debug.WriteLine($"SCRAPING THREAD FOR: {gameName}");
-                System.Diagnostics.Debug.WriteLine($"{'='*80}");
-                System.Diagnostics.Debug.WriteLine($"[THREAD URL] {threadUrl}");
-
-                // Use Selenium to scrape the thread
-                if (rinScraper == null)
-                {
-                    rinScraper = new RinSeleniumScraper();
-                    if (!await rinScraper.Initialize(this))
-                    {
-                        System.Diagnostics.Debug.WriteLine("[ERROR] Failed to initialize Selenium scraper");
-                        return null;
-                    }
-                }
-
-                // Since ScrapeThread doesn't exist, use SearchAndScrapeGame again with the game name
-                var gameInfo = await rinScraper.SearchAndScrapeGame(gameName);
-                if (gameInfo != null)
-                {
-                    return new RinCleanInfo
-                    {
-                        BuildNumber = gameInfo.BuildNumber,
-                        HasCleanFiles = !string.IsNullOrEmpty(gameInfo.BuildNumber),
-                        Status = gameInfo.Status
-                    };
-                }
-                return null;
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"❌ ERROR scraping thread: {ex.Message}");
-            }
-            return null;
-        }
-
-        // This method was removed due to broken implementation
-        /* Original code had 250+ lines of unreachable code here that was deleted */
-        private void UpdateStatusCell(DataGridViewRow row, string localBuild, string rinBuild)
-        {
-            // Clear any existing styles first
-            row.DefaultCellStyle.BackColor = Color.FromArgb(0, 2, 10);
-
-            if (string.IsNullOrEmpty(rinBuild))
-            {
-                // No clean files found on RIN - URGENT NEED!
-                row.Cells["RINStatus"].Value = "🚨 NEEDED!";
-                row.Cells["RINStatus"].Style.ForeColor = Color.FromArgb(255, 100, 100);
-                row.Cells["RINStatus"].Style.Font = new Font("Segoe UI", 10, FontStyle.Bold);
-
-                // Highlight entire row in red tint
-                row.DefaultCellStyle.BackColor = Color.FromArgb(40, 0, 0);
-
-                // Make Clean Share button glow
-                foreach (DataGridViewCell cell in row.Cells)
-                {
-                    if (cell.OwningColumn.Name == "CleanShare")
-                    {
-                        cell.Style.BackColor = Color.FromArgb(150, 50, 50);
-                        cell.Style.ForeColor = Color.FromArgb(255, 200, 200);
-                        cell.Style.Font = new Font("Segoe UI", 9, FontStyle.Bold);
-                    }
-                }
-            }
-            else
-            {
-                // Try to compare build numbers
-                if (long.TryParse(localBuild, out long local) && long.TryParse(rinBuild, out long rin))
-                {
-                    if (local > rin)
-                    {
-                        // WE HAVE NEWER VERSION - SHARE IT!
-                        row.Cells["RINStatus"].Value = "💎 NEWER!";
-                        row.Cells["RINStatus"].Style.ForeColor = Color.FromArgb(100, 255, 100);
-                        row.Cells["RINStatus"].Style.Font = new Font("Segoe UI", 10, FontStyle.Bold);
-
-                        // Green glow for newer builds
-                        row.DefaultCellStyle.BackColor = Color.FromArgb(0, 40, 20);
-
-                        // Highlight Clean Share button
-                        foreach (DataGridViewCell cell in row.Cells)
-                        {
-                            if (cell.OwningColumn.Name == "CleanShare")
-                            {
-                                cell.Style.BackColor = Color.FromArgb(50, 150, 50);
-                                cell.Style.ForeColor = Color.FromArgb(200, 255, 200);
-                                cell.Style.Font = new Font("Segoe UI", 9, FontStyle.Bold);
-                            }
-                        }
-                    }
-                    else if (local == rin)
-                    {
-                        row.Cells["RINStatus"].Value = "✅ Current";
-                        row.Cells["RINStatus"].Style.ForeColor = Color.FromArgb(100, 200, 100);
-                    }
-                    else
-                    {
-                        row.Cells["RINStatus"].Value = "📦 Old";
-                        row.Cells["RINStatus"].Style.ForeColor = Color.Gray;
-                    }
-                }
-                else if (!string.IsNullOrEmpty(rinBuild))
-                {
-                    // RIN has a build but we can't compare numbers
-                    row.Cells["RINStatus"].Value = "❓ Check";
-                    row.Cells["RINStatus"].Style.ForeColor = Color.Yellow;
-                }
-                else
-                {
-                    // RIN has clean files but no build number found
-                    row.Cells["RINStatus"].Value = "📋 Has Clean";
-                    row.Cells["RINStatus"].Style.ForeColor = Color.FromArgb(150, 150, 255);
-                }
-            }
-        }
+        // All RIN scraping code removed - no longer needed
 
         private void resinstruccZip_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void label5_Click(object sender, EventArgs e)
         {
 
         }

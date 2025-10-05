@@ -31,7 +31,9 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<EmbeddedResource Include="CompressionSettingsForm.resx" />
+		<EmbeddedResource Include="CompressionSettingsForm.resx">
+			<DependentUpon>CompressionSettingsForm.cs</DependentUpon>
+		</EmbeddedResource>
 		<EmbeddedResource Include="Costura.Fody.dll">
 			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
 		</EmbeddedResource>
@@ -42,7 +44,9 @@
 		</EmbeddedResource>
 		<Compile Remove="releases\**" />
 		<None Remove="releases\**" />
-		<EmbeddedResource Include="EnhancedShareWindow.resx" />
+		<EmbeddedResource Include="EnhancedShareWindow.resx">
+			<DependentUpon>EnhancedShareWindow.cs</DependentUpon>
+		</EmbeddedResource>
 		<EmbeddedResource Include="Form1.resx">
 			<DependentUpon>Form1.cs</DependentUpon>
 			<LogicalName>APPID.SteamAppId.resources</LogicalName>
@@ -51,7 +55,6 @@
 			<Generator>ResXFileCodeGenerator</Generator>
 			<LastGenOutput>Resources.Designer.cs</LastGenOutput>
 		</EmbeddedResource>
-		<EmbeddedResource Include="RequestsWindow.resx" />
 	</ItemGroup>
 
 	<ItemGroup>
@@ -134,6 +137,12 @@
 	    <DesignTime>True</DesignTime>
 	    <AutoGen>True</AutoGen>
 	    <DependentUpon>Resources.resx</DependentUpon>
+	  </Compile>
+	  <Compile Update="EnhancedShareWindow.Designer.cs">
+	    <DependentUpon>EnhancedShareWindow.cs</DependentUpon>
+	  </Compile>
+	  <Compile Update="CompressionSettingsForm.Designer.cs">
+	    <DependentUpon>CompressionSettingsForm.cs</DependentUpon>
 	  </Compile>
 	</ItemGroup>
 </Project>

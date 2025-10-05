@@ -74,5 +74,29 @@ namespace APPID.Properties {
         public bool ZipDontAsk { get; internal set; }
         public string ZipFormat { get; internal set; }
         public string ZipLevel { get; internal set; }
+
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool UseRinPassword {
+            get {
+                return ((bool)(this["UseRinPassword"]));
+            }
+            set {
+                this["UseRinPassword"] = value;
+            }
+        }
+
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool LANMultiplayer {
+            get {
+                return ((bool)(this["LANMultiplayer"]));
+            }
+            set {
+                this["LANMultiplayer"] = value;
+            }
+        }
     }
 }
