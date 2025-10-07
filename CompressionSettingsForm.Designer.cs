@@ -44,6 +44,7 @@ namespace SteamAutocrackGUI
             // titleLabel
             // 
             this.titleLabel.AutoSize = true;
+            this.titleLabel.BackColor = System.Drawing.Color.Transparent;
             this.titleLabel.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Bold);
             this.titleLabel.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(192)))), ((int)(((byte)(255)))), ((int)(((byte)(255)))));
             this.titleLabel.Location = new System.Drawing.Point(101, 13);
@@ -55,28 +56,30 @@ namespace SteamAutocrackGUI
             // zipRadioButton
             // 
             this.zipRadioButton.AutoSize = true;
+            this.zipRadioButton.BackColor = System.Drawing.Color.Transparent;
             this.zipRadioButton.Checked = true;
-            this.zipRadioButton.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.zipRadioButton.FlatAppearance.CheckedBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(20)))));
             this.zipRadioButton.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(220)))), ((int)(((byte)(255)))), ((int)(((byte)(255)))));
             this.zipRadioButton.Location = new System.Drawing.Point(36, 63);
             this.zipRadioButton.Name = "zipRadioButton";
-            this.zipRadioButton.Size = new System.Drawing.Size(94, 17);
+            this.zipRadioButton.Size = new System.Drawing.Size(95, 17);
             this.zipRadioButton.TabIndex = 2;
             this.zipRadioButton.TabStop = true;
             this.zipRadioButton.Text = "ZIP (Universal)";
-            this.zipRadioButton.UseVisualStyleBackColor = true;
+            this.zipRadioButton.UseVisualStyleBackColor = false;
             // 
             // sevenZipRadioButton
             // 
             this.sevenZipRadioButton.AutoSize = true;
-            this.sevenZipRadioButton.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.sevenZipRadioButton.BackColor = System.Drawing.Color.Transparent;
+            this.sevenZipRadioButton.FlatAppearance.CheckedBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(20)))));
             this.sevenZipRadioButton.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(220)))), ((int)(((byte)(255)))), ((int)(((byte)(255)))));
             this.sevenZipRadioButton.Location = new System.Drawing.Point(187, 63);
             this.sevenZipRadioButton.Name = "sevenZipRadioButton";
-            this.sevenZipRadioButton.Size = new System.Drawing.Size(158, 17);
+            this.sevenZipRadioButton.Size = new System.Drawing.Size(159, 17);
             this.sevenZipRadioButton.TabIndex = 3;
             this.sevenZipRadioButton.Text = "7Z (Smaller file, needs 7-Zip)";
-            this.sevenZipRadioButton.UseVisualStyleBackColor = true;
+            this.sevenZipRadioButton.UseVisualStyleBackColor = false;
             // 
             // levelTrackBar
             // 
@@ -89,6 +92,7 @@ namespace SteamAutocrackGUI
             // 
             // levelDescriptionLabel
             // 
+            this.levelDescriptionLabel.BackColor = System.Drawing.Color.Transparent;
             this.levelDescriptionLabel.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(192)))), ((int)(((byte)(255)))), ((int)(((byte)(255)))));
             this.levelDescriptionLabel.Location = new System.Drawing.Point(55, 143);
             this.levelDescriptionLabel.Name = "levelDescriptionLabel";
@@ -100,29 +104,33 @@ namespace SteamAutocrackGUI
             // rememberCheckBox
             // 
             this.rememberCheckBox.AutoSize = true;
+            this.rememberCheckBox.BackColor = System.Drawing.Color.Transparent;
+            this.rememberCheckBox.FlatAppearance.CheckedBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(20)))));
             this.rememberCheckBox.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(192)))), ((int)(((byte)(255)))), ((int)(((byte)(255)))));
             this.rememberCheckBox.Location = new System.Drawing.Point(187, 46);
             this.rememberCheckBox.Name = "rememberCheckBox";
             this.rememberCheckBox.Size = new System.Drawing.Size(128, 17);
             this.rememberCheckBox.TabIndex = 6;
             this.rememberCheckBox.Text = "Remember my choice";
-            this.rememberCheckBox.UseVisualStyleBackColor = true;
+            this.rememberCheckBox.UseVisualStyleBackColor = false;
             // 
             // rinPasswordCheckBox
             // 
             this.rinPasswordCheckBox.AutoSize = true;
-            this.rinPasswordCheckBox.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.rinPasswordCheckBox.BackColor = System.Drawing.Color.Transparent;
+            this.rinPasswordCheckBox.FlatAppearance.CheckedBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(20)))));
             this.rinPasswordCheckBox.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(220)))), ((int)(((byte)(255)))), ((int)(((byte)(255)))));
             this.rinPasswordCheckBox.Location = new System.Drawing.Point(36, 46);
             this.rinPasswordCheckBox.Name = "rinPasswordCheckBox";
-            this.rinPasswordCheckBox.Size = new System.Drawing.Size(145, 17);
+            this.rinPasswordCheckBox.Size = new System.Drawing.Size(148, 17);
             this.rinPasswordCheckBox.TabIndex = 11;
             this.rinPasswordCheckBox.Text = "🔒 Use cs.rin.ru password";
-            this.rinPasswordCheckBox.UseVisualStyleBackColor = true;
+            this.rinPasswordCheckBox.UseVisualStyleBackColor = false;
             // 
             // ctrlSLabel
             // 
             this.ctrlSLabel.AutoSize = true;
+            this.ctrlSLabel.BackColor = System.Drawing.Color.Transparent;
             this.ctrlSLabel.Font = new System.Drawing.Font("Segoe UI", 8F);
             this.ctrlSLabel.ForeColor = System.Drawing.Color.Gray;
             this.ctrlSLabel.Location = new System.Drawing.Point(94, 228);
@@ -131,14 +139,15 @@ namespace SteamAutocrackGUI
             this.ctrlSLabel.TabIndex = 7;
             this.ctrlSLabel.Text = "Ctrl+S to open this window anytime";
             // 
-            // okButton
-            // 
-            this.okButton.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(2)))), ((int)(((byte)(10)))));
-            this.okButton.FlatAppearance.BorderColor = System.Drawing.Color.FromArgb(((int)(((byte)(192)))), ((int)(((byte)(255)))), ((int)(((byte)(255)))));
-            this.okButton.FlatAppearance.MouseDownBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(10)))), ((int)(((byte)(35)))));
-            this.okButton.FlatAppearance.MouseOverBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(20)))), ((int)(((byte)(50)))));
+            // okButton - Material You Dark Mode
+            //
+            this.okButton.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(38)))), ((int)(((byte)(38)))), ((int)(((byte)(42)))));
+            this.okButton.FlatAppearance.BorderColor = System.Drawing.Color.FromArgb(((int)(((byte)(55)))), ((int)(((byte)(55)))), ((int)(((byte)(60)))));
+            this.okButton.FlatAppearance.MouseDownBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(28)))), ((int)(((byte)(28)))), ((int)(((byte)(32)))));
+            this.okButton.FlatAppearance.MouseOverBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(48)))), ((int)(((byte)(48)))), ((int)(((byte)(52)))));
             this.okButton.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.okButton.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(192)))), ((int)(((byte)(255)))), ((int)(((byte)(255)))));
+            this.okButton.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Regular);
+            this.okButton.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(220)))), ((int)(((byte)(220)))), ((int)(((byte)(225)))));
             this.okButton.Location = new System.Drawing.Point(105, 179);
             this.okButton.Name = "okButton";
             this.okButton.Size = new System.Drawing.Size(80, 30);
@@ -147,14 +156,15 @@ namespace SteamAutocrackGUI
             this.okButton.UseVisualStyleBackColor = false;
             this.okButton.Click += new System.EventHandler(this.okButton_Click);
             // 
-            // cancelButton
-            // 
-            this.cancelButton.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(2)))), ((int)(((byte)(10)))));
-            this.cancelButton.FlatAppearance.BorderColor = System.Drawing.Color.FromArgb(((int)(((byte)(192)))), ((int)(((byte)(255)))), ((int)(((byte)(255)))));
-            this.cancelButton.FlatAppearance.MouseDownBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(10)))), ((int)(((byte)(35)))));
-            this.cancelButton.FlatAppearance.MouseOverBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(20)))), ((int)(((byte)(50)))));
+            // cancelButton - Material You Dark Mode
+            //
+            this.cancelButton.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(38)))), ((int)(((byte)(38)))), ((int)(((byte)(42)))));
+            this.cancelButton.FlatAppearance.BorderColor = System.Drawing.Color.FromArgb(((int)(((byte)(55)))), ((int)(((byte)(55)))), ((int)(((byte)(60)))));
+            this.cancelButton.FlatAppearance.MouseDownBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(28)))), ((int)(((byte)(28)))), ((int)(((byte)(32)))));
+            this.cancelButton.FlatAppearance.MouseOverBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(48)))), ((int)(((byte)(48)))), ((int)(((byte)(52)))));
             this.cancelButton.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.cancelButton.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(192)))), ((int)(((byte)(255)))), ((int)(((byte)(255)))));
+            this.cancelButton.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Regular);
+            this.cancelButton.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(220)))), ((int)(((byte)(220)))), ((int)(((byte)(225)))));
             this.cancelButton.Location = new System.Drawing.Point(195, 179);
             this.cancelButton.Name = "cancelButton";
             this.cancelButton.Size = new System.Drawing.Size(80, 30);

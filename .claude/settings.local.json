@@ -1,7 +1,9 @@
 {
   "permissions": {
     "allow": [
-      "Bash(zip:*)"
+      "Bash(zip:*)",
+      "Bash(dotnet build)",
+      "Bash(\"/mnt/c/Program Files/Microsoft Visual Studio/2022/Community/MSBuild/Current/Bin/MSBuild.exe\" \"HFP''''s APPID Finder.csproj\" /t:Build /p:Configuration=Debug)"
     ],
     "deny": [],
     "ask": []

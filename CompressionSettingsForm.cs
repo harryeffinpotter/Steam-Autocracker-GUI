@@ -41,6 +41,10 @@ namespace SteamAutocrackGUI
             CreateCustomSlider();
             UpdateLevelDescription();
 
+            // Apply rounded corners to buttons
+            ApplyRoundedCornersToButton(okButton);
+            ApplyRoundedCornersToButton(cancelButton);
+
             // Apply acrylic effect
             this.Load += (s, e) => ApplyAcrylicEffect();
         }
@@ -75,6 +79,64 @@ namespace SteamAutocrackGUI
                 Marshal.FreeHGlobal(accentPtr);
             }
             catch { }
+        }
+
+        private void ApplyRoundedCornersToButton(Button btn)
+        {
+            // Paint event for rounded corners
+            btn.Paint += (sender, e) =>
+            {
+                Button b = sender as Button;
+
+                // Enable high quality rendering
+                e.Graphics.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.HighQuality;
+                e.Graphics.PixelOffsetMode = System.Drawing.Drawing2D.PixelOffsetMode.HighQuality;
+                e.Graphics.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.HighQualityBicubic;
+                e.Graphics.CompositingQuality = System.Drawing.Drawing2D.CompositingQuality.HighQuality;
+                e.Graphics.TextRenderingHint = System.Drawing.Text.TextRenderingHint.ClearTypeGridFit;
+
+                System.Drawing.Drawing2D.GraphicsPath path = new System.Drawing.Drawing2D.GraphicsPath();
+
+                // Create rounded rectangle with smoother corners
+                int radius = 10;
+                Rectangle rect = new Rectangle(0, 0, b.Width - 1, b.Height - 1);
+                path.StartFigure();
+                path.AddArc(rect.X, rect.Y, radius * 2, radius * 2, 180, 90);
+                path.AddLine(rect.X + radius, rect.Y, rect.Right - radius, rect.Y);
+                path.AddArc(rect.Right - radius * 2, rect.Y, radius * 2, radius * 2, 270, 90);
+                path.AddLine(rect.Right, rect.Y + radius, rect.Right, rect.Bottom - radius);
+                path.AddArc(rect.Right - radius * 2, rect.Bottom - radius * 2, radius * 2, radius * 2, 0, 90);
+                path.AddLine(rect.Right - radius, rect.Bottom, rect.X + radius, rect.Bottom);
+                path.AddArc(rect.X, rect.Bottom - radius * 2, radius * 2, radius * 2, 90, 90);
+                path.CloseFigure();
+
+                // Set button region for click area
+                b.Region = new Region(path);
+
+                // Draw background
+                using (var brush = new SolidBrush(b.BackColor))
+                {
+                    e.Graphics.FillPath(brush, path);
+                }
+
+                // Draw subtle border
+                using (var pen = new Pen(b.FlatAppearance.BorderColor, 1.0f))
+                {
+                    pen.Alignment = System.Drawing.Drawing2D.PenAlignment.Inset;
+                    e.Graphics.DrawPath(pen, path);
+                }
+
+                // Draw text with better rendering
+                StringFormat sf = new StringFormat
+                {
+                    Alignment = StringAlignment.Center,
+                    LineAlignment = StringAlignment.Center
+                };
+                e.Graphics.DrawString(b.Text, b.Font, new SolidBrush(b.ForeColor), rect, sf);
+            };
+
+            btn.FlatStyle = FlatStyle.Flat;
+            btn.FlatAppearance.BorderSize = 0; // We'll draw our own border
         }
 
         private void CreateCustomSlider()

@@ -35,17 +35,18 @@ namespace APPID
         {
             this.components = new System.ComponentModel.Container();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(SteamAppId));
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle21 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle22 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle23 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle24 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle25 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle6 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle7 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle8 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle9 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle10 = new System.Windows.Forms.DataGridViewCellStyle();
             this.searchTextBox = new System.Windows.Forms.TextBox();
             this.dataGridView1 = new System.Windows.Forms.DataGridView();
             this.btnSearch = new System.Windows.Forms.Button();
             this.resinstruccZip = new System.Windows.Forms.Label();
             this.tgDisc = new System.Windows.Forms.Label();
             this.mainPanel = new System.Windows.Forms.Panel();
+            this.drgdropText = new System.Windows.Forms.Label();
             this.gitHub = new System.Windows.Forms.PictureBox();
             this.ShareButton = new System.Windows.Forms.Button();
             this.RequestButton = new System.Windows.Forms.Button();
@@ -57,6 +58,7 @@ namespace APPID
             this.pin = new System.Windows.Forms.PictureBox();
             this.unPin = new System.Windows.Forms.PictureBox();
             this.currDIrText = new System.Windows.Forms.Label();
+            this.dllSelect = new APPID.TransparentComboBox();
             this.lanMultiplayerCheckBox = new System.Windows.Forms.CheckBox();
             this.donePic = new System.Windows.Forms.PictureBox();
             this.startCrackPic = new System.Windows.Forms.PictureBox();
@@ -64,7 +66,6 @@ namespace APPID
             this.label5 = new System.Windows.Forms.Label();
             this.label1 = new System.Windows.Forms.Label();
             this.selectDirLabel = new System.Windows.Forms.Label();
-            this.drgdropText = new System.Windows.Forms.Label();
             this.btnManualEntry = new System.Windows.Forms.Button();
             this.lanMultiplayerToolTip = new System.Windows.Forms.ToolTip(this.components);
             this.ManAppPanel = new System.Windows.Forms.Panel();
@@ -75,7 +76,6 @@ namespace APPID
             this.lblTitle = new System.Windows.Forms.Label();
             this.btnMinimize = new System.Windows.Forms.Button();
             this.btnClose = new System.Windows.Forms.Button();
-            this.dllSelect = new APPID.TransparentComboBox();
             ((System.ComponentModel.ISupportInitialize)(this.dataGridView1)).BeginInit();
             this.mainPanel.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.gitHub)).BeginInit();
@@ -106,51 +106,51 @@ namespace APPID
             this.dataGridView1.AllowUserToAddRows = false;
             this.dataGridView1.AllowUserToDeleteRows = false;
             this.dataGridView1.AllowUserToResizeRows = false;
-            dataGridViewCellStyle21.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(5)))), ((int)(((byte)(25)))));
-            dataGridViewCellStyle21.ForeColor = System.Drawing.Color.White;
-            dataGridViewCellStyle21.SelectionBackColor = System.Drawing.Color.SpringGreen;
-            dataGridViewCellStyle21.SelectionForeColor = System.Drawing.Color.Black;
-            this.dataGridView1.AlternatingRowsDefaultCellStyle = dataGridViewCellStyle21;
+            dataGridViewCellStyle6.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(5)))), ((int)(((byte)(25)))));
+            dataGridViewCellStyle6.ForeColor = System.Drawing.Color.White;
+            dataGridViewCellStyle6.SelectionBackColor = System.Drawing.Color.SpringGreen;
+            dataGridViewCellStyle6.SelectionForeColor = System.Drawing.Color.Black;
+            this.dataGridView1.AlternatingRowsDefaultCellStyle = dataGridViewCellStyle6;
             this.dataGridView1.AutoSizeColumnsMode = System.Windows.Forms.DataGridViewAutoSizeColumnsMode.Fill;
             this.dataGridView1.BackgroundColor = System.Drawing.Color.FromArgb(((int)(((byte)(5)))), ((int)(((byte)(10)))), ((int)(((byte)(30)))));
             this.dataGridView1.BorderStyle = System.Windows.Forms.BorderStyle.None;
-            dataGridViewCellStyle22.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
-            dataGridViewCellStyle22.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(25)))), ((int)(((byte)(75)))));
-            dataGridViewCellStyle22.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            dataGridViewCellStyle22.ForeColor = System.Drawing.Color.Ivory;
-            dataGridViewCellStyle22.SelectionBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(25)))), ((int)(((byte)(75)))));
-            dataGridViewCellStyle22.SelectionForeColor = System.Drawing.Color.Ivory;
-            dataGridViewCellStyle22.WrapMode = System.Windows.Forms.DataGridViewTriState.True;
-            this.dataGridView1.ColumnHeadersDefaultCellStyle = dataGridViewCellStyle22;
+            dataGridViewCellStyle7.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
+            dataGridViewCellStyle7.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(25)))), ((int)(((byte)(75)))));
+            dataGridViewCellStyle7.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            dataGridViewCellStyle7.ForeColor = System.Drawing.Color.Ivory;
+            dataGridViewCellStyle7.SelectionBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(25)))), ((int)(((byte)(75)))));
+            dataGridViewCellStyle7.SelectionForeColor = System.Drawing.Color.Ivory;
+            dataGridViewCellStyle7.WrapMode = System.Windows.Forms.DataGridViewTriState.True;
+            this.dataGridView1.ColumnHeadersDefaultCellStyle = dataGridViewCellStyle7;
             resources.ApplyResources(this.dataGridView1, "dataGridView1");
             this.dataGridView1.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.DisableResizing;
-            dataGridViewCellStyle23.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
-            dataGridViewCellStyle23.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(2)))), ((int)(((byte)(10)))));
-            dataGridViewCellStyle23.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            dataGridViewCellStyle23.ForeColor = System.Drawing.SystemColors.ActiveCaptionText;
-            dataGridViewCellStyle23.SelectionBackColor = System.Drawing.Color.SpringGreen;
-            dataGridViewCellStyle23.SelectionForeColor = System.Drawing.Color.Black;
-            dataGridViewCellStyle23.WrapMode = System.Windows.Forms.DataGridViewTriState.False;
-            this.dataGridView1.DefaultCellStyle = dataGridViewCellStyle23;
+            dataGridViewCellStyle8.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
+            dataGridViewCellStyle8.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(2)))), ((int)(((byte)(10)))));
+            dataGridViewCellStyle8.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            dataGridViewCellStyle8.ForeColor = System.Drawing.SystemColors.ActiveCaptionText;
+            dataGridViewCellStyle8.SelectionBackColor = System.Drawing.Color.SpringGreen;
+            dataGridViewCellStyle8.SelectionForeColor = System.Drawing.Color.Black;
+            dataGridViewCellStyle8.WrapMode = System.Windows.Forms.DataGridViewTriState.False;
+            this.dataGridView1.DefaultCellStyle = dataGridViewCellStyle8;
             this.dataGridView1.EditMode = System.Windows.Forms.DataGridViewEditMode.EditProgrammatically;
             this.dataGridView1.GridColor = System.Drawing.Color.White;
             this.dataGridView1.MultiSelect = false;
             this.dataGridView1.Name = "dataGridView1";
             this.dataGridView1.ReadOnly = true;
-            dataGridViewCellStyle24.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
-            dataGridViewCellStyle24.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(5)))), ((int)(((byte)(25)))));
-            dataGridViewCellStyle24.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            dataGridViewCellStyle24.ForeColor = System.Drawing.Color.White;
-            dataGridViewCellStyle24.SelectionBackColor = System.Drawing.Color.SteelBlue;
-            dataGridViewCellStyle24.SelectionForeColor = System.Drawing.Color.Black;
-            dataGridViewCellStyle24.WrapMode = System.Windows.Forms.DataGridViewTriState.True;
-            this.dataGridView1.RowHeadersDefaultCellStyle = dataGridViewCellStyle24;
+            dataGridViewCellStyle9.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
+            dataGridViewCellStyle9.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(5)))), ((int)(((byte)(25)))));
+            dataGridViewCellStyle9.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            dataGridViewCellStyle9.ForeColor = System.Drawing.Color.White;
+            dataGridViewCellStyle9.SelectionBackColor = System.Drawing.Color.SteelBlue;
+            dataGridViewCellStyle9.SelectionForeColor = System.Drawing.Color.Black;
+            dataGridViewCellStyle9.WrapMode = System.Windows.Forms.DataGridViewTriState.True;
+            this.dataGridView1.RowHeadersDefaultCellStyle = dataGridViewCellStyle9;
             this.dataGridView1.RowHeadersWidthSizeMode = System.Windows.Forms.DataGridViewRowHeadersWidthSizeMode.DisableResizing;
-            dataGridViewCellStyle25.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(10)))), ((int)(((byte)(35)))));
-            dataGridViewCellStyle25.ForeColor = System.Drawing.Color.White;
-            dataGridViewCellStyle25.SelectionBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(20)))), ((int)(((byte)(111)))), ((int)(((byte)(65)))));
-            dataGridViewCellStyle25.SelectionForeColor = System.Drawing.Color.Black;
-            this.dataGridView1.RowsDefaultCellStyle = dataGridViewCellStyle25;
+            dataGridViewCellStyle10.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(10)))), ((int)(((byte)(35)))));
+            dataGridViewCellStyle10.ForeColor = System.Drawing.Color.White;
+            dataGridViewCellStyle10.SelectionBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(20)))), ((int)(((byte)(111)))), ((int)(((byte)(65)))));
+            dataGridViewCellStyle10.SelectionForeColor = System.Drawing.Color.Black;
+            this.dataGridView1.RowsDefaultCellStyle = dataGridViewCellStyle10;
             this.dataGridView1.RowTemplate.DefaultCellStyle.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(5)))), ((int)(((byte)(25)))));
             this.dataGridView1.RowTemplate.DefaultCellStyle.ForeColor = System.Drawing.Color.White;
             this.dataGridView1.RowTemplate.DefaultCellStyle.SelectionBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(30)))), ((int)(((byte)(70)))), ((int)(((byte)(100)))));
@@ -218,6 +218,17 @@ namespace APPID
             this.mainPanel.DragEnter += new System.Windows.Forms.DragEventHandler(this.mainPanel_DragEnter);
             this.mainPanel.DragLeave += new System.EventHandler(this.mainPanel_DragLeave);
             // 
+            // drgdropText
+            // 
+            this.drgdropText.AllowDrop = true;
+            this.drgdropText.BackColor = System.Drawing.Color.Transparent;
+            resources.ApplyResources(this.drgdropText, "drgdropText");
+            this.drgdropText.ForeColor = System.Drawing.SystemColors.Control;
+            this.drgdropText.Name = "drgdropText";
+            this.drgdropText.DragDrop += new System.Windows.Forms.DragEventHandler(this.mainPanel_DragDrop);
+            this.drgdropText.DragEnter += new System.Windows.Forms.DragEventHandler(this.mainPanel_DragEnter);
+            this.drgdropText.DragLeave += new System.EventHandler(this.mainPanel_DragLeave);
+            // 
             // gitHub
             // 
             this.gitHub.BackColor = System.Drawing.Color.Transparent;
@@ -284,19 +295,24 @@ namespace APPID
             // 
             // OpenDir
             // 
-            this.OpenDir.BackColor = System.Drawing.Color.Transparent;
+            this.OpenDir.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(38)))), ((int)(((byte)(38)))), ((int)(((byte)(42)))));
+            this.OpenDir.FlatAppearance.BorderColor = System.Drawing.Color.FromArgb(((int)(((byte)(55)))), ((int)(((byte)(55)))), ((int)(((byte)(60)))));
+            this.OpenDir.FlatAppearance.MouseDownBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(28)))), ((int)(((byte)(28)))), ((int)(((byte)(32)))));
+            this.OpenDir.FlatAppearance.MouseOverBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(48)))), ((int)(((byte)(48)))), ((int)(((byte)(52)))));
             resources.ApplyResources(this.OpenDir, "OpenDir");
-            this.OpenDir.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(192)))), ((int)(((byte)(255)))), ((int)(((byte)(255)))));
+            this.OpenDir.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(220)))), ((int)(((byte)(220)))), ((int)(((byte)(225)))));
             this.OpenDir.Name = "OpenDir";
             this.OpenDir.UseVisualStyleBackColor = false;
             this.OpenDir.Click += new System.EventHandler(this.OpenDir_Click);
             // 
             // ZipToShare
             // 
-            this.ZipToShare.BackColor = System.Drawing.Color.Transparent;
-            this.ZipToShare.FlatAppearance.BorderColor = System.Drawing.Color.FromArgb(((int)(((byte)(210)))), ((int)(((byte)(255)))), ((int)(((byte)(210)))));
+            this.ZipToShare.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(38)))), ((int)(((byte)(38)))), ((int)(((byte)(42)))));
+            this.ZipToShare.FlatAppearance.BorderColor = System.Drawing.Color.FromArgb(((int)(((byte)(55)))), ((int)(((byte)(55)))), ((int)(((byte)(60)))));
+            this.ZipToShare.FlatAppearance.MouseDownBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(28)))), ((int)(((byte)(28)))), ((int)(((byte)(32)))));
+            this.ZipToShare.FlatAppearance.MouseOverBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(48)))), ((int)(((byte)(48)))), ((int)(((byte)(52)))));
             resources.ApplyResources(this.ZipToShare, "ZipToShare");
-            this.ZipToShare.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(210)))), ((int)(((byte)(255)))), ((int)(((byte)(210)))));
+            this.ZipToShare.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(220)))), ((int)(((byte)(220)))), ((int)(((byte)(225)))));
             this.ZipToShare.Name = "ZipToShare";
             this.lanMultiplayerToolTip.SetToolTip(this.ZipToShare, resources.GetString("ZipToShare.ToolTip"));
             this.ZipToShare.UseVisualStyleBackColor = false;
@@ -327,6 +343,23 @@ namespace APPID
             resources.ApplyResources(this.currDIrText, "currDIrText");
             this.currDIrText.ForeColor = System.Drawing.Color.AliceBlue;
             this.currDIrText.Name = "currDIrText";
+            // 
+            // dllSelect
+            // 
+            this.dllSelect.AutoCompleteCustomSource.AddRange(new string[] {
+            resources.GetString("dllSelect.AutoCompleteCustomSource"),
+            resources.GetString("dllSelect.AutoCompleteCustomSource1")});
+            this.dllSelect.BorderColor = System.Drawing.Color.FromArgb(((int)(((byte)(100)))), ((int)(((byte)(150)))), ((int)(((byte)(200)))));
+            this.dllSelect.DrawMode = System.Windows.Forms.DrawMode.OwnerDrawFixed;
+            this.dllSelect.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            resources.ApplyResources(this.dllSelect, "dllSelect");
+            this.dllSelect.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(192)))), ((int)(((byte)(255)))), ((int)(((byte)(255)))));
+            this.dllSelect.FormattingEnabled = true;
+            this.dllSelect.Items.AddRange(new object[] {
+            resources.GetString("dllSelect.Items"),
+            resources.GetString("dllSelect.Items1")});
+            this.dllSelect.Name = "dllSelect";
+            this.dllSelect.SelectedIndexChanged += new System.EventHandler(this.dllSelect_SelectedIndexChanged);
             // 
             // lanMultiplayerCheckBox
             // 
@@ -408,22 +441,14 @@ namespace APPID
             this.selectDirLabel.DragEnter += new System.Windows.Forms.DragEventHandler(this.mainPanel_DragEnter);
             this.selectDirLabel.DragLeave += new System.EventHandler(this.mainPanel_DragLeave);
             // 
-            // drgdropText
-            // 
-            this.drgdropText.AllowDrop = true;
-            this.drgdropText.BackColor = System.Drawing.Color.Transparent;
-            resources.ApplyResources(this.drgdropText, "drgdropText");
-            this.drgdropText.ForeColor = System.Drawing.SystemColors.Control;
-            this.drgdropText.Name = "drgdropText";
-            this.drgdropText.DragDrop += new System.Windows.Forms.DragEventHandler(this.mainPanel_DragDrop);
-            this.drgdropText.DragEnter += new System.Windows.Forms.DragEventHandler(this.mainPanel_DragEnter);
-            this.drgdropText.DragLeave += new System.EventHandler(this.mainPanel_DragLeave);
-            // 
             // btnManualEntry
             // 
-            this.btnManualEntry.BackColor = System.Drawing.Color.Transparent;
+            this.btnManualEntry.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(38)))), ((int)(((byte)(38)))), ((int)(((byte)(42)))));
+            this.btnManualEntry.FlatAppearance.BorderColor = System.Drawing.Color.FromArgb(((int)(((byte)(55)))), ((int)(((byte)(55)))), ((int)(((byte)(60)))));
+            this.btnManualEntry.FlatAppearance.MouseDownBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(28)))), ((int)(((byte)(28)))), ((int)(((byte)(32)))));
+            this.btnManualEntry.FlatAppearance.MouseOverBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(48)))), ((int)(((byte)(48)))), ((int)(((byte)(52)))));
             resources.ApplyResources(this.btnManualEntry, "btnManualEntry");
-            this.btnManualEntry.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(192)))), ((int)(((byte)(255)))), ((int)(((byte)(255)))));
+            this.btnManualEntry.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(220)))), ((int)(((byte)(220)))), ((int)(((byte)(225)))));
             this.btnManualEntry.Name = "btnManualEntry";
             this.btnManualEntry.UseVisualStyleBackColor = false;
             this.btnManualEntry.Click += new System.EventHandler(this.btnManualEntry_Click);
@@ -518,23 +543,6 @@ namespace APPID
             this.btnClose.UseVisualStyleBackColor = false;
             this.btnClose.Click += new System.EventHandler(this.BtnClose_Click);
             // 
-            // dllSelect
-            // 
-            this.dllSelect.AutoCompleteCustomSource.AddRange(new string[] {
-            resources.GetString("dllSelect.AutoCompleteCustomSource"),
-            resources.GetString("dllSelect.AutoCompleteCustomSource1")});
-            this.dllSelect.BorderColor = System.Drawing.Color.FromArgb(((int)(((byte)(100)))), ((int)(((byte)(150)))), ((int)(((byte)(200)))));
-            this.dllSelect.DrawMode = System.Windows.Forms.DrawMode.OwnerDrawFixed;
-            this.dllSelect.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
-            resources.ApplyResources(this.dllSelect, "dllSelect");
-            this.dllSelect.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(192)))), ((int)(((byte)(255)))), ((int)(((byte)(255)))));
-            this.dllSelect.FormattingEnabled = true;
-            this.dllSelect.Items.AddRange(new object[] {
-            resources.GetString("dllSelect.Items"),
-            resources.GetString("dllSelect.Items1")});
-            this.dllSelect.Name = "dllSelect";
-            this.dllSelect.SelectedIndexChanged += new System.EventHandler(this.dllSelect_SelectedIndexChanged);
-            // 
             // SteamAppId
             // 
             this.AllowDrop = true;
@@ -542,13 +550,13 @@ namespace APPID
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(5)))), ((int)(((byte)(8)))), ((int)(((byte)(20)))));
             this.Controls.Add(this.titleBar);
-            this.Controls.Add(this.resinstruccZip);
             this.Controls.Add(this.mainPanel);
             this.Controls.Add(this.btnManualEntry);
             this.Controls.Add(this.dataGridView1);
             this.Controls.Add(this.ManAppPanel);
             this.Controls.Add(this.searchTextBox);
             this.Controls.Add(this.btnSearch);
+            this.Controls.Add(this.resinstruccZip);
             this.ForeColor = System.Drawing.SystemColors.ActiveCaptionText;
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.None;
             this.Name = "SteamAppId";

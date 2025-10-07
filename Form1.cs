@@ -88,10 +88,94 @@ namespace APPID
                 autoCrackOff.BringToFront();
             }
 
+            // Apply saved pin state
+            if (Properties.Settings.Default.Pinned)
+            {
+                this.TopMost = true;
+                unPin.BringToFront();
+            }
+            else
+            {
+                this.TopMost = false;
+                pin.BringToFront();
+            }
+
             InitializeTimers();
+
+            // Make form background draggable (click empty space to drag)
+            this.MouseDown += TitleBar_MouseDown;
+
+            // Make main panel draggable too if it exists
+            if (mainPanel != null)
+            {
+                mainPanel.MouseDown += TitleBar_MouseDown;
+            }
 
             // Apply acrylic blur and rounded corners
             this.Load += (s, e) => ApplyAcrylicEffect();
+
+            // Apply rounded corners to buttons
+            ApplyRoundedCornersToButton(OpenDir);
+            ApplyRoundedCornersToButton(ZipToShare);
+            ApplyRoundedCornersToButton(btnManualEntry);
+        }
+
+        private void ApplyRoundedCornersToButton(Button btn)
+        {
+            // Paint event for rounded corners
+            btn.Paint += (sender, e) =>
+            {
+                Button b = sender as Button;
+
+                // Enable high quality rendering
+                e.Graphics.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.HighQuality;
+                e.Graphics.PixelOffsetMode = System.Drawing.Drawing2D.PixelOffsetMode.HighQuality;
+                e.Graphics.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.HighQualityBicubic;
+                e.Graphics.CompositingQuality = System.Drawing.Drawing2D.CompositingQuality.HighQuality;
+                e.Graphics.TextRenderingHint = System.Drawing.Text.TextRenderingHint.ClearTypeGridFit;
+
+                System.Drawing.Drawing2D.GraphicsPath path = new System.Drawing.Drawing2D.GraphicsPath();
+
+                // Create rounded rectangle with smoother corners
+                int radius = 10;
+                Rectangle rect = new Rectangle(0, 0, b.Width - 1, b.Height - 1);
+                path.StartFigure();
+                path.AddArc(rect.X, rect.Y, radius * 2, radius * 2, 180, 90);
+                path.AddLine(rect.X + radius, rect.Y, rect.Right - radius, rect.Y);
+                path.AddArc(rect.Right - radius * 2, rect.Y, radius * 2, radius * 2, 270, 90);
+                path.AddLine(rect.Right, rect.Y + radius, rect.Right, rect.Bottom - radius);
+                path.AddArc(rect.Right - radius * 2, rect.Bottom - radius * 2, radius * 2, radius * 2, 0, 90);
+                path.AddLine(rect.Right - radius, rect.Bottom, rect.X + radius, rect.Bottom);
+                path.AddArc(rect.X, rect.Bottom - radius * 2, radius * 2, radius * 2, 90, 90);
+                path.CloseFigure();
+
+                // Set button region for click area
+                b.Region = new Region(path);
+
+                // Draw background
+                using (var brush = new SolidBrush(b.BackColor))
+                {
+                    e.Graphics.FillPath(brush, path);
+                }
+
+                // Draw subtle border
+                using (var pen = new Pen(b.FlatAppearance.BorderColor, 1.0f))
+                {
+                    pen.Alignment = System.Drawing.Drawing2D.PenAlignment.Inset;
+                    e.Graphics.DrawPath(pen, path);
+                }
+
+                // Draw text with better rendering
+                StringFormat sf = new StringFormat
+                {
+                    Alignment = StringAlignment.Center,
+                    LineAlignment = StringAlignment.Center
+                };
+                e.Graphics.DrawString(b.Text, b.Font, new SolidBrush(b.ForeColor), rect, sf);
+            };
+
+            btn.FlatStyle = FlatStyle.Flat;
+            btn.FlatAppearance.BorderSize = 0; // We'll draw our own border
         }
 
         private void ApplyAcrylicEffect()
@@ -136,6 +220,11 @@ namespace APPID
         {
             if (e.Button == MouseButtons.Left)
             {
+                // Don't drag if clicking on DataGridView (allows column resizing)
+                var clickedControl = this.GetChildAtPoint(this.PointToClient(Cursor.Position));
+                if (clickedControl is DataGridView)
+                    return;
+
                 mouseDownPoint = new Point(e.X, e.Y);
                 this.Cursor = Cursors.SizeAll;
 
@@ -202,6 +291,10 @@ namespace APPID
         }
         public static void Tit(string Message, Color color)
         {
+            // Skip if suppressing status updates (cracking from share window)
+            if (SteamAppIdIdentifier.Program.form.suppressStatusUpdates)
+                return;
+
             // Handle cross-thread calls
             if (SteamAppIdIdentifier.Program.form.InvokeRequired)
             {
@@ -231,6 +324,10 @@ namespace APPID
         }
         public static void Tat(string Message)
         {
+            // Skip if suppressing status updates (cracking from share window)
+            if (SteamAppIdIdentifier.Program.form.suppressStatusUpdates)
+                return;
+
             // Handle cross-thread calls
             if (SteamAppIdIdentifier.Program.form.InvokeRequired)
             {
@@ -1092,13 +1189,17 @@ namespace APPID
             btnManualEntry.Visible = false;
             startCrackPic.Visible = true;
             resinstruccZip.Visible = false;
-            Tit("READY! Click skull folder above to perform crack!", Color.LightSkyBlue);
 
             // Auto-crack if enabled
             if (autoCrackEnabled && !string.IsNullOrEmpty(gameDir))
             {
+                Tit("Autocracking...", Color.Yellow);
                 // Trigger crack just like clicking the button
                 startCrackPic_Click(null, null);
+            }
+            else
+            {
+                Tit("READY! Click skull folder above to perform crack!", Color.LightSkyBlue);
             }
         }
 
@@ -1875,16 +1976,31 @@ oLink3.Save";
             IniProcess.WaitForExit();
         }
 
-        
+
         private string parentOfSelection;
         private string gameDir;
         private string gameDirName;
+        private bool suppressStatusUpdates = false;  // Flag to suppress Tit/Tat when cracking from share window
 
         // Public property to allow EnhancedShareWindow to set game directory
         public string GameDirectory
         {
             get { return gameDir; }
-            set { gameDir = value; }
+            set
+            {
+                gameDir = value;
+                // Also set gameDirName when gameDir is set
+                if (!string.IsNullOrEmpty(gameDir))
+                {
+                    gameDirName = Path.GetFileName(gameDir);
+                }
+            }
+        }
+
+        // Public method to suppress status updates when cracking from share window
+        public void SetSuppressStatusUpdates(bool suppress)
+        {
+            suppressStatusUpdates = suppress;
         }
         private void pictureBox2_Click(object sender, EventArgs e)
         {
@@ -2106,6 +2222,12 @@ oLink3.Save";
             pin.BringToFront();
             Properties.Settings.Default.Pinned = false;
             Properties.Settings.Default.Save();
+
+            // Unpin share window too if it's open
+            if (shareWindow != null && !shareWindow.IsDisposed)
+            {
+                shareWindow.TopMost = false;
+            }
         }
 
         private void pin_Click(object sender, EventArgs e)
@@ -2114,6 +2236,12 @@ oLink3.Save";
             unPin.BringToFront();
             Properties.Settings.Default.Pinned = true;
             Properties.Settings.Default.Save();
+
+            // Pin share window too if it's open
+            if (shareWindow != null && !shareWindow.IsDisposed)
+            {
+                shareWindow.TopMost = true;
+            }
         }
 
         private void autoCrackOff_Click(object sender, EventArgs e)
@@ -2699,7 +2827,9 @@ oLink3.Save";
             if (ZipToShare.Text == "Cancel")
             {
                 zipCancellationTokenSource?.Cancel();
-                ZipToShare.BackColor = SystemColors.Control;
+                ZipToShare.BackColor = Color.FromArgb(38, 38, 42);
+                ZipToShare.ForeColor = Color.FromArgb(220, 220, 225);
+                ZipToShare.FlatAppearance.BorderColor = Color.FromArgb(55, 55, 60);
                 ZipToShare.Text = "Zip Dir";
                 Tit("Compression cancelled", Color.Orange);
                 return;
@@ -2708,7 +2838,9 @@ oLink3.Save";
             // Start compression - change button to Cancel
             zipCancellationTokenSource = new System.Threading.CancellationTokenSource();
             ZipToShare.Enabled = true;  // Keep enabled so it can be clicked to cancel
-            ZipToShare.BackColor = Color.FromArgb(255, 200, 100);  // Light orange
+            ZipToShare.BackColor = Color.FromArgb(40, 30, 20);  // Dark orange tint
+            ZipToShare.ForeColor = Color.FromArgb(255, 200, 100);  // Light orange
+            ZipToShare.FlatAppearance.BorderColor = Color.FromArgb(255, 200, 100);  // Light orange
             ZipToShare.Text = "Cancel";
 
             string zipPath = "";  // Declare outside try block so finally can access it
@@ -2757,7 +2889,7 @@ oLink3.Save";
                     }
                 }
 
-                bool use7z = compressionType.StartsWith("7Z");
+                bool use7z = true;  // Always use 7z for both .zip and .7z
                 System.IO.Compression.CompressionLevel compressionLevel;
 
                 // Parse compression level from string
@@ -2789,35 +2921,52 @@ oLink3.Save";
                     safeGameName = safeGameName.Replace(c.ToString(), "");
                 }
 
-                string zipName = use7z ? $"[SACGUI] {safeGameName}.7z" : $"[SACGUI] {safeGameName}.zip";
+                // Determine file extension based on compression type
+                bool is7zFormat = compressionType.StartsWith("7Z");
+                string zipName = is7zFormat ? $"[SACGUI] {safeGameName}.7z" : $"[SACGUI] {safeGameName}.zip";
                 zipPath = Path.Combine(desktopPath, zipName);
 
-                // RGB color array - pastel and neon colors
-                Color[] rgbColors = new Color[]
+                // HSL to RGB converter for smooth color transitions
+                Func<double, double, double, Color> HSLToRGB = (h, s, l) =>
                 {
-                    Color.FromArgb(255, 182, 193),  // Light Pink
-                    Color.FromArgb(255, 255, 153),  // Light Yellow
-                    Color.FromArgb(255, 153, 153),  // Light Red
-                    Color.FromArgb(153, 255, 153),  // Light Green
-                    Color.FromArgb(153, 204, 255),  // Light Blue
-                    Color.FromArgb(221, 160, 221),  // Plum
-                    Color.FromArgb(255, 218, 185),  // Peach
-                    Color.FromArgb(230, 230, 250),  // Lavender
-                    Color.FromArgb(152, 255, 152),  // Pale Green
-                    Color.FromArgb(255, 192, 203),  // Pink
-                    Color.FromArgb(255, 160, 122),  // Light Salmon
-                    Color.FromArgb(176, 224, 230),  // Powder Blue
-                    Color.FromArgb(255, 228, 181),  // Moccasin
-                    Color.FromArgb(216, 191, 216),  // Thistle
-                    Color.FromArgb(127, 255, 212),  // Aquamarine
+                    h = h / 360.0;
+                    double r, g, b;
+
+                    if (s == 0)
+                    {
+                        r = g = b = l;
+                    }
+                    else
+                    {
+                        Func<double, double, double, double> HueToRGB = (pVal, qVal, t) =>
+                        {
+                            if (t < 0) t += 1;
+                            if (t > 1) t -= 1;
+                            if (t < 1.0 / 6) return pVal + (qVal - pVal) * 6 * t;
+                            if (t < 1.0 / 2) return qVal;
+                            if (t < 2.0 / 3) return pVal + (qVal - pVal) * (2.0 / 3 - t) * 6;
+                            return pVal;
+                        };
+
+                        var qHsl = l < 0.5 ? l * (1 + s) : l + s - l * s;
+                        var pHsl = 2 * l - qHsl;
+                        r = HueToRGB(pHsl, qHsl, h + 1.0 / 3);
+                        g = HueToRGB(pHsl, qHsl, h);
+                        b = HueToRGB(pHsl, qHsl, h - 1.0 / 3);
+                    }
+
+                    return Color.FromArgb((int)(r * 255), (int)(g * 255), (int)(b * 255));
                 };
 
                 if (use7z)
                 {
+                    // Show initial progress
+                    Tit($"Starting 7z compression (level {levelNum})...", HSLToRGB(0, 1.0, 0.75));
+
                     // Use 7zip with selected compression level
                     await Task.Run(async () =>
                     {
-                        int colorIndex = 0;
+                        double colorHue = 0;
 
                         // Check if cancelled before starting
                         if (zipCancellationTokenSource.Token.IsCancellationRequested)
@@ -2829,8 +2978,63 @@ oLink3.Save";
                         // Use 7za.exe from _bin folder
                         string sevenZipPath = $"{Environment.CurrentDirectory}\\_bin\\7z\\7za.exe";
 
-                        // Build 7z command with actual compression level and progress output
-                        string args = $"a -mx{levelNum} -t7z -bsp1 \"{zipPath}\" \"{gameDir}\\*\" -r";
+                        // Build 7z command with actual compression level and progress output to stdout
+                        string formatType = is7zFormat ? "7z" : "zip";
+
+                        // Smart RAM detection - adapt dictionary size to available memory
+                        string memParams = "";
+                        if (formatType == "7z" && levelNum > 0)
+                        {
+                            // Get available physical memory using PerformanceCounter
+                            ulong availRAM = 1024; // Default 1GB if detection fails
+                            try
+                            {
+                                using (var pc = new System.Diagnostics.PerformanceCounter("Memory", "Available MBytes"))
+                                {
+                                    availRAM = (ulong)pc.NextValue();
+                                }
+                            }
+                            catch
+                            {
+                                // Fallback to conservative default
+                                availRAM = 1024;
+                            }
+
+                            // Use 10% of available RAM for dictionary, with limits for 32-bit exe
+                            ulong targetDict = availRAM / 10;
+
+                            // Set dictionary based on available RAM and compression level
+                            // 64-bit 7z.exe can use MUCH more memory!
+                            int dictSize;
+                            if (availRAM < 2048)  // Less than 2GB available
+                                dictSize = 64;
+                            else if (availRAM < 4096)  // 2-4GB available
+                                dictSize = 128;
+                            else if (availRAM < 8192)  // 4-8GB available
+                                dictSize = 256;
+                            else if (availRAM < 16384) // 8-16GB available
+                                dictSize = 512;
+                            else if (availRAM < 32768) // 16-32GB available
+                                dictSize = 1024;  // 1GB dictionary
+                            else if (availRAM < 65536) // 32-64GB available
+                                dictSize = 1536;  // 1.5GB dictionary
+                            else  // 64GB+ available - USE THAT SHIT
+                                dictSize = 2048;  // 2GB dictionary!
+
+                            // Cap based on compression level (but be aggressive if they have RAM)
+                            if (levelNum <= 3 && dictSize > 256)
+                                dictSize = 256;
+                            else if (levelNum <= 5 && dictSize > 512)
+                                dictSize = 512;
+                            else if (levelNum <= 7 && dictSize > 1024)
+                                dictSize = 1024;
+
+                            // No need to cap for 64-bit exe!
+
+                            memParams = $" -md={dictSize}m";
+                            System.Diagnostics.Debug.WriteLine($"[7Z] Available RAM: {availRAM}MB, Using dictionary: {dictSize}MB for level {levelNum}");
+                        }
+                        string args = $"a -mx{levelNum} -t{formatType}{memParams} -bsp1 \"{zipPath}\" \"{gameDir}\"\\* -r";
 
                         ProcessStartInfo psi = new ProcessStartInfo
                         {
@@ -2838,17 +3042,69 @@ oLink3.Save";
                             Arguments = args,
                             UseShellExecute = false,
                             RedirectStandardOutput = true,
+                            RedirectStandardError = true,
                             CreateNoWindow = true
                         };
 
                         using (Process p = Process.Start(psi))
                         {
-                            string line;
                             string lastProgressText = $"Compressing with 7z (level {levelNum})...";
 
-                            while ((line = p.StandardOutput.ReadLine()) != null)
+                            // Read stderr asynchronously for progress
+                            var stderrTask = Task.Run(() =>
                             {
-                                // Check if cancelled
+                                string line;
+                                while ((line = p.StandardError.ReadLine()) != null)
+                                {
+                                    System.Diagnostics.Debug.WriteLine($"[7Z STDERR] {line}");
+
+                                    // Parse percentage from 7z output if available
+                                    var percentMatch = System.Text.RegularExpressions.Regex.Match(line, @"(\d+)%");
+                                    if (percentMatch.Success)
+                                    {
+                                        lastProgressText = $"Compressing with 7z... {percentMatch.Groups[1].Value}%";
+
+                                        // Smooth HSL cycling for pastel colors
+                                        colorHue = (colorHue + 3) % 360;
+                                        Color currentColor = HSLToRGB(colorHue, 1.0, 0.75);
+
+                                        this.Invoke(new Action(() =>
+                                        {
+                                            Tit(lastProgressText, currentColor);
+                                        }));
+                                    }
+                                }
+                            });
+
+                            // Check stdout for progress too
+                            var stdoutTask = Task.Run(() =>
+                            {
+                                string line;
+                                while ((line = p.StandardOutput.ReadLine()) != null)
+                                {
+                                    System.Diagnostics.Debug.WriteLine($"[7Z STDOUT] {line}");
+
+                                    // Parse percentage from stdout as well
+                                    var percentMatch = System.Text.RegularExpressions.Regex.Match(line, @"(\d+)%");
+                                    if (percentMatch.Success)
+                                    {
+                                        lastProgressText = $"Compressing with 7z... {percentMatch.Groups[1].Value}%";
+
+                                        // Smooth HSL cycling for pastel colors
+                                        colorHue = (colorHue + 3) % 360;
+                                        Color currentColor = HSLToRGB(colorHue, 1.0, 0.75);
+
+                                        this.Invoke(new Action(() =>
+                                        {
+                                            Tit(lastProgressText, currentColor);
+                                        }));
+                                    }
+                                }
+                            });
+
+                            // Wait for process with cancellation support and show progress
+                            while (!p.HasExited)
+                            {
                                 if (zipCancellationTokenSource.Token.IsCancellationRequested)
                                 {
                                     p.Kill();
@@ -2856,44 +3112,35 @@ oLink3.Save";
                                     break;
                                 }
 
-                                System.Diagnostics.Debug.WriteLine($"[7Z OUTPUT] {line}");
-
-                                // Parse percentage from 7z output if available
-                                var percentMatch = System.Text.RegularExpressions.Regex.Match(line, @"(\d+)%");
-                                if (percentMatch.Success)
+                                // Show smooth HSL progress even without percentage
+                                colorHue = (colorHue + 3) % 360;
+                                Color currentColor = HSLToRGB(colorHue, 1.0, 0.75);
+                                this.Invoke(new Action(() =>
                                 {
-                                    lastProgressText = $"Compressing with 7z... {percentMatch.Groups[1].Value}%";
-                                    System.Diagnostics.Debug.WriteLine($"[7Z PROGRESS] Updated to: {lastProgressText}");
+                                    Tit(lastProgressText, currentColor);
+                                }));
 
-                                    // RGB cycling while 7z works
-                                    Color currentColor = rgbColors[colorIndex % rgbColors.Length];
-                                    colorIndex++;
-
-                                    this.Invoke(new Action(() =>
-                                    {
-                                        Tit(lastProgressText, currentColor);
-                                    }));
-
-                                    await Task.Delay(50);
-                                }
+                                await Task.Delay(50);
                             }
 
                             if (!compressionCancelled)
                             {
                                 p.WaitForExit();
+                                await stderrTask;
+                                await stdoutTask;
                             }
                         }
                     });
                 }
                 else
                 {
-                    // Use standard .NET zip
+                    // Use standard .NET zip (this shouldn't run since use7z is always true)
                     await Task.Run(async () =>
                     {
                         var allFiles = Directory.GetFiles(gameDir, "*", SearchOption.AllDirectories);
                         int totalFiles = allFiles.Length;
                         int currentFile = 0;
-                        int colorIndex = 0;
+                        double colorHue = 0;
 
                         using (var archive = System.IO.Compression.ZipFile.Open(zipPath, System.IO.Compression.ZipArchiveMode.Create))
                         {
@@ -2902,9 +3149,9 @@ oLink3.Save";
                                 currentFile++;
                                 int percentage = (currentFile * 100) / totalFiles;
 
-                                // Cycle through RGB colors
-                                Color currentColor = rgbColors[colorIndex % rgbColors.Length];
-                                colorIndex++;
+                                // Smooth HSL cycling
+                                colorHue = (colorHue + 3) % 360;
+                                Color currentColor = HSLToRGB(colorHue, 1.0, 0.75);
 
                                 this.Invoke(new Action(() =>
                                 {
@@ -2931,9 +3178,11 @@ oLink3.Save";
                 }
 
                 // Final RGB flash
+                double finalHue = 0;
                 for (int i = 0; i < 10; i++)
                 {
-                    Tit($"Saved to Desktop: {zipName}", rgbColors[i % rgbColors.Length]);
+                    finalHue = (finalHue + 36) % 360;
+                    Tit($"Saved to Desktop: {zipName}", HSLToRGB(finalHue, 1.0, 0.75));
                     await Task.Delay(100);
                 }
 
@@ -2946,7 +3195,11 @@ oLink3.Save";
             finally
             {
                 ZipToShare.Enabled = true;
-                ZipToShare.BackColor = SystemColors.Control;  // Reset color
+
+                // Reset colors to Material You dark theme
+                ZipToShare.BackColor = Color.FromArgb(38, 38, 42);
+                ZipToShare.ForeColor = Color.FromArgb(220, 220, 225);
+                ZipToShare.FlatAppearance.BorderColor = Color.FromArgb(55, 55, 60);
 
                 // If cancelled, reset to Zip Dir
                 if (compressionCancelled)
@@ -3172,6 +3425,11 @@ oLink3.Save";
 
             // Sync window state - restoring either window restores both
             shareWindow.Resize += ShareWindow_Resize;
+
+            // Sync pin state - use actual saved setting, not the form's TopMost which might be wrong
+            shareWindow.TopMost = Properties.Settings.Default.Pinned;
+            // Also fix the main form's TopMost to match the setting
+            this.TopMost = Properties.Settings.Default.Pinned;
 
             shareWindow.Show();
             shareWindow.BringToFront();
