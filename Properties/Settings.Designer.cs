@@ -98,5 +98,17 @@ namespace APPID.Properties {
                 this["LANMultiplayer"] = value;
             }
         }
+
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string SharedGamesData {
+            get {
+                return ((string)(this["SharedGamesData"]));
+            }
+            set {
+                this["SharedGamesData"] = value;
+            }
+        }
     }
 }

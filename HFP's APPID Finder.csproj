@@ -145,4 +145,10 @@
 	    <DependentUpon>CompressionSettingsForm.cs</DependentUpon>
 	  </Compile>
 	</ItemGroup>
+
+	<ItemGroup>
+	  <EmbeddedResource Update="_bin\7z\7za.exe">
+	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+	  </EmbeddedResource>
+	</ItemGroup>
 </Project>

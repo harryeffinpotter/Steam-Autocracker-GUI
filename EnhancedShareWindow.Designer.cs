@@ -41,12 +41,6 @@ namespace SteamAppIdIdentifier
             System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle3 = new System.Windows.Forms.DataGridViewCellStyle();
             this.mainPanel = new System.Windows.Forms.Panel();
             this.gamesGrid = new System.Windows.Forms.DataGridView();
-            this.lblStatus = new System.Windows.Forms.Label();
-            this.progressBar = new System.Windows.Forms.ProgressBar();
-            this.titleBar = new System.Windows.Forms.Panel();
-            this.lblTitle = new System.Windows.Forms.Label();
-            this.btnMinimize = new System.Windows.Forms.Button();
-            this.btnClose = new System.Windows.Forms.Button();
             this.GameName = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.InstallPath = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.GameSize = new System.Windows.Forms.DataGridViewTextBoxColumn();
@@ -54,6 +48,12 @@ namespace SteamAppIdIdentifier
             this.AppID = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.ShareClean = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.ShareCracked = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.lblStatus = new System.Windows.Forms.Label();
+            this.progressBar = new System.Windows.Forms.ProgressBar();
+            this.titleBar = new System.Windows.Forms.Panel();
+            this.lblTitle = new System.Windows.Forms.Label();
+            this.btnMinimize = new System.Windows.Forms.Button();
+            this.btnClose = new System.Windows.Forms.Button();
             this.mainPanel.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.gamesGrid)).BeginInit();
             this.titleBar.SuspendLayout();
@@ -82,7 +82,6 @@ namespace SteamAppIdIdentifier
             this.gamesGrid.AutoSizeColumnsMode = System.Windows.Forms.DataGridViewAutoSizeColumnsMode.Fill;
             this.gamesGrid.BackgroundColor = System.Drawing.Color.FromArgb(((int)(((byte)(5)))), ((int)(((byte)(5)))), ((int)(((byte)(8)))));
             this.gamesGrid.BorderStyle = System.Windows.Forms.BorderStyle.None;
-            this.gamesGrid.ReadOnly = true;
             this.gamesGrid.ColumnHeadersBorderStyle = System.Windows.Forms.DataGridViewHeaderBorderStyle.Single;
             dataGridViewCellStyle1.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
             dataGridViewCellStyle1.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(10)))), ((int)(((byte)(12)))), ((int)(((byte)(18)))));
@@ -116,6 +115,7 @@ namespace SteamAppIdIdentifier
             this.gamesGrid.Location = new System.Drawing.Point(1, 36);
             this.gamesGrid.MultiSelect = false;
             this.gamesGrid.Name = "gamesGrid";
+            this.gamesGrid.ReadOnly = true;
             this.gamesGrid.RowHeadersBorderStyle = System.Windows.Forms.DataGridViewHeaderBorderStyle.None;
             dataGridViewCellStyle3.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
             dataGridViewCellStyle3.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(8)))), ((int)(((byte)(8)))), ((int)(((byte)(12)))));
@@ -136,6 +136,55 @@ namespace SteamAppIdIdentifier
             this.gamesGrid.CellFormatting += new System.Windows.Forms.DataGridViewCellFormattingEventHandler(this.GamesGrid_CellFormatting);
             this.gamesGrid.CellMouseEnter += new System.Windows.Forms.DataGridViewCellEventHandler(this.GamesGrid_CellMouseEnter);
             this.gamesGrid.CellMouseLeave += new System.Windows.Forms.DataGridViewCellEventHandler(this.GamesGrid_CellMouseLeave);
+            // 
+            // GameName
+            // 
+            this.GameName.HeaderText = "Game";
+            this.GameName.MinimumWidth = 8;
+            this.GameName.Name = "GameName";
+            this.GameName.ReadOnly = true;
+            // 
+            // InstallPath
+            // 
+            this.InstallPath.HeaderText = "Install Path";
+            this.InstallPath.MinimumWidth = 8;
+            this.InstallPath.Name = "InstallPath";
+            this.InstallPath.ReadOnly = true;
+            // 
+            // GameSize
+            // 
+            this.GameSize.HeaderText = "Size";
+            this.GameSize.MinimumWidth = 8;
+            this.GameSize.Name = "GameSize";
+            this.GameSize.ReadOnly = true;
+            // 
+            // BuildID
+            // 
+            this.BuildID.HeaderText = "Build";
+            this.BuildID.MinimumWidth = 8;
+            this.BuildID.Name = "BuildID";
+            this.BuildID.ReadOnly = true;
+            // 
+            // AppID
+            // 
+            this.AppID.HeaderText = "AppID";
+            this.AppID.MinimumWidth = 8;
+            this.AppID.Name = "AppID";
+            this.AppID.ReadOnly = true;
+            // 
+            // ShareClean
+            // 
+            this.ShareClean.HeaderText = "Share Clean";
+            this.ShareClean.MinimumWidth = 8;
+            this.ShareClean.Name = "ShareClean";
+            this.ShareClean.ReadOnly = true;
+            // 
+            // ShareCracked
+            // 
+            this.ShareCracked.HeaderText = "Share Cracked";
+            this.ShareCracked.MinimumWidth = 8;
+            this.ShareCracked.Name = "ShareCracked";
+            this.ShareCracked.ReadOnly = true;
             // 
             // lblStatus
             // 
@@ -177,6 +226,7 @@ namespace SteamAppIdIdentifier
             // lblTitle
             // 
             this.lblTitle.AutoSize = true;
+            this.lblTitle.BackColor = System.Drawing.Color.Transparent;
             this.lblTitle.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Bold);
             this.lblTitle.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(200)))), ((int)(((byte)(200)))), ((int)(((byte)(210)))));
             this.lblTitle.Location = new System.Drawing.Point(10, 8);
@@ -220,58 +270,6 @@ namespace SteamAppIdIdentifier
             this.btnClose.UseVisualStyleBackColor = false;
             this.btnClose.Click += new System.EventHandler(this.BtnClose_Click);
             // 
-            // GameName
-            // 
-            this.GameName.HeaderText = "Game";
-            this.GameName.MinimumWidth = 8;
-            this.GameName.Name = "GameName";
-            this.GameName.Width = 200;
-            // 
-            // InstallPath
-            //
-            this.InstallPath.HeaderText = "Install Path";
-            this.InstallPath.MinimumWidth = 8;
-            this.InstallPath.Name = "InstallPath";
-            this.InstallPath.Width = 300;
-            //
-            // GameSize
-            //
-            this.GameSize.HeaderText = "Size";
-            this.GameSize.MinimumWidth = 8;
-            this.GameSize.Name = "GameSize";
-            this.GameSize.ReadOnly = true;
-            this.GameSize.Width = 80;
-            //
-            // BuildID
-            // 
-            this.BuildID.HeaderText = "Build";
-            this.BuildID.MinimumWidth = 8;
-            this.BuildID.Name = "BuildID";
-            this.BuildID.Width = 68;
-            // 
-            // AppID
-            // 
-            this.AppID.HeaderText = "AppID";
-            this.AppID.MinimumWidth = 8;
-            this.AppID.Name = "AppID";
-            this.AppID.Width = 63;
-            // 
-            // ShareClean
-            // 
-            this.ShareClean.HeaderText = "Share Clean";
-            this.ShareClean.MinimumWidth = 8;
-            this.ShareClean.Name = "ShareClean";
-            this.ShareClean.ReadOnly = true;
-            this.ShareClean.Width = 132;
-            // 
-            // ShareCracked
-            // 
-            this.ShareCracked.HeaderText = "Share Cracked";
-            this.ShareCracked.MinimumWidth = 8;
-            this.ShareCracked.Name = "ShareCracked";
-            this.ShareCracked.ReadOnly = true;
-            this.ShareCracked.Width = 132;
-            // 
             // EnhancedShareWindow
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -282,9 +280,9 @@ namespace SteamAppIdIdentifier
             this.ForeColor = System.Drawing.Color.White;
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.None;
             this.Name = "EnhancedShareWindow";
+            this.ShowInTaskbar = false;
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
             this.Text = "Share Your Games";
-            this.ShowInTaskbar = false;
             this.FormClosed += new System.Windows.Forms.FormClosedEventHandler(this.EnhancedShareWindow_FormClosed);
             this.Load += new System.EventHandler(this.EnhancedShareWindow_Load);
             this.mainPanel.ResumeLayout(false);
