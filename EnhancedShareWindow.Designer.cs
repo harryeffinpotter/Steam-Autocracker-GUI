@@ -14,6 +14,7 @@ namespace SteamAppIdIdentifier
         private System.Windows.Forms.DataGridView gamesGrid;
         private System.Windows.Forms.Label lblStatus;
         private System.Windows.Forms.ProgressBar progressBar;
+        private System.Windows.Forms.ToolTip toolTip;
 
         /// <summary>
         /// Clean up any resources being used.
@@ -36,6 +37,7 @@ namespace SteamAppIdIdentifier
         /// </summary>
         private void InitializeComponent()
         {
+            this.components = new System.ComponentModel.Container();
             System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle1 = new System.Windows.Forms.DataGridViewCellStyle();
             System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle2 = new System.Windows.Forms.DataGridViewCellStyle();
             System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle3 = new System.Windows.Forms.DataGridViewCellStyle();
@@ -46,14 +48,18 @@ namespace SteamAppIdIdentifier
             this.GameSize = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.BuildID = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.AppID = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.LastUpdated = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.CrackOnly = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.ShareClean = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.ShareCracked = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.lblStatus = new System.Windows.Forms.Label();
             this.progressBar = new System.Windows.Forms.ProgressBar();
             this.titleBar = new System.Windows.Forms.Panel();
             this.lblTitle = new System.Windows.Forms.Label();
+            this.btnCustomPath = new System.Windows.Forms.Button();
             this.btnMinimize = new System.Windows.Forms.Button();
             this.btnClose = new System.Windows.Forms.Button();
+            this.toolTip = new System.Windows.Forms.ToolTip(this.components);
             this.mainPanel.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.gamesGrid)).BeginInit();
             this.titleBar.SuspendLayout();
@@ -99,6 +105,8 @@ namespace SteamAppIdIdentifier
             this.GameSize,
             this.BuildID,
             this.AppID,
+            this.LastUpdated,
+            this.CrackOnly,
             this.ShareClean,
             this.ShareCracked});
             dataGridViewCellStyle2.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
@@ -166,11 +174,25 @@ namespace SteamAppIdIdentifier
             this.BuildID.ReadOnly = true;
             // 
             // AppID
-            // 
+            //
             this.AppID.HeaderText = "AppID";
             this.AppID.MinimumWidth = 8;
             this.AppID.Name = "AppID";
             this.AppID.ReadOnly = true;
+            //
+            // LastUpdated
+            //
+            this.LastUpdated.HeaderText = "Last Updated";
+            this.LastUpdated.MinimumWidth = 8;
+            this.LastUpdated.Name = "LastUpdated";
+            this.LastUpdated.ReadOnly = true;
+            //
+            // CrackOnly
+            // 
+            this.CrackOnly.HeaderText = "Crack Only";
+            this.CrackOnly.MinimumWidth = 8;
+            this.CrackOnly.Name = "CrackOnly";
+            this.CrackOnly.ReadOnly = true;
             // 
             // ShareClean
             // 
@@ -214,6 +236,7 @@ namespace SteamAppIdIdentifier
             // 
             this.titleBar.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(60)))), ((int)(((byte)(50)))), ((int)(((byte)(60)))), ((int)(((byte)(80)))));
             this.titleBar.Controls.Add(this.lblTitle);
+            this.titleBar.Controls.Add(this.btnCustomPath);
             this.titleBar.Controls.Add(this.btnMinimize);
             this.titleBar.Controls.Add(this.btnClose);
             this.titleBar.Dock = System.Windows.Forms.DockStyle.Top;
@@ -231,10 +254,27 @@ namespace SteamAppIdIdentifier
             this.lblTitle.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(200)))), ((int)(((byte)(200)))), ((int)(((byte)(210)))));
             this.lblTitle.Location = new System.Drawing.Point(10, 8);
             this.lblTitle.Name = "lblTitle";
-            this.lblTitle.Size = new System.Drawing.Size(131, 19);
+            this.lblTitle.Size = new System.Drawing.Size(155, 19);
             this.lblTitle.TabIndex = 0;
-            this.lblTitle.Text = "Share Your Games";
+            this.lblTitle.Text = "Crack | Share | Export";
             this.lblTitle.MouseDown += new System.Windows.Forms.MouseEventHandler(this.TitleBar_MouseDown);
+            // 
+            // btnCustomPath
+            // 
+            this.btnCustomPath.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.btnCustomPath.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(40)))), ((int)(((byte)(40)))), ((int)(((byte)(50)))));
+            this.btnCustomPath.FlatAppearance.BorderColor = System.Drawing.Color.FromArgb(((int)(((byte)(80)))), ((int)(((byte)(80)))), ((int)(((byte)(100)))));
+            this.btnCustomPath.FlatAppearance.MouseOverBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(60)))), ((int)(((byte)(60)))), ((int)(((byte)(70)))));
+            this.btnCustomPath.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btnCustomPath.Font = new System.Drawing.Font("Segoe UI", 9F);
+            this.btnCustomPath.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(200)))), ((int)(((byte)(200)))), ((int)(((byte)(210)))));
+            this.btnCustomPath.Location = new System.Drawing.Point(171, 5);
+            this.btnCustomPath.Name = "btnCustomPath";
+            this.btnCustomPath.Size = new System.Drawing.Size(105, 25);
+            this.btnCustomPath.TabIndex = 3;
+            this.btnCustomPath.Text = "📁 Custom Path";
+            this.btnCustomPath.UseVisualStyleBackColor = false;
+            this.btnCustomPath.Click += new System.EventHandler(this.BtnCustomPath_Click);
             // 
             // btnMinimize
             // 
@@ -269,7 +309,18 @@ namespace SteamAppIdIdentifier
             this.btnClose.Text = "✕";
             this.btnClose.UseVisualStyleBackColor = false;
             this.btnClose.Click += new System.EventHandler(this.BtnClose_Click);
-            // 
+            //
+            // toolTip
+            //
+            this.toolTip.AutoPopDelay = 5000;
+            this.toolTip.InitialDelay = 500;
+            this.toolTip.ReshowDelay = 100;
+            this.toolTip.SetToolTip(this.btnCustomPath, "Select a custom steam games folder path, must contain .acf manifests and common di" +
+        "rectory.");
+            this.toolTip.SetToolTip(this.btnMinimize, "Minimize this window");
+            this.toolTip.SetToolTip(this.btnClose, "Close this window");
+            this.toolTip.SetToolTip(this.gamesGrid, "Click on game rows to perform actions. Click column headers to sort.");
+            //
             // EnhancedShareWindow
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -282,7 +333,7 @@ namespace SteamAppIdIdentifier
             this.Name = "EnhancedShareWindow";
             this.ShowInTaskbar = false;
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
-            this.Text = "Share Your Games";
+            this.Text = "Game Manager - Crack, Share & Export";
             this.FormClosed += new System.Windows.Forms.FormClosedEventHandler(this.EnhancedShareWindow_FormClosed);
             this.Load += new System.EventHandler(this.EnhancedShareWindow_Load);
             this.mainPanel.ResumeLayout(false);
@@ -300,6 +351,8 @@ namespace SteamAppIdIdentifier
         private System.Windows.Forms.DataGridViewTextBoxColumn GameSize;
         private System.Windows.Forms.DataGridViewTextBoxColumn BuildID;
         private System.Windows.Forms.DataGridViewTextBoxColumn AppID;
+        private System.Windows.Forms.DataGridViewTextBoxColumn LastUpdated;
+        private System.Windows.Forms.DataGridViewTextBoxColumn CrackOnly;
         private System.Windows.Forms.DataGridViewTextBoxColumn ShareClean;
         private System.Windows.Forms.DataGridViewTextBoxColumn ShareCracked;
     }
