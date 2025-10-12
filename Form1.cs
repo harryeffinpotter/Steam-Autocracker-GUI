@@ -15,6 +15,7 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using CliWrap;
 using CliWrap.Buffered;
+using Newtonsoft.Json.Linq;
 using SAC_GUI;
 using SteamAppIdIdentifier;
 using SteamAutocrackGUI;
@@ -122,60 +123,86 @@ namespace APPID
 
         private void ApplyRoundedCornersToButton(Button btn)
         {
+            // Make button background transparent so we can draw custom
+            btn.FlatStyle = FlatStyle.Flat;
+            btn.FlatAppearance.BorderSize = 0;
+            btn.BackColor = Color.Transparent;
+            btn.FlatAppearance.MouseOverBackColor = Color.Transparent;
+            btn.FlatAppearance.MouseDownBackColor = Color.Transparent;
+
+            // Enable transparency support
+            typeof(Button).InvokeMember("DoubleBuffered",
+                System.Reflection.BindingFlags.SetProperty | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic,
+                null, btn, new object[] { true });
+
+            // Disable focus cues to prevent orange highlighting
+            typeof(Button).InvokeMember("SetStyle",
+                System.Reflection.BindingFlags.InvokeMethod | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic,
+                null, btn, new object[] { System.Windows.Forms.ControlStyles.Selectable, false });
+
             // Paint event for rounded corners
             btn.Paint += (sender, e) =>
             {
                 Button b = sender as Button;
 
-                // Enable high quality rendering
-                e.Graphics.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.HighQuality;
-                e.Graphics.PixelOffsetMode = System.Drawing.Drawing2D.PixelOffsetMode.HighQuality;
+                // DISABLED - This causes deadlocks when updating buttons from background threads
+                // Draw the parent's background in the button area first for true transparency
+                /*if (b.Parent != null)
+                {
+                    using (var bmp = new Bitmap(b.Parent.Width, b.Parent.Height))
+                    {
+                        b.Parent.DrawToBitmap(bmp, new Rectangle(0, 0, b.Parent.Width, b.Parent.Height));
+                        e.Graphics.DrawImage(bmp, new Rectangle(0, 0, b.Width, b.Height),
+                            new Rectangle(b.Left, b.Top, b.Width, b.Height), GraphicsUnit.Pixel);
+                    }
+                }*/
+
+                // Enable maximum quality anti-aliasing
+                e.Graphics.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
                 e.Graphics.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.HighQualityBicubic;
                 e.Graphics.CompositingQuality = System.Drawing.Drawing2D.CompositingQuality.HighQuality;
                 e.Graphics.TextRenderingHint = System.Drawing.Text.TextRenderingHint.ClearTypeGridFit;
 
+                // Create rounded rectangle that fits perfectly - subtle modern look
+                int radius = 8;
+                Rectangle rect = new Rectangle(0, 0, b.Width - 1, b.Height - 1);
                 System.Drawing.Drawing2D.GraphicsPath path = new System.Drawing.Drawing2D.GraphicsPath();
 
-                // Create rounded rectangle with smoother corners
-                int radius = 10;
-                Rectangle rect = new Rectangle(0, 0, b.Width - 1, b.Height - 1);
-                path.StartFigure();
-                path.AddArc(rect.X, rect.Y, radius * 2, radius * 2, 180, 90);
-                path.AddLine(rect.X + radius, rect.Y, rect.Right - radius, rect.Y);
-                path.AddArc(rect.Right - radius * 2, rect.Y, radius * 2, radius * 2, 270, 90);
-                path.AddLine(rect.Right, rect.Y + radius, rect.Right, rect.Bottom - radius);
-                path.AddArc(rect.Right - radius * 2, rect.Bottom - radius * 2, radius * 2, radius * 2, 0, 90);
-                path.AddLine(rect.Right - radius, rect.Bottom, rect.X + radius, rect.Bottom);
-                path.AddArc(rect.X, rect.Bottom - radius * 2, radius * 2, radius * 2, 90, 90);
+                int diameter = radius * 2;
+                path.AddArc(rect.X, rect.Y, diameter, diameter, 180, 90);
+                path.AddArc(rect.Right - diameter, rect.Y, diameter, diameter, 270, 90);
+                path.AddArc(rect.Right - diameter, rect.Bottom - diameter, diameter, diameter, 0, 90);
+                path.AddArc(rect.X, rect.Bottom - diameter, diameter, diameter, 90, 90);
                 path.CloseFigure();
 
-                // Set button region for click area
-                b.Region = new Region(path);
+                // Determine colors based on state
+                Color bgColor = Color.FromArgb(38, 38, 42);
+                if (b.ClientRectangle.Contains(b.PointToClient(Cursor.Position)))
+                {
+                    bgColor = Color.FromArgb(50, 50, 55); // Lighter on hover
+                }
 
                 // Draw background
-                using (var brush = new SolidBrush(b.BackColor))
+                using (var brush = new SolidBrush(bgColor))
                 {
                     e.Graphics.FillPath(brush, path);
                 }
 
-                // Draw subtle border
-                using (var pen = new Pen(b.FlatAppearance.BorderColor, 1.0f))
+                // Draw border
+                using (var pen = new Pen(Color.FromArgb(55, 55, 60), 1.5f))
                 {
-                    pen.Alignment = System.Drawing.Drawing2D.PenAlignment.Inset;
                     e.Graphics.DrawPath(pen, path);
                 }
 
-                // Draw text with better rendering
-                StringFormat sf = new StringFormat
-                {
-                    Alignment = StringAlignment.Center,
-                    LineAlignment = StringAlignment.Center
-                };
-                e.Graphics.DrawString(b.Text, b.Font, new SolidBrush(b.ForeColor), rect, sf);
+                // Draw text
+                TextRenderer.DrawText(e.Graphics, b.Text, b.Font, b.ClientRectangle,
+                    Color.FromArgb(220, 220, 225),
+                    TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter);
             };
 
-            btn.FlatStyle = FlatStyle.Flat;
-            btn.FlatAppearance.BorderSize = 0; // We'll draw our own border
+            // Refresh on mouse enter/leave for hover effect
+            btn.MouseEnter += (s, e) => btn.Invalidate();
+            btn.MouseLeave += (s, e) => btn.Invalidate();
         }
 
         private void ApplyAcrylicEffect()
@@ -298,7 +325,7 @@ namespace APPID
             // Handle cross-thread calls
             if (SteamAppIdIdentifier.Program.form.InvokeRequired)
             {
-                SteamAppIdIdentifier.Program.form.Invoke(new Action(() => Tit(Message, color)));
+                SteamAppIdIdentifier.Program.form.BeginInvoke(new Action(() => Tit(Message, color)));
                 return;
             }
 
@@ -331,7 +358,7 @@ namespace APPID
             // Handle cross-thread calls
             if (SteamAppIdIdentifier.Program.form.InvokeRequired)
             {
-                SteamAppIdIdentifier.Program.form.Invoke(new Action(() => Tat(Message)));
+                SteamAppIdIdentifier.Program.form.BeginInvoke(new Action(() => Tat(Message)));
                 return;
             }
             SteamAppIdIdentifier.Program.form.currDIrText.Text = $"{Message}";
@@ -472,6 +499,11 @@ namespace APPID
                 this.TopMost = true;
                 unPin.BringToFront();
             }
+            else
+            {
+                this.TopMost = false;
+                pin.BringToFront();
+            }
 
             // Update UI for auto-crack setting (value already loaded in constructor)
             // When enabled, show the green ON button. When disabled, show the red OFF button.
@@ -515,7 +547,6 @@ namespace APPID
             {
                 VRLExists = true;
             }
-            this.TopMost = true;
             string args3;
             dataGridView1.DataSource = dataTableGeneration.DataTableToGenerate;
             dataGridView1.MultiSelect = false;
@@ -1216,8 +1247,16 @@ namespace APPID
 
         public async Task<bool> CrackAsync()  // Return true if something was cracked
         {
-            // Run the cracking process on a background thread to prevent UI freeze
-            return await Task.Run(() => CrackCoreAsync());
+            System.Diagnostics.Debug.WriteLine("[CRACK] CrackAsync starting");
+            // Use TaskScheduler.Default to avoid capturing UI synchronization context
+            var result = await Task.Factory.StartNew(
+                async () => await CrackCoreAsync(),
+                CancellationToken.None,
+                TaskCreationOptions.None,
+                TaskScheduler.Default
+            ).Unwrap();
+            System.Diagnostics.Debug.WriteLine($"[CRACK] CrackAsync completed, result: {result}");
+            return result;
         }
 
         private void CopyDirectory(string sourceDir, string targetDir)
@@ -1596,8 +1635,14 @@ namespace APPID
 
                         x2.StartInfo = pro;
                         x2.Start();
-                        string Output = x2.StandardError.ReadToEnd() + x2.StandardOutput.ReadToEnd();
-                        x2.WaitForExit();
+
+                        // Read output asynchronously to avoid blocking
+                        var outputTask = x2.StandardOutput.ReadToEndAsync();
+                        var errorTask = x2.StandardError.ReadToEndAsync();
+
+                        await Task.Run(() => x2.WaitForExit());
+
+                        string Output = await errorTask + await outputTask;
 
                         System.Diagnostics.Debug.WriteLine($"[CRACK] Steamless output: {Output}");
                         System.Diagnostics.Debug.WriteLine($"[CRACK] Steamless exit code: {x2.ExitCode}");
@@ -1813,7 +1858,7 @@ oLink3.Save";
                                         string tempVbs = Path.GetTempFileName() + ".vbs";
                                         File.WriteAllText(tempVbs, vbsScript);
                                         Process vbsProcess = Process.Start("wscript.exe", $"\"{tempVbs}\"");
-                                        vbsProcess.WaitForExit();
+                                        await Task.Run(() => vbsProcess.WaitForExit());
 
                                         try { File.Delete(tempVbs); } catch { }
 
@@ -1888,7 +1933,7 @@ oLink3.Save";
                                         genInterfaces.StartInfo.Arguments = $"\"{parentdir}\\steam_api.dll\"";
                                 }
                                 genInterfaces.Start();
-                                genInterfaces.WaitForExit();
+                                await Task.Run(() => genInterfaces.WaitForExit());
 
                                 // Move generated file to steam_settings if it was created
                                 if (File.Exists($"{parentdir}\\steam_interfaces.txt"))
@@ -1899,7 +1944,7 @@ oLink3.Save";
                             catch { }
                         }
 
-                        // Try achievements_parser first (works better with modern games)
+                        // Get achievements data using achievements_parser
                         string achievementsParserPath = $"{Environment.CurrentDirectory}\\_bin\\achievements_parser.exe";
                         if (File.Exists(achievementsParserPath))
                         {
@@ -1919,26 +1964,28 @@ oLink3.Save";
                                     File.WriteAllText(achievementsPath, achievementsResult.StandardOutput);
                                     Tit($"Found and saved achievement data!", Color.Green);
                                 }
+                                else
+                                {
+                                    Tit("No achievements found for this game", Color.Yellow);
+                                }
                             }
-                            catch { }
+                            catch (Exception ex)
+                            {
+                                Tit($"Failed to get achievements: {ex.Message}", Color.Yellow);
+                                System.Diagnostics.Debug.WriteLine($"[Achievements] Exception: {ex.Message}");
+                            }
                         }
 
-                        // Try old method for DLC if generate_game_infos exists (for compatibility)
-                        string generateGameInfosPath = $"{Environment.CurrentDirectory}\\_bin\\generate_game_infos.exe";
-                        if (File.Exists(generateGameInfosPath))
+                        // Get DLC info from Steam Store API (no API key needed)
+                        Tit("Getting DLC info from Steam...", Color.Cyan);
+                        try
                         {
-                            Tit("Generating DLC info...", Color.Cyan);
-                            try
-                            {
-                                var infos = Cli.Wrap(generateGameInfosPath)
-                                    .WithValidation(CommandResultValidation.None)
-                                    .WithArguments($"{APPID} -s 92CD46192F62DE1A769F79A667CE5631 -o\"{parentdir}\\steam_settings\"")
-                                    .WithWorkingDirectory(parentdir)
-                                    .ExecuteAsync()
-                                    .GetAwaiter()
-                                    .GetResult();
-                            }
-                            catch { }
+                            await FetchDLCInfoAsync(APPID, $"{parentdir}\\steam_settings");
+                        }
+                        catch (Exception ex)
+                        {
+                            Tit($"Failed to get DLC info: {ex.Message}", Color.Yellow);
+                            System.Diagnostics.Debug.WriteLine($"[DLC] Exception: {ex.Message}");
                         }
                     }
                 }
@@ -1974,6 +2021,79 @@ oLink3.Save";
             IniProcess.StartInfo.Arguments = args;
             IniProcess.Start();
             IniProcess.WaitForExit();
+        }
+
+        private async Task FetchDLCInfoAsync(string appId, string outputFolder)
+        {
+            using (var httpClient = new System.Net.Http.HttpClient())
+            {
+                httpClient.Timeout = TimeSpan.FromSeconds(30);
+
+                try
+                {
+                    // Get app details from Steam Store API
+                    var response = await httpClient.GetStringAsync($"https://store.steampowered.com/api/appdetails?appids={appId}");
+                    var json = Newtonsoft.Json.Linq.JObject.Parse(response);
+
+                    var appData = json[appId]?["data"];
+                    if (appData == null || json[appId]?["success"]?.Value<bool>() != true)
+                    {
+                        Tit("No DLC info available for this game", Color.Yellow);
+                        return;
+                    }
+
+                    var dlcArray = appData["dlc"] as Newtonsoft.Json.Linq.JArray;
+                    if (dlcArray == null || dlcArray.Count == 0)
+                    {
+                        Tit("No DLCs found for this game", Color.Yellow);
+                        return;
+                    }
+
+                    Tit($"Found {dlcArray.Count} DLCs, fetching names...", Color.Cyan);
+
+                    var dlcLines = new System.Collections.Generic.List<string>();
+                    int successCount = 0;
+
+                    foreach (var dlcId in dlcArray)
+                    {
+                        try
+                        {
+                            var dlcResponse = await httpClient.GetStringAsync($"https://store.steampowered.com/api/appdetails?appids={dlcId}");
+                            var dlcJson = Newtonsoft.Json.Linq.JObject.Parse(dlcResponse);
+
+                            var dlcData = dlcJson[dlcId.ToString()]?["data"];
+                            if (dlcData != null && dlcJson[dlcId.ToString()]?["success"]?.Value<bool>() == true)
+                            {
+                                string dlcName = dlcData["name"]?.Value<string>() ?? "Unknown";
+                                dlcLines.Add($"{dlcId}={dlcName}");
+                                successCount++;
+                            }
+
+                            // Rate limit to avoid Steam throttling
+                            await Task.Delay(100);
+                        }
+                        catch
+                        {
+                            // Skip DLCs that fail to fetch
+                            dlcLines.Add($"{dlcId}=DLC_{dlcId}");
+                        }
+                    }
+
+                    // Write DLC.txt
+                    string dlcPath = System.IO.Path.Combine(outputFolder, "DLC.txt");
+                    System.IO.File.WriteAllLines(dlcPath, dlcLines);
+
+                    Tit($"Saved {successCount}/{dlcArray.Count} DLC entries!", Color.Green);
+                }
+                catch (System.Threading.Tasks.TaskCanceledException)
+                {
+                    throw new Exception("Request timed out");
+                }
+                catch (System.Net.Http.HttpRequestException ex)
+                {
+                    throw new Exception($"Network error: {ex.Message}");
+                }
+            }
         }
 
 
@@ -2021,22 +2141,68 @@ oLink3.Save";
                 ZipToShare.Visible = false;
                 parentOfSelection = Directory.GetParent(gameDir).FullName;
                 gameDirName = Path.GetFileName(gameDir);
-                btnManualEntry.Visible = true;
-                resinstruccZip.Visible = true;
-                resinstruccZipTimer.Stop();
-                resinstruccZipTimer.Start();  // Start 30 second timer
-                mainPanel.Visible = false;  // Hide mainPanel so dataGridView is visible
 
-                startCrackPic.Visible = true;
-                Tit("Please select the correct game from the list!! (if list empty do manual search!)", Color.LightSkyBlue);
+                // Try to get AppID from Steam manifest files
+                var manifestInfo = SteamManifestParser.GetAppIdFromManifest(gameDir);
+                if (manifestInfo.HasValue)
+                {
+                    // We found the AppID from manifest!
+                    APPID = manifestInfo.Value.appId;
+                    string manifestGameName = manifestInfo.Value.gameName;
+                    long sizeOnDisk = manifestInfo.Value.sizeOnDisk;
+
+                    System.Diagnostics.Debug.WriteLine($"[MANIFEST] Auto-detected from Steam manifest:");
+                    System.Diagnostics.Debug.WriteLine($"[MANIFEST] AppID: {APPID}");
+                    System.Diagnostics.Debug.WriteLine($"[MANIFEST] Game: {manifestGameName}");
+                    System.Diagnostics.Debug.WriteLine($"[MANIFEST] Size: {sizeOnDisk / (1024 * 1024)} MB");
+
+                    // Skip the search UI entirely - we already have the AppID!
+                    // Just show main panel - it will cover all the search UI elements
+                    mainPanel.Visible = true;
+                    resinstruccZip.Visible = true;
+                    resinstruccZipTimer.Stop();
+                    resinstruccZipTimer.Start();
+                    startCrackPic.Visible = true;
+
+                    // Skip the search entirely
+                    isFirstClickAfterSelection = false;
+                    isInitialFolderSearch = false;
+
+                    // Auto-crack if enabled
+                    if (autoCrackEnabled && !string.IsNullOrEmpty(gameDir))
+                    {
+                        System.Diagnostics.Debug.WriteLine("[MANIFEST] Auto-crack enabled, starting crack...");
+                        Tit($"✅ Auto-detected: {manifestGameName} (AppID: {APPID}) - Auto-cracking...", Color.Yellow);
+                        // Trigger crack just like clicking the button
+                        startCrackPic_Click(null, null);
+                    }
+                    else
+                    {
+                        // Update the title with game info
+                        Tit($"✅ Auto-detected: {manifestGameName} (AppID: {APPID}) - Ready to crack!", Color.LightGreen);
+                    }
+                }
+                else
+                {
+                    // No manifest found, proceed with normal search flow
+                    btnManualEntry.Visible = true;
+                    resinstruccZip.Visible = true;
+                    resinstruccZipTimer.Stop();
+                    resinstruccZipTimer.Start();  // Start 30 second timer
+                    mainPanel.Visible = false;  // Hide mainPanel so dataGridView is visible
+
+                    startCrackPic.Visible = true;
+                    Tit("Please select the correct game from the list!! (if list empty do manual search!)", Color.LightSkyBlue);
+
+                    // Trigger the search
+                    isFirstClickAfterSelection = true;  // Set before changing text
+                    isInitialFolderSearch = true;  // This is the initial search from folder
+                    searchTextBox.Text = gameDirName;
+                }
 
                 // Stop label5 timer when game dir is selected
                 label5Timer.Stop();
                 label5.Visible = false;
-
-                isFirstClickAfterSelection = true;  // Set before changing text
-                isInitialFolderSearch = true;  // This is the initial search from folder
-                searchTextBox.Text = gameDirName;
                 Properties.Settings.Default.lastDir = parentOfSelection;
                 Properties.Settings.Default.Save();
             }
@@ -2187,13 +2353,63 @@ oLink3.Save";
                     ZipToShare.Visible = false;
                     parentOfSelection = Directory.GetParent(gameDir).FullName;
                     gameDirName = Path.GetFileName(gameDir);
-                    mainPanel.Visible = false;  // Hide mainPanel so dataGridView is visible
-                    btnManualEntry.Visible = true;
-                    resinstruccZip.Visible = true;  // Show this too!
-                    resinstruccZipTimer.Stop();
-                    resinstruccZipTimer.Start();  // Start 30 second timer
-                    startCrackPic.Visible = true;
-                    Tit("Please select the correct game from the list!! (if list empty do manual search!)", Color.LightSkyBlue);
+
+                    // Try to get AppID from Steam manifest files
+                    var manifestInfo = SteamManifestParser.GetAppIdFromManifest(gameDir);
+                    if (manifestInfo.HasValue)
+                    {
+                        // We found the AppID from manifest!
+                        APPID = manifestInfo.Value.appId;
+                        string manifestGameName = manifestInfo.Value.gameName;
+                        long sizeOnDisk = manifestInfo.Value.sizeOnDisk;
+
+                        System.Diagnostics.Debug.WriteLine($"[MANIFEST] Auto-detected from Steam manifest:");
+                        System.Diagnostics.Debug.WriteLine($"[MANIFEST] AppID: {APPID}");
+                        System.Diagnostics.Debug.WriteLine($"[MANIFEST] Game: {manifestGameName}");
+                        System.Diagnostics.Debug.WriteLine($"[MANIFEST] Size: {sizeOnDisk / (1024 * 1024)} MB");
+
+                        // Skip the search UI entirely - we already have the AppID!
+                        // Just show main panel - it will cover all the search UI elements
+                        mainPanel.Visible = true;
+                        resinstruccZip.Visible = true;
+                        resinstruccZipTimer.Stop();
+                        resinstruccZipTimer.Start();
+                        startCrackPic.Visible = true;
+
+                        // Skip the search entirely
+                        isInitialFolderSearch = false;
+                        isFirstClickAfterSelection = false;
+
+                        // Auto-crack if enabled
+                        if (autoCrackEnabled && !string.IsNullOrEmpty(gameDir))
+                        {
+                            System.Diagnostics.Debug.WriteLine("[MANIFEST] Auto-crack enabled, starting crack...");
+                            Tit($"✅ Auto-detected: {manifestGameName} (AppID: {APPID}) - Auto-cracking...", Color.Yellow);
+                            // Trigger crack just like clicking the button
+                            startCrackPic_Click(null, null);
+                        }
+                        else
+                        {
+                            // Update the title with game info
+                            Tit($"✅ Auto-detected: {manifestGameName} (AppID: {APPID}) - Ready to crack!", Color.LightGreen);
+                        }
+                    }
+                    else
+                    {
+                        // No manifest found, proceed with normal search flow
+                        mainPanel.Visible = false;  // Hide mainPanel so dataGridView is visible
+                        btnManualEntry.Visible = true;
+                        resinstruccZip.Visible = true;  // Show this too!
+                        resinstruccZipTimer.Stop();
+                        resinstruccZipTimer.Start();  // Start 30 second timer
+                        startCrackPic.Visible = true;
+                        Tit("Please select the correct game from the list!! (if list empty do manual search!)", Color.LightSkyBlue);
+
+                        // Trigger the search
+                        isInitialFolderSearch = true;  // This is the initial search
+                        searchTextBox.Text = gameDirName;
+                        isFirstClickAfterSelection = true;  // Set AFTER changing text to avoid race condition
+                    }
 
                     // Stop label5 timer when game dir is selected
                     label5Timer.Stop();
@@ -2827,9 +3043,6 @@ oLink3.Save";
             if (ZipToShare.Text == "Cancel")
             {
                 zipCancellationTokenSource?.Cancel();
-                ZipToShare.BackColor = Color.FromArgb(38, 38, 42);
-                ZipToShare.ForeColor = Color.FromArgb(220, 220, 225);
-                ZipToShare.FlatAppearance.BorderColor = Color.FromArgb(55, 55, 60);
                 ZipToShare.Text = "Zip Dir";
                 Tit("Compression cancelled", Color.Orange);
                 return;
@@ -2838,9 +3051,6 @@ oLink3.Save";
             // Start compression - change button to Cancel
             zipCancellationTokenSource = new System.Threading.CancellationTokenSource();
             ZipToShare.Enabled = true;  // Keep enabled so it can be clicked to cancel
-            ZipToShare.BackColor = Color.FromArgb(40, 30, 20);  // Dark orange tint
-            ZipToShare.ForeColor = Color.FromArgb(255, 200, 100);  // Light orange
-            ZipToShare.FlatAppearance.BorderColor = Color.FromArgb(255, 200, 100);  // Light orange
             ZipToShare.Text = "Cancel";
 
             string zipPath = "";  // Declare outside try block so finally can access it
@@ -3196,11 +3406,6 @@ oLink3.Save";
             {
                 ZipToShare.Enabled = true;
 
-                // Reset colors to Material You dark theme
-                ZipToShare.BackColor = Color.FromArgb(38, 38, 42);
-                ZipToShare.ForeColor = Color.FromArgb(220, 220, 225);
-                ZipToShare.FlatAppearance.BorderColor = Color.FromArgb(55, 55, 60);
-
                 // If cancelled, reset to Zip Dir
                 if (compressionCancelled)
                 {
@@ -3445,350 +3650,6 @@ oLink3.Save";
             }
         }
 
-        protected override void OnResize(EventArgs e)
-        {
-            base.OnResize(e);
-
-            // When main window is restored, restore share window too
-            if (this.WindowState == FormWindowState.Normal && shareWindow != null && !shareWindow.IsDisposed && shareWindow.WindowState == FormWindowState.Minimized)
-            {
-                shareWindow.WindowState = FormWindowState.Normal;
-            }
-        }
-
-        public System.Data.DataTable GetDataTable()
-        {
-            return dataTableGeneration?.DataTableToGenerate;
-        }
-
-        private void ShowSteamGamesForm()
-        {
-            // Create new form for Steam games list
-            var gamesForm = new Form();
-            gamesForm.Text = "Your Steam Library - Share with Friends!";
-            gamesForm.Size = new Size(900, 600);
-            gamesForm.StartPosition = FormStartPosition.CenterParent;
-            gamesForm.BackColor = Color.FromArgb(0, 20, 50);
-            gamesForm.ForeColor = Color.FromArgb(192, 255, 255);
-            gamesForm.Owner = this;  // Set owner so it appears above main form
-
-            // Create DataGridView
-            var gamesGrid = new DataGridView();
-            gamesGrid.Dock = DockStyle.Fill;
-            gamesGrid.BackgroundColor = Color.FromArgb(0, 2, 10);
-            gamesGrid.ForeColor = Color.FromArgb(192, 255, 255);
-            gamesGrid.GridColor = Color.FromArgb(0, 50, 100);
-            gamesGrid.BorderStyle = BorderStyle.None;
-            gamesGrid.AllowUserToAddRows = false;
-            gamesGrid.AllowUserToDeleteRows = false;
-            gamesGrid.ReadOnly = true;
-            gamesGrid.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
-            gamesGrid.RowHeadersVisible = false;
-            gamesGrid.DefaultCellStyle.BackColor = Color.FromArgb(0, 2, 10);
-            gamesGrid.DefaultCellStyle.ForeColor = Color.FromArgb(192, 255, 255);
-            gamesGrid.DefaultCellStyle.SelectionBackColor = Color.FromArgb(0, 50, 100);
-            gamesGrid.DefaultCellStyle.SelectionForeColor = Color.White;
-            gamesGrid.ColumnHeadersDefaultCellStyle.BackColor = Color.FromArgb(0, 30, 60);
-            gamesGrid.ColumnHeadersDefaultCellStyle.ForeColor = Color.FromArgb(220, 255, 255);
-            gamesGrid.EnableHeadersVisualStyles = false;
-
-            // Add columns - simplified view with build info
-            var gameNameColumn = new DataGridViewTextBoxColumn();
-            gameNameColumn.Name = "GameName";
-            gameNameColumn.HeaderText = "Game Title";
-            gameNameColumn.Width = 350;
-            gamesGrid.Columns.Add(gameNameColumn);
-
-            var buildIdColumn = new DataGridViewTextBoxColumn();
-            buildIdColumn.Name = "BuildID";
-            buildIdColumn.HeaderText = "Build ID";
-            buildIdColumn.Width = 100;
-            buildIdColumn.DefaultCellStyle.ForeColor = Color.FromArgb(150, 200, 255);
-            gamesGrid.Columns.Add(buildIdColumn);
-
-            var statusColumn = new DataGridViewTextBoxColumn();
-            statusColumn.Name = "RINStatus";
-            statusColumn.HeaderText = "RIN Status";
-            statusColumn.Width = 120;
-            gamesGrid.Columns.Add(statusColumn);
-
-            // Hidden columns for data
-            var appIdColumn = new DataGridViewTextBoxColumn();
-            appIdColumn.Name = "AppID";
-            appIdColumn.Visible = false;
-            gamesGrid.Columns.Add(appIdColumn);
-
-            var pathColumn = new DataGridViewTextBoxColumn();
-            pathColumn.Name = "InstallPath";
-            pathColumn.Visible = false;
-            gamesGrid.Columns.Add(pathColumn);
-
-            // Add button columns
-            var searchRinColumn = new DataGridViewButtonColumn();
-            searchRinColumn.Name = "SearchRIN";
-            searchRinColumn.HeaderText = "Search RIN";
-            searchRinColumn.Text = "🔍 RIN";
-            searchRinColumn.UseColumnTextForButtonValue = true;
-            searchRinColumn.Width = 90;
-            searchRinColumn.FlatStyle = FlatStyle.Flat;
-            searchRinColumn.DefaultCellStyle.BackColor = Color.FromArgb(50, 50, 100);
-            searchRinColumn.DefaultCellStyle.ForeColor = Color.FromArgb(150, 200, 255);
-            gamesGrid.Columns.Add(searchRinColumn);
-
-            var cleanShareColumn = new DataGridViewButtonColumn();
-            cleanShareColumn.Name = "CleanShare";
-            cleanShareColumn.HeaderText = "Zip Clean";
-            cleanShareColumn.Text = "📦 Clean";
-            cleanShareColumn.UseColumnTextForButtonValue = true;
-            cleanShareColumn.Width = 100;
-            cleanShareColumn.FlatStyle = FlatStyle.Flat;
-            cleanShareColumn.DefaultCellStyle.BackColor = Color.FromArgb(0, 100, 50);
-            cleanShareColumn.DefaultCellStyle.ForeColor = Color.FromArgb(150, 255, 150);
-            gamesGrid.Columns.Add(cleanShareColumn);
-
-            var crackedShareColumn = new DataGridViewButtonColumn();
-            crackedShareColumn.Name = "CrackedShare";
-            crackedShareColumn.HeaderText = "Zip Cracked";
-            crackedShareColumn.Text = "🎮 Cracked";
-            crackedShareColumn.UseColumnTextForButtonValue = true;
-            crackedShareColumn.Width = 100;
-            crackedShareColumn.FlatStyle = FlatStyle.Flat;
-            crackedShareColumn.DefaultCellStyle.BackColor = Color.FromArgb(100, 50, 0);
-            crackedShareColumn.DefaultCellStyle.ForeColor = Color.FromArgb(255, 200, 100);
-            gamesGrid.Columns.Add(crackedShareColumn);
-
-            // Scan for Steam games
-            var games = ScanSteamLibraries();
-
-            // Populate grid - with build ID
-            foreach (var game in games)
-            {
-                var rowIndex = gamesGrid.Rows.Add(game.Name, game.BuildId, "Checking...", game.AppId, game.InstallDir, "🔍 RIN", "📦 Clean", "🎮 Cracked");
-
-                // Start background task to check RIN status
-                _ = Task.Run(async () => {
-                    try
-                    {
-                        // Update status to show we're searching
-                        // RIN scraping removed - just set status to N/A
-                        gamesForm.Invoke(new Action(() => {
-                            if (rowIndex < gamesGrid.Rows.Count)
-                            {
-                                gamesGrid.Rows[rowIndex].Cells["RINStatus"].Value = "N/A";
-                                gamesGrid.Rows[rowIndex].Cells["RINStatus"].Style.ForeColor = Color.Gray;
-                            }
-                        }));
-                    }
-                    catch (Exception ex)
-                    {
-                        // Show the actual error instead of hiding it
-                        gamesForm.Invoke(new Action(() => {
-                            if (rowIndex < gamesGrid.Rows.Count)
-                            {
-                                gamesGrid.Rows[rowIndex].Cells["RINStatus"].Value = "Error";
-                                gamesGrid.Rows[rowIndex].Cells["RINStatus"].ToolTipText = ex.Message;
-                                gamesGrid.Rows[rowIndex].Cells["RINStatus"].Style.ForeColor = Color.Red;
-                            }
-                        }));
-                        System.Diagnostics.Debug.WriteLine($"Error checking RIN for {game.Name}: {ex.Message}");
-                    }
-                });
-            }
-
-            // Handle button clicks
-            gamesGrid.CellClick += async (s, args) =>
-            {
-                if (args.RowIndex < 0) return;
-
-                var gameName = gamesGrid.Rows[args.RowIndex].Cells["GameName"].Value.ToString();
-                var appId = gamesGrid.Rows[args.RowIndex].Cells["AppID"].Value?.ToString();
-                var installPath = gamesGrid.Rows[args.RowIndex].Cells["InstallPath"].Value?.ToString();
-
-                if (string.IsNullOrEmpty(installPath))
-                {
-                    MessageBox.Show("Game installation path not found!", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                    return;
-                }
-
-                if (args.ColumnIndex == gamesGrid.Columns["SearchRIN"].Index)
-                {
-                    // Search cs.rin.ru for this game
-                    var sanitized = SanitizeGameNameForURL(gameName);
-                    var searchUrl = $"https://cs.rin.ru/forum/search.php?keywords={sanitized}&terms=all&author=&sc=1&sf=titleonly&sk=t&sd=d&sr=topics&st=0&ch=300&t=0&submit=Search";
-                    Process.Start(searchUrl);
-                }
-                else if (args.ColumnIndex == gamesGrid.Columns["CleanShare"].Index)
-                {
-                    await ShareGameAsync(gameName, installPath, false, gamesForm); // Clean share
-                }
-                else if (args.ColumnIndex == gamesGrid.Columns["CrackedShare"].Index)
-                {
-                    await ShareGameAsync(gameName, installPath, true, gamesForm); // Cracked share
-                }
-            };
-
-            // Add status label
-            var statusLabel = new Label();
-            statusLabel.Text = $"Found {games.Count} games in your Steam library";
-            statusLabel.Dock = DockStyle.Bottom;
-            statusLabel.Height = 30;
-            statusLabel.TextAlign = ContentAlignment.MiddleCenter;
-            statusLabel.BackColor = Color.FromArgb(0, 30, 60);
-            statusLabel.ForeColor = Color.FromArgb(192, 255, 255);
-
-            gamesForm.Controls.Add(gamesGrid);
-            gamesForm.Controls.Add(statusLabel);
-            gamesForm.ShowDialog();
-        }
-
-        private string SanitizeGameNameForURL(string gameName)
-        {
-            // First replace spaces with %20
-            var result = gameName.Replace(" ", "%20");
-
-            // Remove special characters
-            var charsToRemove = new[] { '-', ':', '_', '&', '!', '?', ',', '.', '(', ')', '$', '#', '%', '+', ';', '\'', '`', '"' };
-
-            foreach (var c in charsToRemove)
-            {
-                result = result.Replace(c.ToString(), "");
-            }
-
-            return result;
-        }
-
-        private List<SteamGame> ScanSteamLibraries()
-        {
-            var games = new List<SteamGame>();
-            var steamPaths = new List<string>();
-
-            // Add default Steam path
-            var defaultSteamPath = @"C:\Program Files (x86)\Steam\steamapps";
-            if (Directory.Exists(defaultSteamPath))
-            {
-                steamPaths.Add(defaultSteamPath);
-            }
-
-            // Also check 64-bit Program Files
-            var steam64Path = @"C:\Program Files\Steam\steamapps";
-            if (Directory.Exists(steam64Path))
-            {
-                steamPaths.Add(steam64Path);
-            }
-
-            // Check all drives for SteamLibrary folders
-            foreach (var drive in DriveInfo.GetDrives())
-            {
-                if (drive.DriveType == DriveType.Fixed)
-                {
-                    var steamLibPath = Path.Combine(drive.Name, "SteamLibrary", "steamapps");
-                    if (Directory.Exists(steamLibPath) && !steamPaths.Contains(steamLibPath))
-                    {
-                        steamPaths.Add(steamLibPath);
-                    }
-                }
-            }
-
-            // Look for additional library folders in libraryfolders.vdf
-            foreach (var basePath in steamPaths.ToList())
-            {
-                var libraryFoldersPath = Path.Combine(basePath, "libraryfolders.vdf");
-                if (File.Exists(libraryFoldersPath))
-                {
-                    try
-                    {
-                        var content = File.ReadAllText(libraryFoldersPath);
-                        // Simple regex to find paths
-                        var pathMatches = Regex.Matches(content, @"""path""\s+""([^""]+)""");
-                        foreach (Match match in pathMatches)
-                        {
-                            var libPath = Path.Combine(match.Groups[1].Value.Replace(@"\\", @"\"), "steamapps");
-                            if (Directory.Exists(libPath) && !steamPaths.Contains(libPath))
-                            {
-                                steamPaths.Add(libPath);
-                            }
-                        }
-                    }
-                    catch { }
-                }
-            }
-
-            // Scan each Steam library for appmanifest files
-            foreach (var steamPath in steamPaths)
-            {
-                try
-                {
-                    var manifestFiles = Directory.GetFiles(steamPath, "appmanifest_*.acf");
-
-                    foreach (var manifestFile in manifestFiles)
-                    {
-                        var game = ParseAppManifest(manifestFile);
-                        if (game != null && !games.Any(g => g.AppId == game.AppId))
-                        {
-                            games.Add(game);
-                        }
-                    }
-                }
-                catch { }
-            }
-
-            // Sort by name
-            return games.OrderBy(g => g.Name).ToList();
-        }
-
-        private SteamGame ParseAppManifest(string filePath)
-        {
-            try
-            {
-                var content = File.ReadAllText(filePath);
-
-                // Extract appid
-                var appIdMatch = Regex.Match(content, @"""appid""\s+""(\d+)""");
-                if (!appIdMatch.Success) return null;
-
-                // Extract name
-                var nameMatch = Regex.Match(content, @"""name""\s+""([^""]+)""");
-                if (!nameMatch.Success) return null;
-
-                // Extract install dir
-                var installDirMatch = Regex.Match(content, @"""installdir""\s+""([^""]+)""");
-                var installDir = installDirMatch.Success ? installDirMatch.Groups[1].Value : "";
-
-                // Extract build id
-                var buildIdMatch = Regex.Match(content, @"""buildid""\s+""([^""]+)""");
-                var buildId = buildIdMatch.Success ? buildIdMatch.Groups[1].Value : "Unknown";
-
-                // Get the actual path
-                var manifestDir = Path.GetDirectoryName(filePath);
-                var commonDir = Path.Combine(manifestDir, "common", installDir);
-
-                // Debug output
-                System.Diagnostics.Debug.WriteLine($"Game: {nameMatch.Groups[1].Value}");
-                System.Diagnostics.Debug.WriteLine($"  Manifest: {filePath}");
-                System.Diagnostics.Debug.WriteLine($"  CommonDir: {commonDir}");
-                System.Diagnostics.Debug.WriteLine($"  Exists: {Directory.Exists(commonDir)}");
-
-                return new SteamGame
-                {
-                    AppId = appIdMatch.Groups[1].Value,
-                    Name = nameMatch.Groups[1].Value,
-                    InstallDir = commonDir,  // Always set the path, even if directory doesn't exist yet
-                    BuildId = buildId
-                };
-            }
-            catch
-            {
-                return null;
-            }
-        }
-
-        private class SteamGame
-        {
-            public string AppId { get; set; }
-            public string Name { get; set; }
-            public string InstallDir { get; set; }
-            public string BuildId { get; set; }
-        }
 
         // All RIN scraping code removed - no longer needed
 

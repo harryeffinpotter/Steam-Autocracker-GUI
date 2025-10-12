@@ -135,7 +135,7 @@ namespace SAC_GUI
                 request.ContentType = $"multipart/form-data; boundary={boundary}";
                 request.SendChunked = false; // Use content-length instead of chunked encoding
 
-                progressCallback?.Report(0.01); // Starting upload
+                // Don't report initial progress - let it stay at 0 until actual upload begins
 
                 using (var requestStream = request.GetRequestStream())
                 {
@@ -165,24 +165,26 @@ namespace SAC_GUI
                             var now = DateTime.Now;
                             var timeSinceLastUpdate = (now - lastUpdateTime).TotalSeconds;
 
-                            if (timeSinceLastUpdate >= 1.0) // Update every second
+                            if (timeSinceLastUpdate >= 0.5) // Update every 0.5 seconds for more responsive feedback
                             {
                                 var bytesThisSecond = totalBytesWritten - lastBytesWritten;
                                 var speedMBps = (bytesThisSecond / (1024.0 * 1024.0)) / timeSinceLastUpdate;
                                 var totalElapsed = (now - startTime).TotalSeconds;
-                                var avgSpeedMBps = (totalBytesWritten / (1024.0 * 1024.0)) / totalElapsed;
+                                var avgSpeedMBps = totalElapsed > 0 ? (totalBytesWritten / (1024.0 * 1024.0)) / totalElapsed : 0;
                                 var bytesRemaining = fileSize - totalBytesWritten;
                                 var etaSeconds = avgSpeedMBps > 0 ? (bytesRemaining / (1024.0 * 1024.0)) / avgSpeedMBps : 0;
 
                                 // Report status with speed info
-                                statusCallback?.Report($"Uploading: {speedMBps:F2} MB/s (Avg: {avgSpeedMBps:F2} MB/s) - ETA: {TimeSpan.FromSeconds(etaSeconds):hh\\:mm\\:ss}");
+                                var statusText = $"Uploading: {speedMBps:F2} MB/s (Avg: {avgSpeedMBps:F2} MB/s) - ETA: {TimeSpan.FromSeconds(etaSeconds):hh\\:mm\\:ss}";
+                                System.Diagnostics.Debug.WriteLine($"[1FICHIER] {statusText}");
+                                statusCallback?.Report(statusText);
 
                                 lastUpdateTime = now;
                                 lastBytesWritten = totalBytesWritten;
                             }
 
-                            // Report progress during ACTUAL network upload (0% to 95%)
-                            double uploadProgress = 0.95 * ((double)totalBytesWritten / fileSize);
+                            // Report progress during ACTUAL network upload (0% to 100%)
+                            double uploadProgress = ((double)totalBytesWritten / fileSize);
                             progressCallback?.Report(uploadProgress);
                         }
                     }
@@ -196,7 +198,7 @@ namespace SAC_GUI
                 }
 
                 System.Diagnostics.Debug.WriteLine($"[1FICHIER] Sending request to {uploadUrl}");
-                progressCallback?.Report(0.95);  // Upload complete, waiting for server response
+                statusCallback?.Report("Upload complete, waiting for server response...");
 
                 HttpWebResponse response = null;
                 try
@@ -216,7 +218,7 @@ namespace SAC_GUI
                     throw new Exception("Upload failed: No response from server. The upload may have succeeded but we couldn't get confirmation. Check your 1fichier account.");
                 }
 
-                progressCallback?.Report(0.98);  // Got response from server
+                statusCallback?.Report("Got response from server, processing...");
 
                 System.Diagnostics.Debug.WriteLine($"[1FICHIER] Upload response status: {response.StatusCode}");
 

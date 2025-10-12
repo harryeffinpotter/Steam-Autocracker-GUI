@@ -10,6 +10,16 @@ namespace SteamAutocrackGUI
     {
         [DllImport("user32.dll")]
         private static extern int SetWindowCompositionAttribute(IntPtr hwnd, ref APPID.WindowCompositionAttribData data);
+
+        [DllImport("user32.dll")]
+        private static extern bool ReleaseCapture();
+
+        [DllImport("user32.dll")]
+        private static extern int SendMessage(IntPtr hWnd, int Msg, int wParam, int lParam);
+
+        private const int WM_NCLBUTTONDOWN = 0xA1;
+        private const int HTCAPTION = 0x2;
+
         public string SelectedFormat { get; set; }
         public string SelectedLevel { get; set; }
         public bool RememberChoice { get; set; }
@@ -20,6 +30,9 @@ namespace SteamAutocrackGUI
         public CompressionSettingsForm()
         {
             InitializeComponent();
+
+            // Enable dragging the form
+            this.MouseDown += CompressionSettingsForm_MouseDown;
 
             // Set icon to match main app
             try
@@ -83,60 +96,86 @@ namespace SteamAutocrackGUI
 
         private void ApplyRoundedCornersToButton(Button btn)
         {
+            // Make button background transparent so we can draw custom
+            btn.FlatStyle = FlatStyle.Flat;
+            btn.FlatAppearance.BorderSize = 0;
+            btn.BackColor = Color.Transparent;
+            btn.FlatAppearance.MouseOverBackColor = Color.Transparent;
+            btn.FlatAppearance.MouseDownBackColor = Color.Transparent;
+
+            // Enable transparency support
+            typeof(Button).InvokeMember("DoubleBuffered",
+                System.Reflection.BindingFlags.SetProperty | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic,
+                null, btn, new object[] { true });
+
+            // Disable focus cues to prevent orange highlighting
+            typeof(Button).InvokeMember("SetStyle",
+                System.Reflection.BindingFlags.InvokeMethod | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic,
+                null, btn, new object[] { System.Windows.Forms.ControlStyles.Selectable, false });
+
             // Paint event for rounded corners
             btn.Paint += (sender, e) =>
             {
                 Button b = sender as Button;
 
-                // Enable high quality rendering
-                e.Graphics.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.HighQuality;
-                e.Graphics.PixelOffsetMode = System.Drawing.Drawing2D.PixelOffsetMode.HighQuality;
+                // DISABLED - This causes deadlocks when updating buttons from background threads
+                // Draw the parent's background in the button area first for true transparency
+                /*if (b.Parent != null)
+                {
+                    using (var bmp = new Bitmap(b.Parent.Width, b.Parent.Height))
+                    {
+                        b.Parent.DrawToBitmap(bmp, new Rectangle(0, 0, b.Parent.Width, b.Parent.Height));
+                        e.Graphics.DrawImage(bmp, new Rectangle(0, 0, b.Width, b.Height),
+                            new Rectangle(b.Left, b.Top, b.Width, b.Height), GraphicsUnit.Pixel);
+                    }
+                }*/
+
+                // Enable maximum quality anti-aliasing
+                e.Graphics.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
                 e.Graphics.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.HighQualityBicubic;
                 e.Graphics.CompositingQuality = System.Drawing.Drawing2D.CompositingQuality.HighQuality;
                 e.Graphics.TextRenderingHint = System.Drawing.Text.TextRenderingHint.ClearTypeGridFit;
 
+                // Create rounded rectangle that fits perfectly - subtle modern look
+                int radius = 8;
+                Rectangle rect = new Rectangle(0, 0, b.Width - 1, b.Height - 1);
                 System.Drawing.Drawing2D.GraphicsPath path = new System.Drawing.Drawing2D.GraphicsPath();
 
-                // Create rounded rectangle with smoother corners
-                int radius = 10;
-                Rectangle rect = new Rectangle(0, 0, b.Width - 1, b.Height - 1);
-                path.StartFigure();
-                path.AddArc(rect.X, rect.Y, radius * 2, radius * 2, 180, 90);
-                path.AddLine(rect.X + radius, rect.Y, rect.Right - radius, rect.Y);
-                path.AddArc(rect.Right - radius * 2, rect.Y, radius * 2, radius * 2, 270, 90);
-                path.AddLine(rect.Right, rect.Y + radius, rect.Right, rect.Bottom - radius);
-                path.AddArc(rect.Right - radius * 2, rect.Bottom - radius * 2, radius * 2, radius * 2, 0, 90);
-                path.AddLine(rect.Right - radius, rect.Bottom, rect.X + radius, rect.Bottom);
-                path.AddArc(rect.X, rect.Bottom - radius * 2, radius * 2, radius * 2, 90, 90);
+                int diameter = radius * 2;
+                path.AddArc(rect.X, rect.Y, diameter, diameter, 180, 90);
+                path.AddArc(rect.Right - diameter, rect.Y, diameter, diameter, 270, 90);
+                path.AddArc(rect.Right - diameter, rect.Bottom - diameter, diameter, diameter, 0, 90);
+                path.AddArc(rect.X, rect.Bottom - diameter, diameter, diameter, 90, 90);
                 path.CloseFigure();
 
-                // Set button region for click area
-                b.Region = new Region(path);
+                // Determine colors based on state
+                Color bgColor = Color.FromArgb(38, 38, 42);
+                if (b.ClientRectangle.Contains(b.PointToClient(Cursor.Position)))
+                {
+                    bgColor = Color.FromArgb(50, 50, 55); // Lighter on hover
+                }
 
                 // Draw background
-                using (var brush = new SolidBrush(b.BackColor))
+                using (var brush = new SolidBrush(bgColor))
                 {
                     e.Graphics.FillPath(brush, path);
                 }
 
-                // Draw subtle border
-                using (var pen = new Pen(b.FlatAppearance.BorderColor, 1.0f))
+                // Draw border
+                using (var pen = new Pen(Color.FromArgb(55, 55, 60), 1.5f))
                 {
-                    pen.Alignment = System.Drawing.Drawing2D.PenAlignment.Inset;
                     e.Graphics.DrawPath(pen, path);
                 }
 
-                // Draw text with better rendering
-                StringFormat sf = new StringFormat
-                {
-                    Alignment = StringAlignment.Center,
-                    LineAlignment = StringAlignment.Center
-                };
-                e.Graphics.DrawString(b.Text, b.Font, new SolidBrush(b.ForeColor), rect, sf);
+                // Draw text
+                TextRenderer.DrawText(e.Graphics, b.Text, b.Font, b.ClientRectangle,
+                    Color.FromArgb(220, 220, 225),
+                    TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter);
             };
 
-            btn.FlatStyle = FlatStyle.Flat;
-            btn.FlatAppearance.BorderSize = 0; // We'll draw our own border
+            // Refresh on mouse enter/leave for hover effect
+            btn.MouseEnter += (s, e) => btn.Invalidate();
+            btn.MouseLeave += (s, e) => btn.Invalidate();
         }
 
         private void CreateCustomSlider()
@@ -360,6 +399,13 @@ namespace SteamAutocrackGUI
             sliderPanel.Invalidate();
         }
 
-
+        private void CompressionSettingsForm_MouseDown(object sender, MouseEventArgs e)
+        {
+            if (e.Button == MouseButtons.Left)
+            {
+                ReleaseCapture();
+                SendMessage(this.Handle, WM_NCLBUTTONDOWN, HTCAPTION, 0);
+            }
+        }
     }
 }

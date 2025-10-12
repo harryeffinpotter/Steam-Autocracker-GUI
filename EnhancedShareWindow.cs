@@ -17,9 +17,8 @@ namespace SteamAppIdIdentifier
     {
 
         private Form parentForm;
-        private Timer rgbTimer;
-        private int colorHue = 0;
         private bool gameSizeColumnSortedOnce = false;
+        private Button btnCustomPath;
 
         public EnhancedShareWindow(Form parent)
         {
@@ -44,7 +43,7 @@ namespace SteamAppIdIdentifier
             {
                 ApplyAcrylicEffect();
                 // Center over parent when loaded
-                CenterToParent();
+                CenterOverParent();
             };
         }
 
@@ -89,9 +88,18 @@ namespace SteamAppIdIdentifier
                 e.SortResult = size1.CompareTo(size2);
                 e.Handled = true;
             }
+            // Sort LastUpdated column by actual timestamp stored in Tag
+            else if (e.Column.Name == "LastUpdated")
+            {
+                long time1 = gamesGrid.Rows[e.RowIndex1].Cells["LastUpdated"].Tag as long? ?? 0;
+                long time2 = gamesGrid.Rows[e.RowIndex2].Cells["LastUpdated"].Tag as long? ?? 0;
+
+                e.SortResult = time1.CompareTo(time2);
+                e.Handled = true;
+            }
         }
 
-        private void CenterToParent()
+        private void CenterOverParent()
         {
             if (parentForm != null && parentForm.IsHandleCreated)
             {
@@ -108,19 +116,6 @@ namespace SteamAppIdIdentifier
 
         private void SetupModernProgressBar()
         {
-            // Start RGB animation timer
-            rgbTimer = new Timer();
-            rgbTimer.Interval = 30; // Smooth animation
-            rgbTimer.Tick += (s, e) =>
-            {
-                colorHue = (colorHue + 2) % 360;
-                if (progressBar.Visible)
-                {
-                    progressBar.Invalidate(); // Force redraw
-                }
-            };
-            rgbTimer.Start();
-
             progressBar.Paint += (s, e) =>
             {
                 Rectangle rec = e.ClipRectangle;
@@ -128,121 +123,24 @@ namespace SteamAppIdIdentifier
                 if (ProgressBarRenderer.IsSupported)
                     rec.Height = rec.Height - 4;
 
-                // Draw dark background matching form
-                e.Graphics.Clear(Color.FromArgb(15, 15, 15));
+                // Draw transparent/dark background
+                e.Graphics.Clear(Color.Transparent);
 
-                // Draw RGB gradient progress bar
+                // Draw blue gradient progress bar
                 rec.Height = rec.Height - 4;
                 if (rec.Width > 0)
                 {
                     using (var brush = new System.Drawing.Drawing2D.LinearGradientBrush(
                         new Point(0, 0),
                         new Point(rec.Width, 0),
-                        HSLToRGB(colorHue, 1.0, 0.5),
-                        HSLToRGB((colorHue + 60) % 360, 1.0, 0.5)))
+                        Color.FromArgb(0, 120, 215),   // Light blue
+                        Color.FromArgb(0, 90, 180)))   // Darker blue
                     {
                         e.Graphics.FillRectangle(brush, 2, 2, rec.Width, rec.Height);
                     }
                 }
             };
         }
-
-        private Color HSLToRGB(double h, double s, double l)
-        {
-            double r, g, b;
-            h = h / 360.0;
-
-            if (s == 0)
-            {
-                r = g = b = l;
-            }
-            else
-            {
-                var q = l < 0.5 ? l * (1 + s) : l + s - l * s;
-                var p = 2 * l - q;
-                r = HueToRGB(p, q, h + 1.0 / 3);
-                g = HueToRGB(p, q, h);
-                b = HueToRGB(p, q, h - 1.0 / 3);
-            }
-
-            return Color.FromArgb((int)(r * 255), (int)(g * 255), (int)(b * 255));
-        }
-
-        private double HueToRGB(double p, double q, double t)
-        {
-            if (t < 0) t += 1;
-            if (t > 1) t -= 1;
-            if (t < 1.0 / 6) return p + (q - p) * 6 * t;
-            if (t < 1.0 / 2) return q;
-            if (t < 2.0 / 3) return p + (q - p) * (2.0 / 3 - t) * 6;
-            return p;
-        }
-
-        private void InitializeWindow_OLD()  // Renamed - not used anymore since we use Designer.cs
-        {
-            this.Text = "Share Your Games - Community Needs You!";
-            this.Size = new Size(1000, 700);
-            this.StartPosition = FormStartPosition.CenterScreen;
-            this.BackColor = Color.FromArgb(15, 15, 15);
-            this.ForeColor = Color.White;
-
-            // Create main panel
-            var mainPanel = new Panel
-            {
-                Dock = DockStyle.Fill,
-                Padding = new Padding(10)
-            };
-
-            // Header with request count
-            var headerPanel = new Panel
-            {
-                Height = 50,
-                Dock = DockStyle.Top,
-                BackColor = Color.FromArgb(20, 20, 20)
-            };
-
-            var lblHeader = new Label
-            {
-                Text = "Loading requests...",
-                Font = new Font("Segoe UI", 14, FontStyle.Bold),
-                ForeColor = Color.FromArgb(100, 200, 255),
-                Location = new Point(10, 10),
-                Size = new Size(500, 30),
-                Name = "lblHeader"
-            };
-            headerPanel.Controls.Add(lblHeader);
-
-            // Create grid
-            gamesGrid = new DataGridView
-            {
-                Dock = DockStyle.Fill,
-                BackgroundColor = Color.FromArgb(10, 10, 10),
-                ForeColor = Color.White,
-                GridColor = Color.FromArgb(40, 40, 50),
-                BorderStyle = BorderStyle.None,
-                AllowUserToAddRows = false,
-                AllowUserToDeleteRows = false,
-                ReadOnly = true,
-                AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill,
-                RowHeadersVisible = false,
-                EnableHeadersVisualStyles = false
-            };
-
-            // Style
-            gamesGrid.DefaultCellStyle.BackColor = Color.FromArgb(15, 15, 15);
-            gamesGrid.DefaultCellStyle.ForeColor = Color.White;
-            gamesGrid.DefaultCellStyle.SelectionBackColor = Color.FromArgb(50, 50, 70);
-            gamesGrid.ColumnHeadersDefaultCellStyle.BackColor = Color.FromArgb(25, 25, 25);
-            gamesGrid.ColumnHeadersDefaultCellStyle.ForeColor = Color.White;
-
-            mainPanel.Controls.Add(gamesGrid);
-            this.Controls.Add(mainPanel);
-            this.Controls.Add(headerPanel);
-
-            // Load games
-            _ = LoadGames();
-        }
-
 
         private async Task LoadGames()
         {
@@ -276,19 +174,34 @@ namespace SteamAppIdIdentifier
                 row.Cells["InstallPath"].Value = game.InstallDir;
                 row.Cells["GameSize"].Value = "...";
 
+                // Format and display last updated date
+                if (game.LastUpdated > 0)
+                {
+                    DateTime lastUpdatedDate = DateTimeOffset.FromUnixTimeSeconds(game.LastUpdated).LocalDateTime;
+                    row.Cells["LastUpdated"].Value = lastUpdatedDate.ToString("yyyy-MM-dd HH:mm");
+                    row.Cells["LastUpdated"].Tag = game.LastUpdated; // Store timestamp for sorting
+                }
+                else
+                {
+                    row.Cells["LastUpdated"].Value = "Unknown";
+                }
+
                 // Check if we've shared this game before
                 string key = $"{game.AppId}_{game.BuildId}";
                 if (sharedGames.ContainsKey(key))
                 {
                     var sharedData = sharedGames[key];
+                    row.Cells["CrackOnly"].Value = sharedData.Contains("cracked_only") ? "✅ Cracked!" : "⚡ Crack";
                     row.Cells["ShareClean"].Value = sharedData.Contains("clean") ? "✅ Shared!" : "📦 Clean";
                     row.Cells["ShareCracked"].Value = sharedData.Contains("cracked") ? "✅ Shared!" : "🎮 Cracked";
+                    if (sharedData.Contains("cracked_only")) row.Cells["CrackOnly"].Style.BackColor = Color.FromArgb(60, 0, 60);
                     if (sharedData.Contains("clean")) row.Cells["ShareClean"].Style.BackColor = Color.FromArgb(0, 60, 0);
                     if (sharedData.Contains("cracked")) row.Cells["ShareCracked"].Style.BackColor = Color.FromArgb(0, 60, 0);
                 }
                 else
                 {
                     // Default button texts
+                    row.Cells["CrackOnly"].Value = "⚡ Crack";
                     row.Cells["ShareClean"].Value = "📦 Clean";
                     row.Cells["ShareCracked"].Value = "🎮 Cracked";
                 }
@@ -347,6 +260,13 @@ namespace SteamAppIdIdentifier
 
             // No request button anymore - this window is for sharing YOUR games
 
+            // Handle Crack Only button
+            if (e.ColumnIndex == gamesGrid.Columns["CrackOnly"].Index)
+            {
+                await CrackOnlyGame(gameName, installPath, appId, row);
+                return;
+            }
+
             // Handle Share Clean button
             if (e.ColumnIndex == gamesGrid.Columns["ShareClean"].Index)
             {
@@ -362,6 +282,105 @@ namespace SteamAppIdIdentifier
             }
         }
 
+        private async Task CrackOnlyGame(string gameName, string installPath, string appId, DataGridViewRow row)
+        {
+            try
+            {
+                // Check if game path is valid
+                if (string.IsNullOrEmpty(installPath) || !Directory.Exists(installPath))
+                {
+                    MessageBox.Show("Game installation path not found!", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return;
+                }
+
+                // Verify this is the main form
+                var mainForm = parentForm as SteamAppId;
+                if (mainForm == null)
+                {
+                    MessageBox.Show("Cannot access cracking functionality.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return;
+                }
+
+                // Update UI to show cracking in progress
+                row.Cells["CrackOnly"].Value = "⚙️ Cracking...";
+                row.Cells["CrackOnly"].Style.BackColor = Color.FromArgb(30, 30, 0); // Subtle yellow tint
+
+                // Create translucent overlay
+                var overlay = new Form
+                {
+                    StartPosition = FormStartPosition.Manual,
+                    FormBorderStyle = FormBorderStyle.None,
+                    BackColor = Color.Black,
+                    Opacity = 0.7,
+                    ShowInTaskbar = false,
+                    TopMost = true,
+                    Location = this.Location,
+                    Size = this.Size
+                };
+
+                var statusLabel = new Label
+                {
+                    Text = $"Cracking {gameName}...",
+                    Font = new Font("Segoe UI", 14, FontStyle.Bold),
+                    ForeColor = Color.Cyan,
+                    AutoSize = true,
+                    BackColor = Color.Transparent
+                };
+                statusLabel.Location = new Point(
+                    (overlay.Width - statusLabel.Width) / 2,
+                    (overlay.Height - statusLabel.Height) / 2
+                );
+                overlay.Controls.Add(statusLabel);
+                overlay.Show();
+
+                try
+                {
+                    // Set game directory and APPID for cracking
+                    mainForm.GameDirectory = installPath;
+                    SteamAppId.APPID = appId;
+
+                    // Perform the crack
+                    bool success = await mainForm.CrackAsync();
+
+                    overlay.Close();
+
+                    if (success)
+                    {
+                        row.Cells["CrackOnly"].Value = "✅ Cracked!";
+                        row.Cells["CrackOnly"].Style.BackColor = Color.FromArgb(60, 0, 60); // Purple tint for cracked
+
+                        // Save that we cracked this game
+                        SaveSharedGame(appId, row.Cells["BuildID"].Value?.ToString(), "cracked_only");
+
+                        MessageBox.Show($"{gameName} has been cracked successfully!", "Success",
+                            MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    }
+                    else
+                    {
+                        row.Cells["CrackOnly"].Value = "⚡ Crack";
+                        row.Cells["CrackOnly"].Style.BackColor = Color.FromArgb(8, 8, 12); // Reset to default
+                        MessageBox.Show($"Failed to crack {gameName}. Check the main window for details.",
+                            "Crack Failed", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    overlay.Close();
+                    row.Cells["CrackOnly"].Value = "⚡ Crack";
+                    row.Cells["CrackOnly"].Style.BackColor = Color.FromArgb(8, 8, 12); // Reset to default
+
+                    System.Diagnostics.Debug.WriteLine($"[CRACK-ONLY] Error: {ex}");
+                    MessageBox.Show($"Error cracking {gameName}:\n{ex.Message}",
+                        "Crack Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                row.Cells["CrackOnly"].Value = "⚡ Crack";
+            }
+        }
+
         private async Task ShareGame(string gameName, string installPath, string appId, bool cracked, DataGridViewRow row)
         {
             if (string.IsNullOrEmpty(installPath) || !Directory.Exists(installPath))
@@ -370,7 +389,7 @@ namespace SteamAppIdIdentifier
                 return;
             }
 
-            // If sharing clean files, restore all .bak files first
+            // If sharing clean files, restore all .bak files and clean up crack artifacts
             if (!cracked)
             {
                 try
@@ -378,32 +397,124 @@ namespace SteamAppIdIdentifier
                     var parentFormTyped = parentForm as SteamAppId;
                     if (parentFormTyped != null)
                     {
-                        // Use the RestoreAllBakFiles method from Form1
-                        var bakFiles = Directory.GetFiles(installPath, "*.bak", SearchOption.AllDirectories);
-                        if (bakFiles.Length > 0)
+                        // Restore .bak files
+                        try
                         {
-                            System.Diagnostics.Debug.WriteLine($"[SHARE CLEAN] Found {bakFiles.Length} .bak files, restoring clean files...");
-                            foreach (var bakFile in bakFiles)
+                            var bakFiles = Directory.GetFiles(installPath, "*.bak", SearchOption.AllDirectories);
+                            if (bakFiles.Length > 0)
                             {
-                                var originalFile = bakFile.Substring(0, bakFile.Length - 4); // Remove .bak
+                                System.Diagnostics.Debug.WriteLine($"[SHARE CLEAN] Found {bakFiles.Length} .bak files, restoring clean files...");
+                                foreach (var bakFile in bakFiles)
+                                {
+                                    try
+                                    {
+                                        var originalFile = bakFile.Substring(0, bakFile.Length - 4); // Remove .bak
+                                        if (File.Exists(originalFile))
+                                            File.Delete(originalFile);
+                                        File.Move(bakFile, originalFile);
+                                        System.Diagnostics.Debug.WriteLine($"[SHARE CLEAN] Restored {Path.GetFileName(bakFile)}");
+                                    }
+                                    catch (Exception ex)
+                                    {
+                                        System.Diagnostics.Debug.WriteLine($"[SHARE CLEAN] Failed to restore {bakFile}: {ex.Message}");
+                                    }
+                                }
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            System.Diagnostics.Debug.WriteLine($"[SHARE CLEAN] Failed to search for .bak files: {ex.Message}");
+                        }
+
+                        // Delete steam_settings directories (recursively search for all instances)
+                        try
+                        {
+                            var steamSettingsDirs = Directory.GetDirectories(installPath, "steam_settings", SearchOption.AllDirectories);
+                            foreach (var steamSettingsDir in steamSettingsDirs)
+                            {
                                 try
                                 {
-                                    if (File.Exists(originalFile))
-                                        File.Delete(originalFile);
-                                    File.Move(bakFile, originalFile);
-                                    System.Diagnostics.Debug.WriteLine($"[SHARE CLEAN] Restored {Path.GetFileName(bakFile)}");
+                                    Directory.Delete(steamSettingsDir, true);
+                                    System.Diagnostics.Debug.WriteLine($"[SHARE CLEAN] Deleted steam_settings directory: {steamSettingsDir}");
                                 }
                                 catch (Exception ex)
                                 {
-                                    System.Diagnostics.Debug.WriteLine($"[SHARE CLEAN] Failed to restore {bakFile}: {ex.Message}");
+                                    System.Diagnostics.Debug.WriteLine($"[SHARE CLEAN] Failed to delete steam_settings at {steamSettingsDir}: {ex.Message}");
                                 }
                             }
+                        }
+                        catch (Exception ex)
+                        {
+                            System.Diagnostics.Debug.WriteLine($"[SHARE CLEAN] Failed to search for steam_settings directories: {ex.Message}");
+                        }
+
+                        // Delete lobby_connect files (all variations: _lobby_connect* and lobby_connect*)
+                        try
+                        {
+                            // Search for _lobby_connect* pattern
+                            var lobbyConnectFiles = Directory.GetFiles(installPath, "_lobby_connect*", SearchOption.AllDirectories);
+                            foreach (var lobbyConnectFile in lobbyConnectFiles)
+                            {
+                                try
+                                {
+                                    File.Delete(lobbyConnectFile);
+                                    System.Diagnostics.Debug.WriteLine($"[SHARE CLEAN] Deleted lobby_connect file: {lobbyConnectFile}");
+                                }
+                                catch (Exception ex)
+                                {
+                                    System.Diagnostics.Debug.WriteLine($"[SHARE CLEAN] Failed to delete lobby_connect file at {lobbyConnectFile}: {ex.Message}");
+                                }
+                            }
+
+                            // Also search for lobby_connect* pattern (without underscore prefix)
+                            lobbyConnectFiles = Directory.GetFiles(installPath, "lobby_connect*", SearchOption.AllDirectories);
+                            foreach (var lobbyConnectFile in lobbyConnectFiles)
+                            {
+                                try
+                                {
+                                    File.Delete(lobbyConnectFile);
+                                    System.Diagnostics.Debug.WriteLine($"[SHARE CLEAN] Deleted lobby_connect file: {lobbyConnectFile}");
+                                }
+                                catch (Exception ex)
+                                {
+                                    System.Diagnostics.Debug.WriteLine($"[SHARE CLEAN] Failed to delete lobby_connect file at {lobbyConnectFile}: {ex.Message}");
+                                }
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            System.Diagnostics.Debug.WriteLine($"[SHARE CLEAN] Failed to search for lobby_connect files: {ex.Message}");
+                        }
+
+                        // Delete shortcuts (*.lnk files in the game directory)
+                        try
+                        {
+                            var shortcuts = Directory.GetFiles(installPath, "*.lnk", SearchOption.TopDirectoryOnly);
+                            if (shortcuts.Length > 0)
+                            {
+                                foreach (var shortcut in shortcuts)
+                                {
+                                    try
+                                    {
+                                        File.Delete(shortcut);
+                                        System.Diagnostics.Debug.WriteLine($"[SHARE CLEAN] Deleted shortcut: {Path.GetFileName(shortcut)}");
+                                    }
+                                    catch (Exception ex)
+                                    {
+                                        System.Diagnostics.Debug.WriteLine($"[SHARE CLEAN] Failed to delete shortcut {Path.GetFileName(shortcut)}: {ex.Message}");
+                                    }
+                                }
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            System.Diagnostics.Debug.WriteLine($"[SHARE CLEAN] Failed to search for shortcuts: {ex.Message}");
                         }
                     }
                 }
                 catch (Exception ex)
                 {
-                    System.Diagnostics.Debug.WriteLine($"[SHARE CLEAN] Error restoring .bak files: {ex.Message}");
+                    System.Diagnostics.Debug.WriteLine($"[SHARE CLEAN] Error during clean file preparation: {ex.Message}");
                 }
             }
 
@@ -593,6 +704,29 @@ namespace SteamAppIdIdentifier
                     string zipName = $"{prefix} {safeGameName}.{format.ToLower()}";
                     string outputPath = Path.Combine(desktopPath, zipName);
 
+                    // For clean shares, prepare proper Steam folder structure
+                    string pathToCompress = installPath;
+                    string tempCleanFolder = null;
+                    bool isCleanStructure = false;
+
+                    if (!cracked)
+                    {
+                        // Prepare clean game structure with depotcache and steamapps
+                        string buildId = row.Cells["BuildID"].Value?.ToString() ?? "Unknown";
+                        tempCleanFolder = await Task.Run(() => PrepareCleanGameStructure(appId, gameName, installPath, buildId));
+
+                        if (!string.IsNullOrEmpty(tempCleanFolder))
+                        {
+                            pathToCompress = tempCleanFolder;
+                            isCleanStructure = true;
+                            System.Diagnostics.Debug.WriteLine($"[SHARE CLEAN] Using prepared structure: {pathToCompress}");
+                        }
+                        else
+                        {
+                            System.Diagnostics.Debug.WriteLine($"[SHARE CLEAN] Failed to prepare structure, using direct path");
+                        }
+                    }
+
                     // Show progress window
                     var progressForm = new RGBProgressWindow(gameName, cracked ? "Cracked" : "Clean");
                     progressForm.TopMost = this.TopMost;
@@ -601,7 +735,21 @@ namespace SteamAppIdIdentifier
                     progressForm.UpdateStatus($"Compressing with {format.ToUpper()} level {level}..." + (usePassword ? " (Password protected)" : ""));
 
                     // Compress the game using the real compression with optional password
-                    bool compressionSuccess = await Task.Run(() => CompressGameProper(installPath, outputPath, format, level, usePassword ? "cs.rin.ru" : null, progressForm));
+                    bool compressionSuccess = await Task.Run(() => CompressGameProper(pathToCompress, outputPath, format, level, usePassword ? "cs.rin.ru" : null, progressForm, isCleanStructure));
+
+                    // Clean up temporary folder if created
+                    if (!string.IsNullOrEmpty(tempCleanFolder) && Directory.Exists(tempCleanFolder))
+                    {
+                        try
+                        {
+                            Directory.Delete(tempCleanFolder, true);
+                            System.Diagnostics.Debug.WriteLine($"[SHARE CLEAN] Cleaned up temp folder: {tempCleanFolder}");
+                        }
+                        catch (Exception cleanupEx)
+                        {
+                            System.Diagnostics.Debug.WriteLine($"[SHARE CLEAN] Failed to cleanup temp folder: {cleanupEx.Message}");
+                        }
+                    }
 
                     progressForm.Close();
 
@@ -683,18 +831,12 @@ namespace SteamAppIdIdentifier
                         uploadProgress.TopMost = this.TopMost;
                         string uploadUrl = await UploadFileWithProgress(outputPath, uploadProgress);
 
-                        // Check if cancelled
-                        if (uploadProgress.WasCancelled)
-                        {
-                            row.Cells[btnColumn].Value = cracked ? "🎮 Cracked" : "📦 Clean";
-                            MessageBox.Show("Upload cancelled.", "Cancelled", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                            return;
-                        }
-
                         if (!string.IsNullOrEmpty(uploadUrl))
                         {
-                            // uploadUrl is already the converted pydrive link from UploadFileWithProgress
-                            System.Diagnostics.Debug.WriteLine($"[SHARE] Final upload URL to show user: {uploadUrl}");
+                            // Check if it's a 1fichier URL (not converted yet)
+                            bool isOneFichier = uploadUrl.Contains("1fichier.com");
+
+                            System.Diagnostics.Debug.WriteLine($"[SHARE] Final upload URL to show user: {uploadUrl} (isOneFichier: {isOneFichier})");
 
                             row.Cells[btnColumn].Value = "✅ Shared!";
                             row.Cells[btnColumn].Style.BackColor = Color.FromArgb(0, 60, 0);
@@ -702,11 +844,11 @@ namespace SteamAppIdIdentifier
                             // Save shared game data
                             SaveSharedGame(appId, row.Cells["BuildID"].Value?.ToString(), cracked ? "cracked" : "clean");
 
-                            // Notify backend about completion with converted URL
+                            // Get file size for conversion timing
                             long fileSize = new FileInfo(outputPath).Length;
-                            string uploadType = cracked ? "cracked" : "clean";
 
-                            ShowUploadSuccess(uploadUrl, gameName, cracked);
+                            // Show success modal with optional convert button for 1fichier links
+                            ShowUploadSuccessWithConvert(uploadUrl, gameName, cracked, isOneFichier, fileSize);
                         }
                         else
                         {
@@ -731,7 +873,174 @@ namespace SteamAppIdIdentifier
             }
         }
 
-        private bool CompressGameProper(string sourcePath, string outputPath, string format, string level, string password = null, RGBProgressWindow progressWindow = null)
+        /// <summary>
+        /// Prepares the proper Steam folder structure for clean game sharing
+        /// </summary>
+        private string PrepareCleanGameStructure(string appId, string gameName, string installPath, string buildId)
+        {
+            try
+            {
+                System.Diagnostics.Debug.WriteLine($"[SHARE CLEAN] Preparing structure for {gameName} (AppID: {appId})");
+
+                // Find the ACF file for this game
+                string acfFilePath = null;
+                string acfContent = null;
+
+                var steamPaths = GetSteamLibraryPaths();
+                foreach (var steamPath in steamPaths)
+                {
+                    var potentialAcfPath = Path.Combine(steamPath, $"appmanifest_{appId}.acf");
+                    if (File.Exists(potentialAcfPath))
+                    {
+                        acfFilePath = potentialAcfPath;
+                        acfContent = File.ReadAllText(potentialAcfPath);
+                        System.Diagnostics.Debug.WriteLine($"[SHARE CLEAN] Found ACF: {acfFilePath}");
+                        break;
+                    }
+                }
+
+                if (string.IsNullOrEmpty(acfFilePath))
+                {
+                    System.Diagnostics.Debug.WriteLine($"[SHARE CLEAN] No ACF file found for AppID {appId}");
+                    return null;
+                }
+
+                // Parse installed depots from ACF
+                var depots = ParseInstalledDepots(acfContent);
+                System.Diagnostics.Debug.WriteLine($"[SHARE CLEAN] Found {depots.Count} depots");
+
+                // Find depot manifests
+                var manifestFiles = FindDepotManifests(appId, depots);
+                System.Diagnostics.Debug.WriteLine($"[SHARE CLEAN] Found {manifestFiles.Count} depot manifests");
+
+                // Get install directory name from ACF
+                var acfData = ParseAcfFile(acfContent);
+                string installDir = acfData.ContainsKey("installdir") ? acfData["installdir"] : Path.GetFileName(installPath);
+
+                // Create temp folder with proper naming: GameName.Build.BuildID.Win64.public
+                string tempBasePath = Path.Combine(Path.GetTempPath(), "SACGUI_Clean_" + Guid.NewGuid().ToString("N").Substring(0, 8));
+                string cleanFolderName = $"{gameName.Replace(" ", ".")}.Build.{buildId}.Win64.public";
+                // Sanitize folder name
+                foreach (char c in Path.GetInvalidFileNameChars())
+                {
+                    cleanFolderName = cleanFolderName.Replace(c.ToString(), "");
+                }
+
+                string cleanFolderPath = Path.Combine(tempBasePath, cleanFolderName);
+                Directory.CreateDirectory(cleanFolderPath);
+
+                // Create depotcache folder and copy manifests
+                string depotcachePath = Path.Combine(cleanFolderPath, "depotcache");
+                Directory.CreateDirectory(depotcachePath);
+
+                foreach (var manifestFile in manifestFiles)
+                {
+                    string destPath = Path.Combine(depotcachePath, Path.GetFileName(manifestFile));
+                    File.Copy(manifestFile, destPath, true);
+                    System.Diagnostics.Debug.WriteLine($"[SHARE CLEAN] Copied manifest: {Path.GetFileName(manifestFile)}");
+                }
+
+                // Create steamapps folder
+                string steamappsPath = Path.Combine(cleanFolderPath, "steamapps");
+                Directory.CreateDirectory(steamappsPath);
+
+                // Copy ACF file
+                string destAcfPath = Path.Combine(steamappsPath, Path.GetFileName(acfFilePath));
+                File.Copy(acfFilePath, destAcfPath, true);
+                System.Diagnostics.Debug.WriteLine($"[SHARE CLEAN] Copied ACF file");
+
+                // Create common folder and copy game files
+                string commonPath = Path.Combine(steamappsPath, "common");
+                Directory.CreateDirectory(commonPath);
+
+                string gameDestPath = Path.Combine(commonPath, installDir);
+                System.Diagnostics.Debug.WriteLine($"[SHARE CLEAN] Copying game files from {installPath} to {gameDestPath}");
+
+                // Copy entire game directory
+                CopyDirectory(installPath, gameDestPath);
+
+                System.Diagnostics.Debug.WriteLine($"[SHARE CLEAN] Structure prepared successfully: {cleanFolderPath}");
+                return cleanFolderPath;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[SHARE CLEAN] Error preparing structure: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"[SHARE CLEAN] Stack trace: {ex.StackTrace}");
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// Converts a path to long path format (bypasses 260 character limit)
+        /// </summary>
+        private string ToLongPath(string path)
+        {
+            if (string.IsNullOrEmpty(path))
+                return path;
+
+            // Already a long path
+            if (path.StartsWith(@"\\?\"))
+                return path;
+
+            // UNC path
+            if (path.StartsWith(@"\\"))
+                return @"\\?\UNC\" + path.Substring(2);
+
+            // Regular path - must be absolute
+            if (Path.IsPathRooted(path))
+                return @"\\?\" + path;
+
+            // Relative path - convert to absolute first
+            return @"\\?\" + Path.GetFullPath(path);
+        }
+
+        /// <summary>
+        /// Recursively copies a directory and all its contents using long paths
+        /// </summary>
+        private void CopyDirectory(string sourceDir, string destDir)
+        {
+            // Convert to long paths to bypass 260 character limit
+            string longSourceDir = ToLongPath(sourceDir);
+            string longDestDir = ToLongPath(destDir);
+
+            // Ensure destination directory exists
+            if (!Directory.Exists(longDestDir))
+            {
+                Directory.CreateDirectory(longDestDir);
+            }
+
+            // Copy files
+            foreach (string file in Directory.GetFiles(longSourceDir))
+            {
+                try
+                {
+                    string destFile = Path.Combine(longDestDir, Path.GetFileName(file));
+
+                    // Ensure parent directory exists
+                    string destFileDir = Path.GetDirectoryName(destFile);
+                    if (!Directory.Exists(destFileDir))
+                    {
+                        Directory.CreateDirectory(destFileDir);
+                    }
+
+                    File.Copy(file, destFile, true);
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[COPY] Error copying file {file}: {ex.Message}");
+                    throw; // Re-throw to fail the operation
+                }
+            }
+
+            // Copy subdirectories
+            foreach (string subDir in Directory.GetDirectories(longSourceDir))
+            {
+                string destSubDir = Path.Combine(longDestDir, Path.GetFileName(subDir));
+                CopyDirectory(subDir, destSubDir);
+            }
+        }
+
+        private bool CompressGameProper(string sourcePath, string outputPath, string format, string level, string password = null, RGBProgressWindow progressWindow = null, bool includeParentFolder = false)
         {
             try
             {
@@ -816,10 +1125,27 @@ namespace SteamAppIdIdentifier
                     // Add password if provided
                     string passwordSwitch = !string.IsNullOrEmpty(password) ? $"-p\"{password}\"" : "";
 
-                    // Add progress reporting (-bsp1 shows percentage progress)
-                    string arguments = $"a -t{archiveType} {compressionSwitch}{dictParams} {passwordSwitch} -bsp1 \"{outputPath}\" \"{sourcePath}\\*\" -r";
+                    // For clean structure, we need to include the parent folder in the archive
+                    string arguments;
+                    string workingDirectory = null;
+
+                    if (includeParentFolder)
+                    {
+                        // Compress from parent directory to include folder name in archive
+                        string parentDir = Path.GetDirectoryName(sourcePath);
+                        string folderName = Path.GetFileName(sourcePath);
+                        workingDirectory = parentDir;
+                        // Use trailing backslash to indicate it's a directory (no -r needed, 7z will recurse automatically)
+                        arguments = $"a -t{archiveType} {compressionSwitch}{dictParams} {passwordSwitch} -bsp1 \"{outputPath}\" \"{folderName}\\\"";
+                    }
+                    else
+                    {
+                        // Compress contents only (original behavior)
+                        arguments = $"a -t{archiveType} {compressionSwitch}{dictParams} {passwordSwitch} -bsp1 \"{outputPath}\" \"{sourcePath}\\*\"";
+                    }
 
                     System.Diagnostics.Debug.WriteLine($"[7z] Command: 7za.exe {arguments}");
+                    System.Diagnostics.Debug.WriteLine($"[7z] Working dir: {workingDirectory ?? "default"}");
 
                     var psi = new System.Diagnostics.ProcessStartInfo
                     {
@@ -830,6 +1156,11 @@ namespace SteamAppIdIdentifier
                         RedirectStandardOutput = true,
                         RedirectStandardError = true
                     };
+
+                    if (!string.IsNullOrEmpty(workingDirectory))
+                    {
+                        psi.WorkingDirectory = workingDirectory;
+                    }
 
                     using (var process = System.Diagnostics.Process.Start(psi))
                     {
@@ -1018,107 +1349,6 @@ namespace SteamAppIdIdentifier
             }
         }
 
-        private async Task CompressAndUploadFallback(string installPath, string outputPath, string gameName, string format, string level, bool cracked, string appId, DataGridViewRow row)
-        {
-            var progressForm = new RGBProgressWindow(gameName, cracked ? "Cracked" : "Clean");
-            progressForm.TopMost = this.TopMost;
-            progressForm.Show(this);
-            progressForm.CenterOverParent(this);
-
-            try
-            {
-                // Use the existing compression method but with proper parameters
-                progressForm.UpdateStatus("Compressing files...");
-                string compressedPath = await CompressGameWithProgress(installPath, gameName, cracked, progressForm);
-
-                // Upload the file
-                progressForm.UpdateStatus("Uploading to server...");
-                string uploadUrl = await UploadFileWithProgress(compressedPath, progressForm);
-
-                // Get file size
-                long fileSize = new FileInfo(compressedPath).Length;
-
-                // Notify backend
-                progressForm.UpdateStatus("Notifying community...");
-                string uploadType = cracked ? "cracked" : "clean";
-
-                // Update UI
-                var btnColumn = cracked ? "ShareCracked" : "ShareClean";
-                row.Cells[btnColumn].Value = "✅ Shared!";
-                row.Cells[btnColumn].Style.BackColor = Color.FromArgb(0, 100, 0);
-
-                progressForm.Complete(uploadUrl);
-                ShowUploadSuccess(uploadUrl, gameName, cracked);
-            }
-            catch (Exception ex)
-            {
-                progressForm.ShowError($"Error: {ex.Message}");
-                row.Cells[cracked ? "ShareCracked" : "ShareClean"].Value = cracked ? "🎮 Cracked" : "📦 Clean";
-            }
-        }
-
-        private async Task<string> CompressGameWithProgress(string sourcePath, string gameName, bool cracked, RGBProgressWindow progressWindow)
-        {
-            try
-            {
-                string tempPath = Path.Combine(Path.GetTempPath(), "SteamAutoCracker");
-                Directory.CreateDirectory(tempPath);
-
-                // Sanitize filename - remove invalid characters but keep spaces
-                string cleanName = gameName;
-                foreach (char c in Path.GetInvalidFileNameChars())
-                {
-                    cleanName = cleanName.Replace(c.ToString(), "");
-                }
-                string zipFileName = $"[SACGUI] {(cracked ? "CRACKED" : "CLEAN")} {cleanName}.zip";
-                string outputPath = Path.Combine(tempPath, zipFileName);
-
-                // Delete existing file if it exists
-                if (File.Exists(outputPath))
-                {
-                    File.Delete(outputPath);
-                }
-
-                progressWindow.UpdateStatus($"Compressing {gameName}...");
-
-                await Task.Run(() =>
-                {
-                    using (var archive = System.IO.Compression.ZipFile.Open(outputPath, System.IO.Compression.ZipArchiveMode.Create))
-                    {
-                        // Add all files from the game directory
-                        var files = Directory.GetFiles(sourcePath, "*", SearchOption.AllDirectories);
-                        int totalFiles = files.Length;
-                        int currentFile = 0;
-
-                        foreach (string file in files)
-                        {
-                            currentFile++;
-                            // .NET Framework compatible way to get relative path
-                            string relativePath = file.Substring(sourcePath.Length).TrimStart(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
-                            string entryName = Path.Combine(cleanName, relativePath).Replace('\\', '/');
-
-                            archive.CreateEntryFromFile(file, entryName);
-
-                            int percentage = (currentFile * 100) / totalFiles;
-                            if (progressWindow.IsHandleCreated)
-                            {
-                                progressWindow.Invoke(new Action(() =>
-                                {
-                                    progressWindow.UpdateStatus($"Compressing... {percentage}% ({currentFile}/{totalFiles} files)");
-                                }));
-                            }
-                        }
-                    }
-                });
-
-                return outputPath;
-            }
-            catch (Exception ex)
-            {
-                throw new Exception($"Compression failed: {ex.Message}");
-            }
-        }
-
         private async Task<string> UploadFileWithProgress(string filePath, RGBProgressWindow progressWindow)
         {
             System.Diagnostics.Debug.WriteLine($"[UPLOAD] === Starting 1fichier upload from EnhancedShareWindow ===");
@@ -1130,37 +1360,24 @@ namespace SteamAppIdIdentifier
                 System.Diagnostics.Debug.WriteLine($"[UPLOAD] File size: {fi.Length / (1024.0 * 1024.0):F2} MB");
             }
 
-            // Show the progress window centered over parent
-            progressWindow.TopMost = this.TopMost;
-            progressWindow.Show(this);
-            progressWindow.CenterOverParent(this);
-            progressWindow.BringToFront();
-            Application.DoEvents(); // Allow UI to update
-
             try
             {
                 var fileInfo = new FileInfo(filePath);
                 long fileSize = fileInfo.Length;
 
-                // Initialize progress to 0% explicitly
-                progressWindow.SetProgress(0, $"Uploading to 1fichier... 0% (0/{fileSize / 1024 / 1024}MB)");
-
-                // Create progress handler that updates UI thread
+                // Create progress handler that updates UI thread - only updates progress bar, not status text
                 var progress = new Progress<double>(value =>
                 {
-                    var mbUploaded = (long)(fileSize * value) / 1024 / 1024;
-                    var mbTotal = fileSize / 1024 / 1024;
                     var percentage = (int)(value * 100);
 
-                    // Safely update progress window on UI thread
+                    // Only update progress bar if we have actual progress
                     if (progressWindow != null && !progressWindow.IsDisposed && progressWindow.IsHandleCreated)
                     {
                         try
                         {
                             progressWindow.BeginInvoke(new Action(() =>
                             {
-                                // Update directly without calling SetProgress to avoid nested Invoke
-                                progressWindow.lblStatus.Text = $"Uploading to 1fichier... {percentage}% ({mbUploaded}/{mbTotal}MB)";
+                                // Only update progress bar - status text is handled by statusCallback with MB/s info
                                 progressWindow.progressBar.Value = Math.Max(0, Math.Min(100, percentage));
                             }));
                         }
@@ -1168,21 +1385,33 @@ namespace SteamAppIdIdentifier
                     }
                 });
 
-                // Status callback for retry messages
+                // Status callback for upload status with speed info
                 var statusProgress = new Progress<string>(status =>
                 {
                     try
                     {
-                        if (progressWindow != null && progressWindow.IsHandleCreated)
+                        System.Diagnostics.Debug.WriteLine($"[STATUS CALLBACK] {status}");
+                        if (progressWindow != null && !progressWindow.IsDisposed && progressWindow.IsHandleCreated)
                         {
-                            progressWindow.Invoke(new Action(() =>
+                            progressWindow.BeginInvoke(new Action(() =>
                             {
                                 progressWindow.lblStatus.Text = status;
                             }));
                         }
                     }
-                    catch { }
+                    catch (Exception ex)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"[STATUS CALLBACK ERROR] {ex.Message}");
+                    }
                 });
+
+                // Show the progress window centered over parent (after creating progress handlers)
+                progressWindow.TopMost = this.TopMost;
+                progressWindow.lblStatus.Text = $"Starting upload...";
+                progressWindow.Show(this);
+                progressWindow.CenterOverParent(this);
+                progressWindow.BringToFront();
+                Application.DoEvents(); // Allow UI to update
 
                 // Run upload on background thread to avoid UI lock
                 OneFichierUploader.UploadResult result = null;
@@ -1213,133 +1442,11 @@ namespace SteamAppIdIdentifier
                 {
                     System.Diagnostics.Debug.WriteLine($"[UPLOAD] 1fichier upload successful. Download URL: {result.DownloadUrl}");
 
-                    // Store the 1fichier URL in the progress window
-                    progressWindow.OneFichierUrl = result.DownloadUrl;
+                    // Close progress window
+                    progressWindow.Close();
 
-                    progressWindow.UpdateStatus($"Upload complete! Waiting for 1fichier to process...");
-
-                    // For large files, show scrolling warning and wait appropriately
-                    if (fileSize > 5L * 1024 * 1024 * 1024) // 5GB in bytes
-                    {
-                        long sizeInGB = fileSize / (1024 * 1024 * 1024);
-
-                        // Calculate conservative estimate for user display (15s per GB)
-                        int conservativeSecondsPerGB = 15;
-                        int estimatedMinutes = (int)Math.Ceiling((sizeInGB * conservativeSecondsPerGB) / 60.0);
-
-                        // Show scrolling warning with countdown for large files
-                        progressWindow.ShowLargeFileWarning(fileSize, estimatedMinutes);
-
-                        // Display very rough estimate to user
-                        string timeEstimateText = estimatedMinutes > 1 ?
-                            $"Very rough estimate: ~{estimatedMinutes} minutes (could be faster)" :
-                            "Very rough estimate: ~1 minute";
-                        progressWindow.UpdateStatus(timeEstimateText);
-
-                        // Calculate actual wait time based on observed data:
-                        // 17GB took about 4 minutes (240 seconds)
-                        // That's roughly 14 seconds per GB
-                        // Use a slightly lower estimate to avoid over-waiting
-                        int secondsPerGB = 12;
-                        int waitSeconds = (int)(sizeInGB * secondsPerGB);
-
-                        // Cap the wait at 30 minutes (1800 seconds)
-                        waitSeconds = Math.Min(waitSeconds, 1800);
-
-                        // But ensure at least 30 seconds for any large file
-                        waitSeconds = Math.Max(waitSeconds, 30);
-
-                        await Task.Delay(2000); // Show estimate for 2 seconds
-                        progressWindow.UpdateStatus($"Waiting for 1fichier to scan the file...");
-
-                        // Wait the calculated time
-                        await Task.Delay(waitSeconds * 1000);
-                    }
-                    else
-                    {
-                        // Small files just need a short wait
-                        await Task.Delay(3000);
-                    }
-
-                    // Convert the 1fichier link to pydrive
-                    string convertedLink = null;
-                    string oneFichierUrl = result.DownloadUrl;
-                    bool retryConversion = true;
-
-                    while (retryConversion)
-                    {
-                        progressWindow.UpdateStatus($"Converting link...");
-
-                        try
-                        {
-                            convertedLink = await Convert1FichierLink(oneFichierUrl, progressWindow);
-                            System.Diagnostics.Debug.WriteLine($"[UPLOAD] Conversion result: {convertedLink ?? "NULL"}");
-
-                            // If conversion succeeded, we're done
-                            if (!string.IsNullOrEmpty(convertedLink) && convertedLink != oneFichierUrl)
-                            {
-                                retryConversion = false;
-
-                                if (progressWindow != null && progressWindow.IsHandleCreated)
-                                {
-                                    progressWindow.Invoke(new Action(() =>
-                                    {
-                                        progressWindow.lblStatus.Text = "Conversion complete!";
-                                        progressWindow.lblStatus.ForeColor = Color.Lime;
-                                    }));
-                                }
-                                await Task.Delay(1000);
-                                progressWindow.Close();
-
-                                System.Diagnostics.Debug.WriteLine($"[UPLOAD] Returning converted URL: {convertedLink}");
-                                return convertedLink;
-                            }
-                        }
-                        catch (Exception convEx)
-                        {
-                            System.Diagnostics.Debug.WriteLine($"[UPLOAD] Conversion FAILED: {convEx.Message}");
-                            System.Diagnostics.Debug.WriteLine($"[UPLOAD] Conversion stack trace: {convEx.StackTrace}");
-                        }
-
-                        // Check if user cancelled during conversion
-                        if (progressWindow.WasCancelled)
-                        {
-                            // Show retry options with the 1fichier link
-                            var dialogResult = progressWindow.ShowDialog();
-
-                            if (dialogResult == DialogResult.Retry)
-                            {
-                                // User wants to retry conversion - create new window with same game name
-                                string gameNameForRetry = progressWindow.GameName;
-                                progressWindow = new RGBProgressWindow(gameNameForRetry, "Converting");
-                                progressWindow.OneFichierUrl = oneFichierUrl;
-                                progressWindow.TopMost = this.TopMost;
-                                progressWindow.Show(this);
-                                progressWindow.CenterOverParent(this);
-                                retryConversion = true;
-                                continue;
-                            }
-                            else
-                            {
-                                // User chose to close or copy link - return 1fichier URL
-                                System.Diagnostics.Debug.WriteLine($"[UPLOAD] User cancelled conversion, returning 1fichier URL: {oneFichierUrl}");
-                                return oneFichierUrl;
-                            }
-                        }
-                        else
-                        {
-                            // Conversion failed but not cancelled - return 1fichier URL
-                            retryConversion = false;
-                            progressWindow.Close();
-                            System.Diagnostics.Debug.WriteLine($"[UPLOAD] Conversion failed, returning 1fichier URL: {oneFichierUrl}");
-                            return oneFichierUrl;
-                        }
-                    }
-
-                    // Shouldn't reach here, but just in case
-                    string finalUrl = convertedLink ?? oneFichierUrl;
-                    System.Diagnostics.Debug.WriteLine($"[UPLOAD] Returning final URL: {finalUrl}");
-                    return finalUrl;
+                    // Return the 1fichier URL - the calling code will show modal with conversion logic
+                    return result.DownloadUrl;
                 }
                 else
                 {
@@ -1474,12 +1581,6 @@ namespace SteamAppIdIdentifier
             return oneFichierUrl;
         }
 
-
-        private void PulseTimer_Tick(object sender, EventArgs e)
-        {
-            // Timer tick implementation if needed
-        }
-
         private void GamesGrid_CellFormatting(object sender, DataGridViewCellFormattingEventArgs e)
         {
             // Format both button columns and text columns
@@ -1518,7 +1619,7 @@ namespace SteamAppIdIdentifier
             _ = LoadGames();
         }
 
-        private void ShowUploadSuccess(string url, string gameName, bool cracked)
+        private async void ShowUploadSuccessWithConvert(string url, string gameName, bool cracked, bool isOneFichier, long fileSize)
         {
             // Auto-copy link to clipboard immediately
             Clipboard.SetText(url);
@@ -1526,12 +1627,12 @@ namespace SteamAppIdIdentifier
             var successForm = new Form
             {
                 Text = "Upload Complete!",
-                Size = new Size(500, 250),
+                Size = new Size(500, 270),
                 StartPosition = FormStartPosition.CenterParent,
-                FormBorderStyle = FormBorderStyle.None,  // Remove title bar
+                FormBorderStyle = FormBorderStyle.None,
                 BackColor = Color.FromArgb(5, 8, 20),
                 ForeColor = Color.White,
-                ShowInTaskbar = false  // Don't show in taskbar
+                ShowInTaskbar = false
             };
 
             // Apply acrylic effect and rounded corners
@@ -1546,9 +1647,10 @@ namespace SteamAppIdIdentifier
             // Click off to close
             successForm.Deactivate += (s, e) => successForm.Close();
 
+            string linkType = isOneFichier ? "1fichier" : "PyDrive";
             var lblSuccess = new Label
             {
-                Text = $"✅ {gameName} ({(cracked ? "Cracked" : "Clean")}) uploaded successfully!\n\nLink copied to clipboard!",
+                Text = $"✅ {gameName} ({(cracked ? "Cracked" : "Clean")}) uploaded successfully!\n\n{linkType} link copied to clipboard!",
                 Font = new Font("Segoe UI", 11, FontStyle.Bold),
                 ForeColor = Color.FromArgb(100, 255, 150),
                 Location = new Point(20, 20),
@@ -1569,11 +1671,47 @@ namespace SteamAppIdIdentifier
                 TextAlign = HorizontalAlignment.Center
             };
 
+            // Countdown label for 1fichier links
+            Label lblCountdown = null;
+            Timer countdownTimer = null;
+            int secondsRemaining = 0;
+            bool isConverting = false;
+
+            if (isOneFichier)
+            {
+                // Calculate initial wait time based on file size
+                if (fileSize > 5L * 1024 * 1024 * 1024) // 5GB+
+                {
+                    long sizeInGB = fileSize / (1024 * 1024 * 1024);
+                    secondsRemaining = (int)(sizeInGB * 12); // 12 seconds per GB
+                    secondsRemaining = Math.Min(secondsRemaining, 1800); // Cap at 30 minutes
+                    secondsRemaining = Math.Max(secondsRemaining, 30); // At least 30 seconds
+                }
+                else
+                {
+                    secondsRemaining = 3; // Small files
+                }
+
+                string reason = fileSize > 5L * 1024 * 1024 * 1024
+                    ? $"Waiting for 1fichier to scan the {fileSize / (1024 * 1024 * 1024)}GB file... "
+                    : "Waiting for 1fichier to process... ";
+
+                lblCountdown = new Label
+                {
+                    Text = $"{reason}Auto-converting in {secondsRemaining}s",
+                    Location = new Point(20, 125),
+                    Size = new Size(460, 20),
+                    ForeColor = Color.FromArgb(200, 200, 100),
+                    Font = new Font("Segoe UI", 9),
+                    TextAlign = ContentAlignment.MiddleCenter
+                };
+            }
+
             var btnCopy = new Button
             {
                 Text = "📋 Copy Link",
-                Location = new Point(100, 140),
-                Size = new Size(140, 40),
+                Location = new Point(isOneFichier ? 50 : 100, 160),
+                Size = new Size(120, 40),
                 BackColor = Color.FromArgb(0, 80, 120),
                 ForeColor = Color.White,
                 FlatStyle = FlatStyle.Flat,
@@ -1582,26 +1720,142 @@ namespace SteamAppIdIdentifier
             btnCopy.FlatAppearance.BorderColor = Color.FromArgb(100, 200, 255);
             btnCopy.Click += (s, e) =>
             {
-                Clipboard.SetText(url);
+                Clipboard.SetText(txtUrl.Text);
                 btnCopy.Text = "✓ Copied!";
                 btnCopy.BackColor = Color.FromArgb(0, 100, 0);
             };
 
+            // Conversion logic (shared between auto-convert and manual Convert button)
+            Func<Task> attemptConversion = async () =>
+            {
+                if (isConverting) return;
+                isConverting = true;
+
+                countdownTimer?.Stop();
+                if (lblCountdown != null) lblCountdown.Text = "Converting...";
+                Button convertBtn = successForm.Controls.OfType<Button>().FirstOrDefault(b => b.Text.Contains("Convert") || b.Text.Contains("Converting"));
+                if (convertBtn != null)
+                {
+                    convertBtn.Enabled = false;
+                    convertBtn.Text = "Converting...";
+                }
+
+                try
+                {
+                    string convertedUrl = await Convert1FichierLink(url, null);
+
+                    if (!string.IsNullOrEmpty(convertedUrl))
+                    {
+                        // Success! Update the modal
+                        txtUrl.Text = convertedUrl;
+                        Clipboard.SetText(convertedUrl);
+                        lblSuccess.Text = $"✅ {gameName} ({(cracked ? "Cracked" : "Clean")}) uploaded successfully!\n\nPyDrive link copied to clipboard!";
+                        if (lblCountdown != null) lblCountdown.Visible = false;
+                        if (convertBtn != null) convertBtn.Visible = false;
+                        var copyBtn = successForm.Controls.OfType<Button>().FirstOrDefault(b => b.Text.Contains("Copy"));
+                        if (copyBtn != null)
+                        {
+                            copyBtn.Location = new Point(100, 160);
+                            copyBtn.Size = new Size(140, 40);
+                        }
+                        var closeBtn = successForm.Controls.OfType<Button>().FirstOrDefault(b => b.Text.Contains("Close"));
+                        if (closeBtn != null) closeBtn.Location = new Point(260, 160);
+                    }
+                    else
+                    {
+                        // Failed - setup retry
+                        if (lblCountdown != null) lblCountdown.Text = "Trying again in 30s...";
+                        if (convertBtn != null)
+                        {
+                            convertBtn.Text = "🔗 Convert";
+                            convertBtn.Enabled = true;
+                        }
+                        secondsRemaining = 30;
+                        countdownTimer?.Start();
+                    }
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[CONVERT] Error: {ex.Message}");
+                    // Failed - setup retry
+                    if (lblCountdown != null) lblCountdown.Text = "Trying again in 30s...";
+                    if (convertBtn != null)
+                    {
+                        convertBtn.Text = "🔗 Convert";
+                        convertBtn.Enabled = true;
+                    }
+                    secondsRemaining = 30;
+                    countdownTimer?.Start();
+                }
+
+                isConverting = false;
+            };
+
+            Button btnConvert = null;
+            if (isOneFichier)
+            {
+                btnConvert = new Button
+                {
+                    Text = "🔗 Convert",
+                    Location = new Point(190, 160),
+                    Size = new Size(120, 40),
+                    BackColor = Color.FromArgb(80, 40, 0),
+                    ForeColor = Color.White,
+                    FlatStyle = FlatStyle.Flat,
+                    Font = new Font("Segoe UI", 10, FontStyle.Bold)
+                };
+                btnConvert.FlatAppearance.BorderColor = Color.FromArgb(255, 150, 50);
+                btnConvert.Click += async (s, e) => await attemptConversion();
+
+                // Create countdown timer
+                countdownTimer = new Timer { Interval = 1000 };
+                countdownTimer.Tick += async (s, e) =>
+                {
+                    secondsRemaining--;
+                    if (secondsRemaining > 0)
+                    {
+                        string reason = fileSize > 5L * 1024 * 1024 * 1024 && !lblCountdown.Text.Contains("Trying")
+                            ? $"Waiting for 1fichier to scan the {fileSize / (1024 * 1024 * 1024)}GB file... "
+                            : lblCountdown.Text.Contains("Trying") ? "" : "Waiting for 1fichier to process... ";
+                        string action = lblCountdown.Text.Contains("Trying") ? "Trying again" : "Auto-converting";
+                        lblCountdown.Text = $"{reason}{action} in {secondsRemaining}s";
+                    }
+                    else
+                    {
+                        await attemptConversion();
+                    }
+                };
+                countdownTimer.Start();
+            }
+
             var btnClose = new Button
             {
                 Text = "✓ Close",
-                Location = new Point(260, 140),
-                Size = new Size(140, 40),
+                Location = new Point(isOneFichier ? 330 : 260, 160),
+                Size = new Size(120, 40),
                 BackColor = Color.FromArgb(0, 100, 0),
                 ForeColor = Color.White,
                 FlatStyle = FlatStyle.Flat,
                 Font = new Font("Segoe UI", 10, FontStyle.Bold)
             };
             btnClose.FlatAppearance.BorderColor = Color.FromArgb(100, 255, 150);
-            btnClose.Click += (s, e) => successForm.Close();
+            btnClose.Click += (s, e) => {
+                countdownTimer?.Stop();
+                successForm.Close();
+            };
 
-            successForm.Controls.AddRange(new Control[] { lblSuccess, txtUrl, btnCopy, btnClose });
+            // Add controls to form
+            if (btnConvert != null && lblCountdown != null)
+                successForm.Controls.AddRange(new Control[] { lblSuccess, txtUrl, lblCountdown, btnCopy, btnConvert, btnClose });
+            else
+                successForm.Controls.AddRange(new Control[] { lblSuccess, txtUrl, btnCopy, btnClose });
+
             successForm.ShowDialog(this);
+        }
+
+        private void ShowUploadSuccess(string url, string gameName, bool cracked)
+        {
+            ShowUploadSuccessWithConvert(url, gameName, cracked, url.Contains("1fichier.com"), 0);
         }
 
 
@@ -1631,40 +1885,50 @@ namespace SteamAppIdIdentifier
 
         private List<string> GetSteamLibraryPaths()
         {
-            var paths = new List<string>();
+            var paths = new HashSet<string>(); // Use HashSet to avoid duplicates
 
-            // Common Steam locations
-            var commonPaths = new[]
+            // Get ALL drives on the system
+            var drives = DriveInfo.GetDrives()
+                .Where(d => d.IsReady && d.DriveType == DriveType.Fixed)
+                .Select(d => d.RootDirectory.FullName);
+
+            // Check common Steam locations on ALL drives
+            foreach (var drive in drives)
             {
-                @"C:\Program Files (x86)\Steam\steamapps",
-                @"C:\Program Files\Steam\steamapps",
-                @"D:\Steam\steamapps",
-                @"D:\SteamLibrary\steamapps",
-                @"E:\Steam\steamapps",
-                @"E:\SteamLibrary\steamapps"
-            };
-
-            paths.AddRange(commonPaths.Where(Directory.Exists));
-
-            // Check for additional libraries from libraryfolders.vdf
-            var mainSteamPath = commonPaths.FirstOrDefault(Directory.Exists);
-            if (mainSteamPath != null)
-            {
-                var vdfPath = Path.Combine(mainSteamPath, "libraryfolders.vdf");
-                if (File.Exists(vdfPath))
+                var potentialPaths = new[]
                 {
-                    var vdfContent = File.ReadAllText(vdfPath);
-                    var pathMatches = System.Text.RegularExpressions.Regex.Matches(vdfContent, @"""path""\s+""([^""]+)""");
-                    foreach (System.Text.RegularExpressions.Match match in pathMatches)
+                    Path.Combine(drive, "Program Files (x86)", "Steam", "steamapps"),
+                    Path.Combine(drive, "Program Files", "Steam", "steamapps"),
+                    Path.Combine(drive, "Steam", "steamapps"),
+                    Path.Combine(drive, "SteamLibrary", "steamapps"),
+                    Path.Combine(drive, "Games", "Steam", "steamapps"),
+                    Path.Combine(drive, "Games", "SteamLibrary", "steamapps")
+                };
+
+                foreach (var path in potentialPaths)
+                {
+                    if (Directory.Exists(path))
                     {
-                        var libPath = Path.Combine(match.Groups[1].Value.Replace(@"\\", @"\"), "steamapps");
-                        if (Directory.Exists(libPath) && !paths.Contains(libPath))
-                            paths.Add(libPath);
+                        paths.Add(path);
+
+                        // Found a Steam install, check for libraryfolders.vdf
+                        var vdfPath = Path.Combine(path, "libraryfolders.vdf");
+                        if (File.Exists(vdfPath))
+                        {
+                            var vdfContent = File.ReadAllText(vdfPath);
+                            var pathMatches = System.Text.RegularExpressions.Regex.Matches(vdfContent, @"""path""\s+""([^""]+)""");
+                            foreach (System.Text.RegularExpressions.Match match in pathMatches)
+                            {
+                                var libPath = Path.Combine(match.Groups[1].Value.Replace(@"\\", @"\"), "steamapps");
+                                if (Directory.Exists(libPath))
+                                    paths.Add(libPath);
+                            }
+                        }
                     }
                 }
             }
 
-            return paths;
+            return paths.ToList();
         }
 
         private SteamGame ParseManifest(string manifestPath)
@@ -1677,6 +1941,7 @@ namespace SteamAppIdIdentifier
                 var nameMatch = System.Text.RegularExpressions.Regex.Match(content, @"""name""\s+""([^""]+)""");
                 var buildIdMatch = System.Text.RegularExpressions.Regex.Match(content, @"""buildid""\s+""([^""]+)""");
                 var installDirMatch = System.Text.RegularExpressions.Regex.Match(content, @"""installdir""\s+""([^""]+)""");
+                var lastUpdatedMatch = System.Text.RegularExpressions.Regex.Match(content, @"""LastUpdated""\s+""(\d+)""");
 
                 if (!appIdMatch.Success || !nameMatch.Success) return null;
 
@@ -1684,12 +1949,19 @@ namespace SteamAppIdIdentifier
                 var installDir = installDirMatch.Success ?
                     Path.Combine(steamPath, "common", installDirMatch.Groups[1].Value) : "";
 
+                long lastUpdated = 0;
+                if (lastUpdatedMatch.Success)
+                {
+                    long.TryParse(lastUpdatedMatch.Groups[1].Value, out lastUpdated);
+                }
+
                 return new SteamGame
                 {
                     AppId = appIdMatch.Groups[1].Value,
                     Name = nameMatch.Groups[1].Value,
                     BuildId = buildIdMatch.Success ? buildIdMatch.Groups[1].Value : "Unknown",
-                    InstallDir = installDir
+                    InstallDir = installDir,
+                    LastUpdated = lastUpdated
                 };
             }
             catch
@@ -1704,14 +1976,9 @@ namespace SteamAppIdIdentifier
             public string Name { get; set; }
             public string InstallDir { get; set; }
             public string BuildId { get; set; }
+            public long LastUpdated { get; set; }
         }
 
-        private void lblHeader_Click(object sender, EventArgs e)
-        {
-
-        }
-
-        // Custom title bar drag functionality
         private Point mouseDownPoint = Point.Empty;
 
         private void DataGrid_MouseDown(object sender, MouseEventArgs e)
@@ -1775,6 +2042,327 @@ namespace SteamAppIdIdentifier
             this.WindowState = FormWindowState.Minimized;
         }
 
+        private async void BtnCustomPath_Click(object sender, EventArgs e)
+        {
+            // Create folder browser dialog
+            using (var folderDialog = new FolderBrowserDialog())
+            {
+                folderDialog.Description = "Select a folder to scan for Steam games (will search for .acf files)";
+                folderDialog.ShowNewFolderButton = false;
+
+                if (folderDialog.ShowDialog() == DialogResult.OK)
+                {
+                    string selectedPath = folderDialog.SelectedPath;
+
+                    // Show progress
+                    lblStatus.Text = "Scanning for games...";
+                    lblStatus.Visible = true;
+                    progressBar.Visible = true;
+                    progressBar.Style = ProgressBarStyle.Marquee;
+
+                    await Task.Run(() =>
+                    {
+                        // Search for .acf files recursively
+                        var acfFiles = Directory.GetFiles(selectedPath, "appmanifest_*.acf", SearchOption.AllDirectories);
+
+                        System.Diagnostics.Debug.WriteLine($"[CUSTOM PATH] Scanning: {selectedPath}");
+                        System.Diagnostics.Debug.WriteLine($"[CUSTOM PATH] Found {acfFiles.Length} ACF files");
+
+                        // Show visible status
+                        this.Invoke(new Action(() =>
+                        {
+                            lblStatus.Text = $"Found {acfFiles.Length} ACF file(s) in {selectedPath}";
+                        }));
+
+                        if (acfFiles.Length > 0)
+                        {
+                            this.Invoke(new Action(() =>
+                            {
+                                lblStatus.Text = $"Found {acfFiles.Length} game manifest(s)";
+                            }));
+
+                            foreach (var acfFile in acfFiles)
+                            {
+                                try
+                                {
+                                    // Parse the ACF file
+                                    string content = File.ReadAllText(acfFile);
+                                    var manifest = ParseAcfFile(content);
+
+                                    if (manifest.ContainsKey("appid") && manifest.ContainsKey("name") && manifest.ContainsKey("installdir"))
+                                    {
+                                        string appId = manifest["appid"];
+                                        string gameName = manifest["name"];
+                                        string installDir = manifest["installdir"];
+
+                                        // ACF file directory (where the manifest is)
+                                        string acfDirectory = Path.GetDirectoryName(acfFile);
+                                        string gamePath = null;
+
+                                        System.Diagnostics.Debug.WriteLine($"[CUSTOM PATH] ACF: {acfFile}");
+                                        System.Diagnostics.Debug.WriteLine($"[CUSTOM PATH] InstallDir from ACF: {installDir}");
+                                        System.Diagnostics.Debug.WriteLine($"[CUSTOM PATH] ACF Directory: {acfDirectory}");
+
+                                        // Check 1: In common/ subfolder (standard Steam layout)
+                                        string inCommon = Path.Combine(acfDirectory, "common", installDir);
+                                        System.Diagnostics.Debug.WriteLine($"[CUSTOM PATH] Checking: {inCommon}");
+                                        if (Directory.Exists(inCommon))
+                                        {
+                                            gamePath = inCommon;
+                                            System.Diagnostics.Debug.WriteLine($"[CUSTOM PATH] ✓ Found in common/");
+                                        }
+                                        // Check 2: Next to ACF file (extracted/portable games)
+                                        else
+                                        {
+                                            string nextToAcf = Path.Combine(acfDirectory, installDir);
+                                            System.Diagnostics.Debug.WriteLine($"[CUSTOM PATH] Checking: {nextToAcf}");
+                                            if (Directory.Exists(nextToAcf))
+                                            {
+                                                gamePath = nextToAcf;
+                                                System.Diagnostics.Debug.WriteLine($"[CUSTOM PATH] ✓ Found next to ACF");
+                                            }
+                                            else
+                                            {
+                                                System.Diagnostics.Debug.WriteLine($"[CUSTOM PATH] ✗ Game folder not found!");
+                                            }
+                                        }
+
+                                        if (gamePath != null)
+                                        {
+                                            // Add to grid if not already present
+                                            this.Invoke(new Action(() =>
+                                            {
+                                                // Check if game already in grid
+                                                bool exists = false;
+                                                foreach (DataGridViewRow existingRow in gamesGrid.Rows)
+                                                {
+                                                    if (existingRow.Cells["AppID"].Value?.ToString() == appId)
+                                                    {
+                                                        exists = true;
+                                                        break;
+                                                    }
+                                                }
+
+                                                if (exists)
+                                                {
+                                                    System.Diagnostics.Debug.WriteLine($"[CUSTOM PATH] Skipping {gameName} - already in list");
+                                                }
+
+                                                if (!exists)
+                                                {
+                                                    var row = gamesGrid.Rows[gamesGrid.Rows.Add()];
+                                                    row.Cells["GameName"].Value = gameName + " [Custom]";
+                                                    row.Cells["AppID"].Value = appId;
+                                                    row.Cells["InstallPath"].Value = gamePath;
+                                                    row.Cells["BuildID"].Value = manifest.ContainsKey("buildid") ? manifest["buildid"] : "Unknown";
+
+                                                    // Get size from ACF file directly
+                                                    if (manifest.ContainsKey("SizeOnDisk"))
+                                                    {
+                                                        if (long.TryParse(manifest["SizeOnDisk"], out long sizeBytes))
+                                                        {
+                                                            row.Cells["GameSize"].Value = FormatSize(sizeBytes);
+                                                            row.Cells["GameSize"].Tag = sizeBytes;
+                                                        }
+                                                        else
+                                                        {
+                                                            row.Cells["GameSize"].Value = "Unknown";
+                                                        }
+                                                    }
+                                                    else
+                                                    {
+                                                        row.Cells["GameSize"].Value = "Unknown";
+                                                    }
+
+                                                    // Set button values
+                                                    row.Cells["CrackOnly"].Value = "⚡ Crack";
+                                                    row.Cells["ShareClean"].Value = "📦 Clean";
+                                                    row.Cells["ShareCracked"].Value = "🎮 Cracked";
+
+                                                    // Mark as custom path game with different color
+                                                    row.DefaultCellStyle.ForeColor = Color.FromArgb(150, 200, 255);
+                                                }
+                                            }));
+                                        }
+                                    }
+                                }
+                                catch (Exception ex)
+                                {
+                                    System.Diagnostics.Debug.WriteLine($"[CUSTOM PATH] Error parsing {acfFile}: {ex.Message}");
+                                }
+                            }
+                        }
+                        else
+                        {
+                            // No ACF files found - scan for game folders anyway
+                            this.Invoke(new Action(() =>
+                            {
+                                lblStatus.Text = "No Steam manifests found, scanning for game folders...";
+                            }));
+
+                            // Look for common game indicators (exe files, steam_api.dll, etc)
+                            var exeFiles = Directory.GetFiles(selectedPath, "*.exe", SearchOption.AllDirectories);
+                            var potentialGames = new HashSet<string>();
+
+                            foreach (var exe in exeFiles)
+                            {
+                                var dir = Path.GetDirectoryName(exe);
+                                // Check if this directory has steam_api.dll or steam_api64.dll
+                                if (File.Exists(Path.Combine(dir, "steam_api.dll")) ||
+                                    File.Exists(Path.Combine(dir, "steam_api64.dll")))
+                                {
+                                    potentialGames.Add(dir);
+                                }
+                            }
+
+                            foreach (var gameDir in potentialGames)
+                            {
+                                this.Invoke(new Action(() =>
+                                {
+                                    var gameName = Path.GetFileName(gameDir);
+                                    var row = gamesGrid.Rows[gamesGrid.Rows.Add()];
+                                    row.Cells["GameName"].Value = gameName + " [Unknown]";
+                                    row.Cells["AppID"].Value = "Manual";
+                                    row.Cells["InstallPath"].Value = gameDir;
+                                    row.Cells["BuildID"].Value = "Unknown";
+                                    row.Cells["GameSize"].Value = "...";
+
+                                    // Set button values - only crack available for unknown games
+                                    row.Cells["CrackOnly"].Value = "⚡ Crack";
+                                    row.Cells["ShareClean"].Value = "❌ No ID";
+                                    row.Cells["ShareCracked"].Value = "❌ No ID";
+
+                                    // Mark as unknown game with different color
+                                    row.DefaultCellStyle.ForeColor = Color.FromArgb(255, 200, 100);
+
+                                    // Calculate size since we don't have ACF
+                                    int rowIndex = row.Index;
+                                    string gamePath = gameDir;
+                                    _ = Task.Run(() =>
+                                    {
+                                        long size = GetDirectorySize(gamePath);
+                                        this.Invoke(new Action(() =>
+                                        {
+                                            if (rowIndex < gamesGrid.Rows.Count)
+                                            {
+                                                gamesGrid.Rows[rowIndex].Cells["GameSize"].Value = FormatSize(size);
+                                                gamesGrid.Rows[rowIndex].Cells["GameSize"].Tag = size;
+                                            }
+                                        }));
+                                    });
+                                }));
+                            }
+                        }
+                    });
+
+                    // Hide progress
+                    lblStatus.Visible = false;
+                    progressBar.Visible = false;
+                    progressBar.Style = ProgressBarStyle.Blocks;
+                }
+            }
+        }
+
+        // Helper method to parse ACF files (if not in SteamManifestParser)
+        private static Dictionary<string, string> ParseAcfFile(string content)
+        {
+            var result = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            var keyValuePattern = @"""(\w+)""\s+""([^""]*)""";
+            var matches = System.Text.RegularExpressions.Regex.Matches(content, keyValuePattern);
+
+            foreach (System.Text.RegularExpressions.Match match in matches)
+            {
+                if (match.Groups.Count == 3)
+                {
+                    string key = match.Groups[1].Value;
+                    string value = match.Groups[2].Value;
+                    if (!result.ContainsKey(key))
+                    {
+                        result[key] = value;
+                    }
+                }
+            }
+            return result;
+        }
+
+        private List<(string depotId, string manifestId)> ParseInstalledDepots(string acfContent)
+        {
+            var depots = new List<(string, string)>();
+
+            var depotPattern = @"""InstalledDepots"".*?\{(.*?)\n\t\}";
+            var depotMatch = System.Text.RegularExpressions.Regex.Match(acfContent, depotPattern, System.Text.RegularExpressions.RegexOptions.Singleline);
+
+            if (depotMatch.Success)
+            {
+                var depotSection = depotMatch.Groups[1].Value;
+                var depotIdPattern = @"""(\d+)""\s*\{";
+                var manifestPattern = @"""manifest""\s+""(\d+)""";
+
+                var depotIds = System.Text.RegularExpressions.Regex.Matches(depotSection, depotIdPattern);
+                var manifestIds = System.Text.RegularExpressions.Regex.Matches(depotSection, manifestPattern);
+
+                for (int i = 0; i < Math.Min(depotIds.Count, manifestIds.Count); i++)
+                {
+                    depots.Add((depotIds[i].Groups[1].Value, manifestIds[i].Groups[1].Value));
+                }
+            }
+
+            return depots;
+        }
+
+        private List<string> FindDepotManifests(string appId, List<(string depotId, string manifestId)> depots)
+        {
+            var manifestFiles = new List<string>();
+
+            var steamPaths = GetSteamLibraryPaths();
+
+            foreach (var steamPath in steamPaths)
+            {
+                var depotcachePath = Path.Combine(Path.GetDirectoryName(steamPath), "depotcache");
+                if (Directory.Exists(depotcachePath))
+                {
+                    foreach (var (depotId, manifestId) in depots)
+                    {
+                        var manifestFile = Path.Combine(depotcachePath, $"{depotId}_{manifestId}.manifest");
+                        if (File.Exists(manifestFile))
+                        {
+                            manifestFiles.Add(manifestFile);
+                            System.Diagnostics.Debug.WriteLine($"[DEPOT] Found manifest: {manifestFile}");
+                        }
+                    }
+                }
+            }
+
+            return manifestFiles;
+        }
+
+        // Helper method to get directory size
+        private long GetDirectorySize(string path)
+        {
+            try
+            {
+                DirectoryInfo dir = new DirectoryInfo(path);
+                return dir.EnumerateFiles("*", SearchOption.AllDirectories).Sum(file => file.Length);
+            }
+            catch
+            {
+                return 0;
+            }
+        }
+
+        // Helper method to format file size
+        private string FormatSize(long bytes)
+        {
+            if (bytes >= 1073741824)
+                return $"{bytes / 1073741824.0:F1} GB";
+            else if (bytes >= 1048576)
+                return $"{bytes / 1048576.0:F1} MB";
+            else if (bytes >= 1024)
+                return $"{bytes / 1024.0:F1} KB";
+            else
+                return $"{bytes} B";
+        }
+
         private void gamesGrid_CellContentClick(object sender, DataGridViewCellEventArgs e)
         {
 
@@ -1785,9 +2373,49 @@ namespace SteamAppIdIdentifier
             if (e.RowIndex >= 0 && e.ColumnIndex >= 0)
             {
                 var colName = gamesGrid.Columns[e.ColumnIndex].Name;
-                if (colName == "ShareClean" || colName == "ShareCracked")
+
+                // Set cursor for clickable cells
+                if (colName == "ShareClean" || colName == "ShareCracked" || colName == "CrackOnly")
                 {
                     gamesGrid.Cursor = Cursors.Hand;
+                }
+            }
+            // Show tooltips only on column headers (row index -1)
+            else if (e.RowIndex == -1 && e.ColumnIndex >= 0)
+            {
+                var colName = gamesGrid.Columns[e.ColumnIndex].Name;
+                string tooltipText = "";
+                switch (colName)
+                {
+                    case "GameName":
+                        tooltipText = "Game name";
+                        break;
+                    case "InstallPath":
+                        tooltipText = "Full path where the game is installed";
+                        break;
+                    case "GameSize":
+                        tooltipText = "Total size of the game installation";
+                        break;
+                    case "BuildID":
+                        tooltipText = "Steam build ID version";
+                        break;
+                    case "AppID":
+                        tooltipText = "Steam Application ID";
+                        break;
+                    case "CrackOnly":
+                        tooltipText = "Click to crack this game (generates crack files only)";
+                        break;
+                    case "ShareClean":
+                        tooltipText = "Click to share the clean game (original Steam version)";
+                        break;
+                    case "ShareCracked":
+                        tooltipText = "Click to share the cracked game (includes emulator)";
+                        break;
+                }
+
+                if (!string.IsNullOrEmpty(tooltipText))
+                {
+                    toolTip.SetToolTip(gamesGrid, tooltipText);
                 }
             }
         }
@@ -1907,6 +2535,15 @@ namespace SteamAppIdIdentifier
     // RGB Progress Window
     public class RGBProgressWindow : Form
     {
+        [System.Runtime.InteropServices.DllImport("user32.dll")]
+        private static extern bool ReleaseCapture();
+
+        [System.Runtime.InteropServices.DllImport("user32.dll")]
+        private static extern int SendMessage(IntPtr hWnd, int Msg, int wParam, int lParam);
+
+        private const int WM_NCLBUTTONDOWN = 0xA1;
+        private const int HTCAPTION = 0x2;
+
         internal ProgressBar progressBar;
         internal Label lblStatus;
         private Timer rgbTimer;
@@ -1922,14 +2559,14 @@ namespace SteamAppIdIdentifier
         private long currentFileSize = 0;
         public string OneFichierUrl { get; set; }
         public string GameName { get; private set; }
-        private Button btnCopyLink;
-        private Button btnRetry;
-        private Button btnClose;
 
         public RGBProgressWindow(string gameName, string type)
         {
             GameName = gameName;
             InitializeWindow(gameName, type);
+
+            // Enable dragging the form
+            this.MouseDown += RGBProgressWindow_MouseDown;
         }
 
         public void CenterOverParent(Form parent)
@@ -1989,7 +2626,10 @@ namespace SteamAppIdIdentifier
                 Location = new Point(25, 110),
                 Size = new Size(450, 30),
                 Style = ProgressBarStyle.Continuous,
-                BackColor = Color.FromArgb(15, 15, 15)
+                BackColor = Color.FromArgb(15, 15, 15),
+                Value = 0,
+                Minimum = 0,
+                Maximum = 100
             };
 
             btnCancel = new Button
@@ -2005,80 +2645,15 @@ namespace SteamAppIdIdentifier
             btnCancel.Click += (s, e) =>
             {
                 WasCancelled = true;
-
-                // If we have a 1fichier URL, show options
-                if (!string.IsNullOrEmpty(OneFichierUrl))
-                {
-                    ShowCancelOptions();
-                }
-                else
-                {
-                    lblStatus.Text = "Cancelled by user";
-                    lblStatus.ForeColor = Color.Orange;
-                    btnCancel.Enabled = false;
-                    rgbTimer?.Stop();
-                    scrollTimer?.Stop();
-                    this.Close();
-                }
-            };
-
-            // Create additional buttons (hidden initially)
-            btnCopyLink = new Button
-            {
-                Text = "📋 Copy Link",
-                Location = new Point(50, 165),
-                Size = new Size(100, 30),
-                BackColor = Color.FromArgb(40, 40, 40),
-                ForeColor = Color.White,
-                FlatStyle = FlatStyle.Standard,
-                Font = new Font("Segoe UI", 9),
-                Visible = false
-            };
-            btnCopyLink.Click += (s, e) =>
-            {
-                if (!string.IsNullOrEmpty(OneFichierUrl))
-                {
-                    Clipboard.SetText(OneFichierUrl);
-                    lblStatus.Text = "1fichier link copied to clipboard!";
-                    lblStatus.ForeColor = Color.Lime;
-                }
-            };
-
-            btnRetry = new Button
-            {
-                Text = "🔗 Convert",
-                Location = new Point(200, 165),
-                Size = new Size(100, 30),
-                BackColor = Color.FromArgb(40, 40, 40),
-                ForeColor = Color.White,
-                FlatStyle = FlatStyle.Standard,
-                Font = new Font("Segoe UI", 9),
-                Visible = false
-            };
-            btnRetry.Click += (s, e) =>
-            {
-                // Set flag to retry conversion to direct link
-                this.DialogResult = DialogResult.Retry;
+                lblStatus.Text = "Cancelled by user";
+                lblStatus.ForeColor = Color.Orange;
+                btnCancel.Enabled = false;
+                rgbTimer?.Stop();
+                scrollTimer?.Stop();
                 this.Close();
             };
 
-            btnClose = new Button
-            {
-                Text = "✖ Close",
-                Location = new Point(350, 165),
-                Size = new Size(100, 30),
-                BackColor = Color.FromArgb(40, 40, 40),
-                ForeColor = Color.White,
-                FlatStyle = FlatStyle.Standard,
-                Font = new Font("Segoe UI", 9),
-                Visible = false
-            };
-            btnClose.Click += (s, e) =>
-            {
-                this.Close();
-            };
-
-            this.Controls.AddRange(new Control[] { lblScrollingInfo, lblStatus, progressBar, btnCancel, btnCopyLink, btnRetry, btnClose });
+            this.Controls.AddRange(new Control[] { lblScrollingInfo, lblStatus, progressBar, btnCancel });
 
             // RGB effect
             SetupRGBEffect();
@@ -2247,26 +2822,6 @@ namespace SteamAppIdIdentifier
             scrollText = $"     Waiting for 1fichier to scan the file...     This will take roughly {remaining} more {minuteText}...{compressionTip}     Cancel anytime to get the 1fichier link...     ";
         }
 
-        private void ShowCancelOptions()
-        {
-            rgbTimer?.Stop();
-            scrollTimer?.Stop();
-
-            // Update status
-            lblStatus.Text = "Upload complete! 1fichier link ready. Convert to get a direct download link.";
-            lblStatus.ForeColor = Color.FromArgb(255, 200, 100); // Orange-yellow
-
-            // Hide progress bar and original cancel button
-            progressBar.Visible = false;
-            btnCancel.Visible = false;
-            lblScrollingInfo.Visible = false;
-
-            // Show the option buttons
-            btnCopyLink.Visible = true;
-            btnRetry.Visible = true;
-            btnClose.Visible = true;
-        }
-
         public void ShowError(string error)
         {
             if (this.IsHandleCreated)
@@ -2278,6 +2833,15 @@ namespace SteamAppIdIdentifier
                     rgbTimer.Stop();
                     this.BackColor = Color.FromArgb(50, 0, 0);
                 }));
+            }
+        }
+
+        private void RGBProgressWindow_MouseDown(object sender, MouseEventArgs e)
+        {
+            if (e.Button == MouseButtons.Left)
+            {
+                ReleaseCapture();
+                SendMessage(this.Handle, WM_NCLBUTTONDOWN, HTCAPTION, 0);
             }
         }
     }

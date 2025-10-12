@@ -1,0 +1,25 @@
+<Project outputDir="bin\Obfuscated" baseDir="bin\Debug\SACGUI">
+  <rule pattern="true" preset="maximum" inherit="false">
+    <!-- Core protections -->
+    <protection id="anti ildasm" />
+    <protection id="anti tamper" />
+    <protection id="constants">
+      <argument name="mode" value="normal" />
+    </protection>
+    <protection id="ctrl flow">
+      <argument name="predicate" value="expression" />
+      <argument name="intensity" value="high" />
+    </protection>
+    <protection id="ref proxy">
+      <argument name="mode" value="strong" />
+      <argument name="encoding" value="expression" />
+      <argument name="intensity" value="high" />
+    </protection>
+    <protection id="rename">
+      <argument name="mode" value="decodable" />
+      <argument name="renameArgs" value="true" />
+      <argument name="renPdb" value="false" />
+    </protection>
+  </rule>
+  <module path="SACGUI.exe" />
+</Project>
