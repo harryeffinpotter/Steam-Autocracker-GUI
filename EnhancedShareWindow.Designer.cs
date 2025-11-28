@@ -74,9 +74,10 @@ namespace SteamAppIdIdentifier
             this.mainPanel.Controls.Add(this.titleBar);
             this.mainPanel.Dock = System.Windows.Forms.DockStyle.Fill;
             this.mainPanel.Location = new System.Drawing.Point(0, 0);
+            this.mainPanel.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
             this.mainPanel.Name = "mainPanel";
             this.mainPanel.Padding = new System.Windows.Forms.Padding(1);
-            this.mainPanel.Size = new System.Drawing.Size(1000, 700);
+            this.mainPanel.Size = new System.Drawing.Size(1167, 915);
             this.mainPanel.TabIndex = 0;
             // 
             // gamesGrid
@@ -120,7 +121,8 @@ namespace SteamAppIdIdentifier
             this.gamesGrid.Dock = System.Windows.Forms.DockStyle.Fill;
             this.gamesGrid.EnableHeadersVisualStyles = false;
             this.gamesGrid.GridColor = System.Drawing.Color.FromArgb(((int)(((byte)(30)))), ((int)(((byte)(35)))), ((int)(((byte)(45)))));
-            this.gamesGrid.Location = new System.Drawing.Point(1, 36);
+            this.gamesGrid.Location = new System.Drawing.Point(1, 47);
+            this.gamesGrid.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
             this.gamesGrid.MultiSelect = false;
             this.gamesGrid.Name = "gamesGrid";
             this.gamesGrid.ReadOnly = true;
@@ -137,8 +139,9 @@ namespace SteamAppIdIdentifier
             this.gamesGrid.RowHeadersWidth = 62;
             this.gamesGrid.RowTemplate.Height = 30;
             this.gamesGrid.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
-            this.gamesGrid.Size = new System.Drawing.Size(998, 613);
+            this.gamesGrid.Size = new System.Drawing.Size(1165, 802);
             this.gamesGrid.TabIndex = 1;
+            this.toolTip.SetToolTip(this.gamesGrid, "Click on game rows to perform actions. Click column headers to sort.");
             this.gamesGrid.CellClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.GamesGrid_CellClick);
             this.gamesGrid.CellContentClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.gamesGrid_CellContentClick);
             this.gamesGrid.CellFormatting += new System.Windows.Forms.DataGridViewCellFormattingEventHandler(this.GamesGrid_CellFormatting);
@@ -174,19 +177,19 @@ namespace SteamAppIdIdentifier
             this.BuildID.ReadOnly = true;
             // 
             // AppID
-            //
+            // 
             this.AppID.HeaderText = "AppID";
             this.AppID.MinimumWidth = 8;
             this.AppID.Name = "AppID";
             this.AppID.ReadOnly = true;
-            //
+            // 
             // LastUpdated
-            //
+            // 
             this.LastUpdated.HeaderText = "Last Updated";
             this.LastUpdated.MinimumWidth = 8;
             this.LastUpdated.Name = "LastUpdated";
             this.LastUpdated.ReadOnly = true;
-            //
+            // 
             // CrackOnly
             // 
             this.CrackOnly.HeaderText = "Crack Only";
@@ -214,9 +217,10 @@ namespace SteamAppIdIdentifier
             this.lblStatus.Dock = System.Windows.Forms.DockStyle.Bottom;
             this.lblStatus.Font = new System.Drawing.Font("Segoe UI", 9F);
             this.lblStatus.ForeColor = System.Drawing.Color.Cyan;
-            this.lblStatus.Location = new System.Drawing.Point(1, 649);
+            this.lblStatus.Location = new System.Drawing.Point(1, 849);
+            this.lblStatus.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.lblStatus.Name = "lblStatus";
-            this.lblStatus.Size = new System.Drawing.Size(998, 20);
+            this.lblStatus.Size = new System.Drawing.Size(1165, 26);
             this.lblStatus.TabIndex = 2;
             this.lblStatus.Text = "Ready";
             this.lblStatus.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
@@ -226,9 +230,10 @@ namespace SteamAppIdIdentifier
             // 
             this.progressBar.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(15)))), ((int)(((byte)(15)))), ((int)(((byte)(15)))));
             this.progressBar.Dock = System.Windows.Forms.DockStyle.Bottom;
-            this.progressBar.Location = new System.Drawing.Point(1, 669);
+            this.progressBar.Location = new System.Drawing.Point(1, 875);
+            this.progressBar.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
             this.progressBar.Name = "progressBar";
-            this.progressBar.Size = new System.Drawing.Size(998, 30);
+            this.progressBar.Size = new System.Drawing.Size(1165, 39);
             this.progressBar.TabIndex = 3;
             this.progressBar.Visible = false;
             // 
@@ -241,8 +246,9 @@ namespace SteamAppIdIdentifier
             this.titleBar.Controls.Add(this.btnClose);
             this.titleBar.Dock = System.Windows.Forms.DockStyle.Top;
             this.titleBar.Location = new System.Drawing.Point(1, 1);
+            this.titleBar.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
             this.titleBar.Name = "titleBar";
-            this.titleBar.Size = new System.Drawing.Size(998, 35);
+            this.titleBar.Size = new System.Drawing.Size(1165, 46);
             this.titleBar.TabIndex = 4;
             this.titleBar.MouseDown += new System.Windows.Forms.MouseEventHandler(this.TitleBar_MouseDown);
             // 
@@ -252,7 +258,8 @@ namespace SteamAppIdIdentifier
             this.lblTitle.BackColor = System.Drawing.Color.Transparent;
             this.lblTitle.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Bold);
             this.lblTitle.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(200)))), ((int)(((byte)(200)))), ((int)(((byte)(210)))));
-            this.lblTitle.Location = new System.Drawing.Point(10, 8);
+            this.lblTitle.Location = new System.Drawing.Point(24, 14);
+            this.lblTitle.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.lblTitle.Name = "lblTitle";
             this.lblTitle.Size = new System.Drawing.Size(155, 19);
             this.lblTitle.TabIndex = 0;
@@ -268,11 +275,14 @@ namespace SteamAppIdIdentifier
             this.btnCustomPath.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btnCustomPath.Font = new System.Drawing.Font("Segoe UI", 9F);
             this.btnCustomPath.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(200)))), ((int)(((byte)(200)))), ((int)(((byte)(210)))));
-            this.btnCustomPath.Location = new System.Drawing.Point(171, 5);
+            this.btnCustomPath.Location = new System.Drawing.Point(201, 7);
+            this.btnCustomPath.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
             this.btnCustomPath.Name = "btnCustomPath";
-            this.btnCustomPath.Size = new System.Drawing.Size(105, 25);
+            this.btnCustomPath.Size = new System.Drawing.Size(122, 33);
             this.btnCustomPath.TabIndex = 3;
             this.btnCustomPath.Text = "📁 Custom Path";
+            this.toolTip.SetToolTip(this.btnCustomPath, "Select a custom steam games folder path, must contain .acf manifests and common d" +
+        "irectory.");
             this.btnCustomPath.UseVisualStyleBackColor = false;
             this.btnCustomPath.Click += new System.EventHandler(this.BtnCustomPath_Click);
             // 
@@ -285,11 +295,13 @@ namespace SteamAppIdIdentifier
             this.btnMinimize.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btnMinimize.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Bold);
             this.btnMinimize.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(150)))), ((int)(((byte)(200)))), ((int)(((byte)(255)))));
-            this.btnMinimize.Location = new System.Drawing.Point(923, 0);
+            this.btnMinimize.Location = new System.Drawing.Point(1078, 0);
+            this.btnMinimize.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
             this.btnMinimize.Name = "btnMinimize";
-            this.btnMinimize.Size = new System.Drawing.Size(35, 35);
+            this.btnMinimize.Size = new System.Drawing.Size(41, 46);
             this.btnMinimize.TabIndex = 2;
             this.btnMinimize.Text = "−";
+            this.toolTip.SetToolTip(this.btnMinimize, "Minimize this window");
             this.btnMinimize.UseVisualStyleBackColor = false;
             this.btnMinimize.Click += new System.EventHandler(this.BtnMinimize_Click);
             // 
@@ -302,34 +314,32 @@ namespace SteamAppIdIdentifier
             this.btnClose.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btnClose.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Bold);
             this.btnClose.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(150)))), ((int)(((byte)(200)))), ((int)(((byte)(255)))));
-            this.btnClose.Location = new System.Drawing.Point(963, 0);
+            this.btnClose.Location = new System.Drawing.Point(1125, -3);
+            this.btnClose.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
             this.btnClose.Name = "btnClose";
-            this.btnClose.Size = new System.Drawing.Size(35, 35);
+            this.btnClose.Size = new System.Drawing.Size(41, 46);
             this.btnClose.TabIndex = 1;
             this.btnClose.Text = "✕";
+            this.toolTip.SetToolTip(this.btnClose, "Close this window");
             this.btnClose.UseVisualStyleBackColor = false;
             this.btnClose.Click += new System.EventHandler(this.BtnClose_Click);
-            //
+            // 
             // toolTip
-            //
+            // 
             this.toolTip.AutoPopDelay = 5000;
             this.toolTip.InitialDelay = 500;
             this.toolTip.ReshowDelay = 100;
-            this.toolTip.SetToolTip(this.btnCustomPath, "Select a custom steam games folder path, must contain .acf manifests and common di" +
-        "rectory.");
-            this.toolTip.SetToolTip(this.btnMinimize, "Minimize this window");
-            this.toolTip.SetToolTip(this.btnClose, "Close this window");
-            this.toolTip.SetToolTip(this.gamesGrid, "Click on game rows to perform actions. Click column headers to sort.");
-            //
+            // 
             // EnhancedShareWindow
             // 
-            this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
+            this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 17F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(5)))), ((int)(((byte)(8)))), ((int)(((byte)(15)))));
-            this.ClientSize = new System.Drawing.Size(1000, 700);
+            this.ClientSize = new System.Drawing.Size(1167, 915);
             this.Controls.Add(this.mainPanel);
             this.ForeColor = System.Drawing.Color.White;
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.None;
+            this.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
             this.Name = "EnhancedShareWindow";
             this.ShowInTaskbar = false;
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;

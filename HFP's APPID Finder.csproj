@@ -39,7 +39,7 @@
 		</EmbeddedResource>
 		<Content Include="sac.ico" />
 		<Content Include="FodyWeavers.xml" />
-		<EmbeddedResource Include="_bin\**\*.*">
+		<EmbeddedResource Include="_bin\**\*.*" Exclude="_bin\test_*\**;_bin\steam_settings\**;_bin\*.png">
 			<LogicalName>_bin.%(RecursiveDir)%(Filename)%(Extension)</LogicalName>
 		</EmbeddedResource>
 		<Compile Remove="releases\**" />

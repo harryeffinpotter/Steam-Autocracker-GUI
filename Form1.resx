@@ -122,7 +122,7 @@
     <value>Microsoft Sans Serif, 9.75pt, style=Bold</value>
   </data>
   <data name="searchTextBox.Location" type="System.Drawing.Point, System.Drawing">
-    <value>12, 39</value>
+    <value>12, 41</value>
   </data>
   <assembly alias="System.Windows.Forms" name="System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" />
   <data name="searchTextBox.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
@@ -151,7 +151,7 @@
     <value>29</value>
   </data>
   <data name="dataGridView1.Location" type="System.Drawing.Point, System.Drawing">
-    <value>12, 74</value>
+    <value>12, 79</value>
   </data>
   <data name="dataGridView1.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
     <value>3, 4, 3, 4</value>
@@ -160,7 +160,7 @@
     <value>35</value>
   </data>
   <data name="dataGridView1.Size" type="System.Drawing.Size, System.Drawing">
-    <value>772, 318</value>
+    <value>772, 338</value>
   </data>
   <data name="dataGridView1.TabIndex" type="System.Int32, mscorlib">
     <value>1</value>
@@ -187,13 +187,13 @@
     <value>On</value>
   </data>
   <data name="btnSearch.Location" type="System.Drawing.Point, System.Drawing">
-    <value>688, 39</value>
+    <value>688, 41</value>
   </data>
   <data name="btnSearch.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
     <value>3, 4, 3, 4</value>
   </data>
   <data name="btnSearch.Size" type="System.Drawing.Size, System.Drawing">
-    <value>96, 27</value>
+    <value>96, 29</value>
   </data>
   <data name="btnSearch.TabIndex" type="System.Int32, mscorlib">
     <value>2</value>
@@ -223,7 +223,7 @@
     <value>On</value>
   </data>
   <data name="resinstruccZip.Location" type="System.Drawing.Point, System.Drawing">
-    <value>2, 402</value>
+    <value>2, 427</value>
   </data>
   <data name="resinstruccZip.Size" type="System.Drawing.Size, System.Drawing">
     <value>322, 54</value>
@@ -265,7 +265,7 @@ Enter to select top result.
     <value>On</value>
   </data>
   <data name="tgDisc.Location" type="System.Drawing.Point, System.Drawing">
-    <value>600, 451</value>
+    <value>600, 479</value>
   </data>
   <data name="tgDisc.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
     <value>2, 0, 2, 0</value>
@@ -297,11 +297,14 @@ Enter to select top result.
   <data name="UploadZipButton.FlatStyle" type="System.Windows.Forms.FlatStyle, System.Windows.Forms">
     <value>Flat</value>
   </data>
+  <data name="UploadZipButton.ImeMode" type="System.Windows.Forms.ImeMode, System.Windows.Forms">
+    <value>On</value>
+  </data>
   <data name="UploadZipButton.Location" type="System.Drawing.Point, System.Drawing">
-    <value>5, 377</value>
+    <value>5, 401</value>
   </data>
   <data name="UploadZipButton.Size" type="System.Drawing.Size, System.Drawing">
-    <value>109, 27</value>
+    <value>109, 29</value>
   </data>
   <data name="UploadZipButton.TabIndex" type="System.Int32, mscorlib">
     <value>26</value>
@@ -324,9 +327,6 @@ Enter to select top result.
   <data name="&gt;&gt;UploadZipButton.ZOrder" xml:space="preserve">
     <value>0</value>
   </data>
-  <metadata name="lanMultiplayerToolTip.TrayLocation" type="System.Drawing.Point, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
-    <value>17, 17</value>
-  </metadata>
   <data name="pin.Image" type="System.Drawing.Bitmap, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
     <value>
         iVBORw0KGgoAAAANSUhEUgAAAagAAAGoCAYAAAATsnHAAAAABGdBTUEAALGPC/xhBQAAAAlwSFlzAAAL
@@ -447,13 +447,13 @@ Enter to select top result.
     <value>On</value>
   </data>
   <data name="pin.Location" type="System.Drawing.Point, System.Drawing">
-    <value>27, 34</value>
+    <value>30, 38</value>
   </data>
   <data name="pin.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
     <value>3, 4, 3, 4</value>
   </data>
   <data name="pin.Size" type="System.Drawing.Size, System.Drawing">
-    <value>26, 27</value>
+    <value>26, 29</value>
   </data>
   <data name="pin.SizeMode" type="System.Windows.Forms.PictureBoxSizeMode, System.Windows.Forms">
     <value>StretchImage</value>
@@ -461,6 +461,9 @@ Enter to select top result.
   <data name="pin.TabIndex" type="System.Int32, mscorlib">
     <value>12</value>
   </data>
+  <metadata name="lanMultiplayerToolTip.TrayLocation" type="System.Drawing.Point, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
+    <value>17, 17</value>
+  </metadata>
   <data name="pin.ToolTip" xml:space="preserve">
     <value>Window is currently unpinned
 
@@ -576,13 +579,13 @@ easier to drag files while browsing.</value>
     <value>On</value>
   </data>
   <data name="unPin.Location" type="System.Drawing.Point, System.Drawing">
-    <value>27, 34</value>
+    <value>30, 38</value>
   </data>
   <data name="unPin.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
     <value>3, 4, 3, 4</value>
   </data>
   <data name="unPin.Size" type="System.Drawing.Size, System.Drawing">
-    <value>26, 27</value>
+    <value>26, 29</value>
   </data>
   <data name="unPin.SizeMode" type="System.Windows.Forms.PictureBoxSizeMode, System.Windows.Forms">
     <value>StretchImage</value>
@@ -841,13 +844,13 @@ covered by other windows normally.</value>
     <value>On</value>
   </data>
   <data name="gitHub.Location" type="System.Drawing.Point, System.Drawing">
-    <value>740, 403</value>
+    <value>740, 428</value>
   </data>
   <data name="gitHub.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
     <value>3, 4, 3, 4</value>
   </data>
   <data name="gitHub.Size" type="System.Drawing.Size, System.Drawing">
-    <value>51, 50</value>
+    <value>51, 53</value>
   </data>
   <data name="gitHub.SizeMode" type="System.Windows.Forms.PictureBoxSizeMode, System.Windows.Forms">
     <value>Zoom</value>
@@ -880,13 +883,13 @@ covered by other windows normally.</value>
     <value>On</value>
   </data>
   <data name="ShareButton.Location" type="System.Drawing.Point, System.Drawing">
-    <value>-5, 23</value>
+    <value>-5, 28</value>
   </data>
   <data name="ShareButton.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
     <value>3, 4, 3, 4</value>
   </data>
   <data name="ShareButton.Size" type="System.Drawing.Size, System.Drawing">
-    <value>39, 44</value>
+    <value>39, 47</value>
   </data>
   <data name="ShareButton.TabIndex" type="System.Int32, mscorlib">
     <value>24</value>
@@ -919,13 +922,13 @@ covered by other windows normally.</value>
     <value>On</value>
   </data>
   <data name="RequestButton.Location" type="System.Drawing.Point, System.Drawing">
-    <value>758, 554</value>
+    <value>758, 589</value>
   </data>
   <data name="RequestButton.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
     <value>3, 4, 3, 4</value>
   </data>
   <data name="RequestButton.Size" type="System.Drawing.Size, System.Drawing">
-    <value>140, 37</value>
+    <value>140, 39</value>
   </data>
   <data name="RequestButton.TabIndex" type="System.Int32, mscorlib">
     <value>25</value>
@@ -949,13 +952,13 @@ covered by other windows normally.</value>
     <value>On</value>
   </data>
   <data name="autoCrackOff.Location" type="System.Drawing.Point, System.Drawing">
-    <value>764, 32</value>
+    <value>760, 35</value>
   </data>
   <data name="autoCrackOff.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
     <value>2, 2, 2, 2</value>
   </data>
   <data name="autoCrackOff.Size" type="System.Drawing.Size, System.Drawing">
-    <value>33, 30</value>
+    <value>33, 32</value>
   </data>
   <data name="autoCrackOff.SizeMode" type="System.Windows.Forms.PictureBoxSizeMode, System.Windows.Forms">
     <value>Zoom</value>
@@ -987,13 +990,13 @@ from the search results.</value>
     <value>On</value>
   </data>
   <data name="autoCrackOn.Location" type="System.Drawing.Point, System.Drawing">
-    <value>764, 32</value>
+    <value>760, 35</value>
   </data>
   <data name="autoCrackOn.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
     <value>2, 2, 2, 2</value>
   </data>
   <data name="autoCrackOn.Size" type="System.Drawing.Size, System.Drawing">
-    <value>33, 30</value>
+    <value>33, 32</value>
   </data>
   <data name="autoCrackOn.SizeMode" type="System.Windows.Forms.PictureBoxSizeMode, System.Windows.Forms">
     <value>Zoom</value>
@@ -1028,10 +1031,10 @@ from the search results.</value>
     <value>On</value>
   </data>
   <data name="StatusLabel.Location" type="System.Drawing.Point, System.Drawing">
-    <value>82, 324</value>
+    <value>82, 344</value>
   </data>
   <data name="StatusLabel.Size" type="System.Drawing.Size, System.Drawing">
-    <value>630, 23</value>
+    <value>630, 24</value>
   </data>
   <data name="StatusLabel.TabIndex" type="System.Int32, mscorlib">
     <value>1</value>
@@ -1061,13 +1064,13 @@ from the search results.</value>
     <value>On</value>
   </data>
   <data name="OpenDir.Location" type="System.Drawing.Point, System.Drawing">
-    <value>5, 437</value>
+    <value>5, 464</value>
   </data>
   <data name="OpenDir.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
     <value>3, 4, 3, 4</value>
   </data>
   <data name="OpenDir.Size" type="System.Drawing.Size, System.Drawing">
-    <value>109, 27</value>
+    <value>109, 29</value>
   </data>
   <data name="OpenDir.TabIndex" type="System.Int32, mscorlib">
     <value>4</value>
@@ -1100,13 +1103,13 @@ from the search results.</value>
     <value>On</value>
   </data>
   <data name="ZipToShare.Location" type="System.Drawing.Point, System.Drawing">
-    <value>5, 407</value>
+    <value>5, 432</value>
   </data>
   <data name="ZipToShare.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
     <value>3, 4, 3, 4</value>
   </data>
   <data name="ZipToShare.Size" type="System.Drawing.Size, System.Drawing">
-    <value>109, 27</value>
+    <value>109, 29</value>
   </data>
   <data name="ZipToShare.TabIndex" type="System.Int32, mscorlib">
     <value>3</value>
@@ -1114,9 +1117,6 @@ from the search results.</value>
   <data name="ZipToShare.Text" xml:space="preserve">
     <value>Zip Release</value>
   </data>
-  <metadata name="lanMultiplayerToolTip.TrayLocation" type="System.Drawing.Point, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
-    <value>17, 17</value>
-  </metadata>
   <data name="ZipToShare.ToolTip" xml:space="preserve">
     <value>Zip the cracked and finished release to easily share with your friends!</value>
   </data>
@@ -1142,10 +1142,10 @@ from the search results.</value>
     <value>On</value>
   </data>
   <data name="currDIrText.Location" type="System.Drawing.Point, System.Drawing">
-    <value>176, 347</value>
+    <value>176, 369</value>
   </data>
   <data name="currDIrText.Size" type="System.Drawing.Size, System.Drawing">
-    <value>443, 28</value>
+    <value>443, 30</value>
   </data>
   <data name="currDIrText.TabIndex" type="System.Int32, mscorlib">
     <value>10</value>
@@ -1181,13 +1181,13 @@ from the search results.</value>
     <value>ALI213</value>
   </data>
   <data name="dllSelect.Location" type="System.Drawing.Point, System.Drawing">
-    <value>338, 267</value>
+    <value>338, 284</value>
   </data>
   <data name="dllSelect.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
     <value>3, 4, 3, 4</value>
   </data>
   <data name="dllSelect.Size" type="System.Drawing.Size, System.Drawing">
-    <value>119, 23</value>
+    <value>119, 24</value>
   </data>
   <data name="dllSelect.TabIndex" type="System.Int32, mscorlib">
     <value>0</value>
@@ -1211,13 +1211,13 @@ from the search results.</value>
     <value>On</value>
   </data>
   <data name="lanMultiplayerCheckBox.Location" type="System.Drawing.Point, System.Drawing">
-    <value>345, 300</value>
+    <value>343, 319</value>
   </data>
   <data name="lanMultiplayerCheckBox.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
     <value>3, 4, 3, 4</value>
   </data>
   <data name="lanMultiplayerCheckBox.Size" type="System.Drawing.Size, System.Drawing">
-    <value>102, 20</value>
+    <value>109, 21</value>
   </data>
   <data name="lanMultiplayerCheckBox.TabIndex" type="System.Int32, mscorlib">
     <value>1</value>
@@ -1448,13 +1448,13 @@ Perfect for playing with friends on the same network!</value>
     <value />
   </data>
   <data name="donePic.Location" type="System.Drawing.Point, System.Drawing">
-    <value>338, 158</value>
+    <value>338, 168</value>
   </data>
   <data name="donePic.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
     <value>3, 4, 3, 4</value>
   </data>
   <data name="donePic.Size" type="System.Drawing.Size, System.Drawing">
-    <value>120, 107</value>
+    <value>120, 114</value>
   </data>
   <data name="donePic.SizeMode" type="System.Windows.Forms.PictureBoxSizeMode, System.Windows.Forms">
     <value>Zoom</value>
@@ -3641,13 +3641,13 @@ Perfect for playing with friends on the same network!</value>
 </value>
   </data>
   <data name="startCrackPic.Location" type="System.Drawing.Point, System.Drawing">
-    <value>338, 158</value>
+    <value>338, 168</value>
   </data>
   <data name="startCrackPic.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
     <value>3, 4, 3, 4</value>
   </data>
   <data name="startCrackPic.Size" type="System.Drawing.Size, System.Drawing">
-    <value>120, 107</value>
+    <value>120, 114</value>
   </data>
   <data name="startCrackPic.SizeMode" type="System.Windows.Forms.PictureBoxSizeMode, System.Windows.Forms">
     <value>Zoom</value>
@@ -3832,13 +3832,13 @@ Perfect for playing with friends on the same network!</value>
     <value />
   </data>
   <data name="selectDir.Location" type="System.Drawing.Point, System.Drawing">
-    <value>338, 158</value>
+    <value>338, 168</value>
   </data>
   <data name="selectDir.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
     <value>3, 4, 3, 4</value>
   </data>
   <data name="selectDir.Size" type="System.Drawing.Size, System.Drawing">
-    <value>120, 107</value>
+    <value>120, 114</value>
   </data>
   <data name="selectDir.SizeMode" type="System.Windows.Forms.PictureBoxSizeMode, System.Windows.Forms">
     <value>Zoom</value>
@@ -3858,9 +3858,6 @@ Perfect for playing with friends on the same network!</value>
   <data name="&gt;&gt;selectDir.ZOrder" xml:space="preserve">
     <value>17</value>
   </data>
-  <data name="label5.AutoSize" type="System.Boolean, mscorlib">
-    <value>True</value>
-  </data>
   <data name="label5.Font" type="System.Drawing.Font, System.Drawing">
     <value>Microsoft Sans Serif, 9.75pt</value>
   </data>
@@ -3868,7 +3865,7 @@ Perfect for playing with friends on the same network!</value>
     <value>On</value>
   </data>
   <data name="label5.Location" type="System.Drawing.Point, System.Drawing">
-    <value>212, 96</value>
+    <value>212, 102</value>
   </data>
   <data name="label5.Size" type="System.Drawing.Size, System.Drawing">
     <value>370, 32</value>
@@ -3877,8 +3874,8 @@ Perfect for playing with friends on the same network!</value>
     <value>1</value>
   </data>
   <data name="label5.Text" xml:space="preserve">
-    <value>Goldberg(GBE_fork) recommended. Only use ALI if GBE fails.
-If you have permissions issues, run as Administrator.</value>
+    <value>Only use ALI if GBE fails
+If you have issues, run as Admin.</value>
   </data>
   <data name="label5.TextAlign" type="System.Drawing.ContentAlignment, System.Drawing">
     <value>TopCenter</value>
@@ -3905,7 +3902,7 @@ If you have permissions issues, run as Administrator.</value>
     <value>On</value>
   </data>
   <data name="label1.Location" type="System.Drawing.Point, System.Drawing">
-    <value>766, 62</value>
+    <value>762, 67</value>
   </data>
   <data name="label1.Size" type="System.Drawing.Size, System.Drawing">
     <value>29, 13</value>
@@ -3941,7 +3938,7 @@ If you have permissions issues, run as Administrator.</value>
     <value>On</value>
   </data>
   <data name="selectDirLabel.Location" type="System.Drawing.Point, System.Drawing">
-    <value>255, 102</value>
+    <value>255, 108</value>
   </data>
   <data name="selectDirLabel.Size" type="System.Drawing.Size, System.Drawing">
     <value>285, 20</value>
@@ -3977,10 +3974,10 @@ If you have permissions issues, run as Administrator.</value>
     <value>On</value>
   </data>
   <data name="drgdropText.Location" type="System.Drawing.Point, System.Drawing">
-    <value>-2, 3</value>
+    <value>-2, 4</value>
   </data>
   <data name="drgdropText.Size" type="System.Drawing.Size, System.Drawing">
-    <value>798, 466</value>
+    <value>798, 495</value>
   </data>
   <data name="drgdropText.TabIndex" type="System.Int32, mscorlib">
     <value>2</value>
@@ -4013,7 +4010,7 @@ If you have permissions issues, run as Administrator.</value>
     <value>3, 4, 3, 4</value>
   </data>
   <data name="mainPanel.Size" type="System.Drawing.Size, System.Drawing">
-    <value>795, 472</value>
+    <value>795, 502</value>
   </data>
   <data name="mainPanel.TabIndex" type="System.Int32, mscorlib">
     <value>8</value>
@@ -4040,13 +4037,13 @@ If you have permissions issues, run as Administrator.</value>
     <value>On</value>
   </data>
   <data name="btnManualEntry.Location" type="System.Drawing.Point, System.Drawing">
-    <value>599, 398</value>
+    <value>599, 423</value>
   </data>
   <data name="btnManualEntry.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
     <value>3, 4, 3, 4</value>
   </data>
   <data name="btnManualEntry.Size" type="System.Drawing.Size, System.Drawing">
-    <value>185, 34</value>
+    <value>185, 36</value>
   </data>
   <data name="btnManualEntry.TabIndex" type="System.Int32, mscorlib">
     <value>20</value>
@@ -4069,74 +4066,11 @@ If you have permissions issues, run as Administrator.</value>
   <data name="&gt;&gt;btnManualEntry.ZOrder" xml:space="preserve">
     <value>2</value>
   </data>
-  <data name="&gt;&gt;ManAppBox.Name" xml:space="preserve">
-    <value>ManAppBox</value>
-  </data>
-  <data name="&gt;&gt;ManAppBox.Type" xml:space="preserve">
-    <value>System.Windows.Forms.TextBox, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
-  </data>
-  <data name="&gt;&gt;ManAppBox.Parent" xml:space="preserve">
-    <value>ManAppPanel</value>
-  </data>
-  <data name="&gt;&gt;ManAppBox.ZOrder" xml:space="preserve">
-    <value>0</value>
-  </data>
-  <data name="&gt;&gt;ManAppBtn.Name" xml:space="preserve">
-    <value>ManAppBtn</value>
-  </data>
-  <data name="&gt;&gt;ManAppBtn.Type" xml:space="preserve">
-    <value>System.Windows.Forms.Button, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
-  </data>
-  <data name="&gt;&gt;ManAppBtn.Parent" xml:space="preserve">
-    <value>ManAppPanel</value>
-  </data>
-  <data name="&gt;&gt;ManAppBtn.ZOrder" xml:space="preserve">
-    <value>1</value>
-  </data>
-  <data name="&gt;&gt;ManAppLbl.Name" xml:space="preserve">
-    <value>ManAppLbl</value>
-  </data>
-  <data name="&gt;&gt;ManAppLbl.Type" xml:space="preserve">
-    <value>System.Windows.Forms.Label, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
-  </data>
-  <data name="&gt;&gt;ManAppLbl.Parent" xml:space="preserve">
-    <value>ManAppPanel</value>
-  </data>
-  <data name="&gt;&gt;ManAppLbl.ZOrder" xml:space="preserve">
-    <value>2</value>
-  </data>
-  <data name="ManAppPanel.Location" type="System.Drawing.Point, System.Drawing">
-    <value>250, 139</value>
-  </data>
-  <data name="ManAppPanel.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
-    <value>2, 2, 2, 2</value>
-  </data>
-  <data name="ManAppPanel.Size" type="System.Drawing.Size, System.Drawing">
-    <value>286, 156</value>
-  </data>
-  <data name="ManAppPanel.TabIndex" type="System.Int32, mscorlib">
-    <value>13</value>
-  </data>
-  <data name="ManAppPanel.Visible" type="System.Boolean, mscorlib">
-    <value>False</value>
-  </data>
-  <data name="&gt;&gt;ManAppPanel.Name" xml:space="preserve">
-    <value>ManAppPanel</value>
-  </data>
-  <data name="&gt;&gt;ManAppPanel.Type" xml:space="preserve">
-    <value>System.Windows.Forms.Panel, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
-  </data>
-  <data name="&gt;&gt;ManAppPanel.Parent" xml:space="preserve">
-    <value>$this</value>
-  </data>
-  <data name="&gt;&gt;ManAppPanel.ZOrder" xml:space="preserve">
-    <value>4</value>
-  </data>
   <data name="ManAppBox.Font" type="System.Drawing.Font, System.Drawing">
     <value>Microsoft Sans Serif, 12pt, style=Bold</value>
   </data>
   <data name="ManAppBox.Location" type="System.Drawing.Point, System.Drawing">
-    <value>50, 55</value>
+    <value>50, 58</value>
   </data>
   <data name="ManAppBox.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
     <value>2, 2, 2, 2</value>
@@ -4169,13 +4103,13 @@ If you have permissions issues, run as Administrator.</value>
     <value>On</value>
   </data>
   <data name="ManAppBtn.Location" type="System.Drawing.Point, System.Drawing">
-    <value>156, 94</value>
+    <value>156, 100</value>
   </data>
   <data name="ManAppBtn.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
     <value>3, 4, 3, 4</value>
   </data>
   <data name="ManAppBtn.Size" type="System.Drawing.Size, System.Drawing">
-    <value>75, 32</value>
+    <value>75, 34</value>
   </data>
   <data name="ManAppBtn.TabIndex" type="System.Int32, mscorlib">
     <value>0</value>
@@ -4208,7 +4142,7 @@ If you have permissions issues, run as Administrator.</value>
     <value>On</value>
   </data>
   <data name="ManAppLbl.Location" type="System.Drawing.Point, System.Drawing">
-    <value>7, 16</value>
+    <value>7, 17</value>
   </data>
   <data name="ManAppLbl.Size" type="System.Drawing.Size, System.Drawing">
     <value>144, 16</value>
@@ -4234,68 +4168,32 @@ If you have permissions issues, run as Administrator.</value>
   <data name="&gt;&gt;ManAppLbl.ZOrder" xml:space="preserve">
     <value>2</value>
   </data>
-  <data name="&gt;&gt;lblTitle.Name" xml:space="preserve">
-    <value>lblTitle</value>
+  <data name="ManAppPanel.Location" type="System.Drawing.Point, System.Drawing">
+    <value>250, 148</value>
   </data>
-  <data name="&gt;&gt;lblTitle.Type" xml:space="preserve">
-    <value>System.Windows.Forms.Label, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  <data name="ManAppPanel.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>2, 2, 2, 2</value>
   </data>
-  <data name="&gt;&gt;lblTitle.Parent" xml:space="preserve">
-    <value>titleBar</value>
+  <data name="ManAppPanel.Size" type="System.Drawing.Size, System.Drawing">
+    <value>286, 166</value>
   </data>
-  <data name="&gt;&gt;lblTitle.ZOrder" xml:space="preserve">
-    <value>0</value>
+  <data name="ManAppPanel.TabIndex" type="System.Int32, mscorlib">
+    <value>13</value>
   </data>
-  <data name="&gt;&gt;btnMinimize.Name" xml:space="preserve">
-    <value>btnMinimize</value>
+  <data name="ManAppPanel.Visible" type="System.Boolean, mscorlib">
+    <value>False</value>
   </data>
-  <data name="&gt;&gt;btnMinimize.Type" xml:space="preserve">
-    <value>System.Windows.Forms.Button, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  <data name="&gt;&gt;ManAppPanel.Name" xml:space="preserve">
+    <value>ManAppPanel</value>
   </data>
-  <data name="&gt;&gt;btnMinimize.Parent" xml:space="preserve">
-    <value>titleBar</value>
-  </data>
-  <data name="&gt;&gt;btnMinimize.ZOrder" xml:space="preserve">
-    <value>1</value>
-  </data>
-  <data name="&gt;&gt;btnClose.Name" xml:space="preserve">
-    <value>btnClose</value>
-  </data>
-  <data name="&gt;&gt;btnClose.Type" xml:space="preserve">
-    <value>System.Windows.Forms.Button, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
-  </data>
-  <data name="&gt;&gt;btnClose.Parent" xml:space="preserve">
-    <value>titleBar</value>
-  </data>
-  <data name="&gt;&gt;btnClose.ZOrder" xml:space="preserve">
-    <value>2</value>
-  </data>
-  <data name="titleBar.Dock" type="System.Windows.Forms.DockStyle, System.Windows.Forms">
-    <value>Top</value>
-  </data>
-  <data name="titleBar.Location" type="System.Drawing.Point, System.Drawing">
-    <value>0, 0</value>
-  </data>
-  <data name="titleBar.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
-    <value>3, 4, 3, 4</value>
-  </data>
-  <data name="titleBar.Size" type="System.Drawing.Size, System.Drawing">
-    <value>798, 32</value>
-  </data>
-  <data name="titleBar.TabIndex" type="System.Int32, mscorlib">
-    <value>100</value>
-  </data>
-  <data name="&gt;&gt;titleBar.Name" xml:space="preserve">
-    <value>titleBar</value>
-  </data>
-  <data name="&gt;&gt;titleBar.Type" xml:space="preserve">
+  <data name="&gt;&gt;ManAppPanel.Type" xml:space="preserve">
     <value>System.Windows.Forms.Panel, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
-  <data name="&gt;&gt;titleBar.Parent" xml:space="preserve">
+  <data name="&gt;&gt;ManAppPanel.Parent" xml:space="preserve">
     <value>$this</value>
   </data>
-  <data name="&gt;&gt;titleBar.ZOrder" xml:space="preserve">
-    <value>0</value>
+  <data name="&gt;&gt;ManAppPanel.ZOrder" xml:space="preserve">
+    <value>4</value>
   </data>
   <data name="lblTitle.AutoSize" type="System.Boolean, mscorlib">
     <value>True</value>
@@ -4307,7 +4205,7 @@ If you have permissions issues, run as Administrator.</value>
     <value>On</value>
   </data>
   <data name="lblTitle.Location" type="System.Drawing.Point, System.Drawing">
-    <value>9, 9</value>
+    <value>9, 10</value>
   </data>
   <data name="lblTitle.Size" type="System.Drawing.Size, System.Drawing">
     <value>71, 15</value>
@@ -4349,7 +4247,7 @@ If you have permissions issues, run as Administrator.</value>
     <value>3, 4, 3, 4</value>
   </data>
   <data name="btnMinimize.Size" type="System.Drawing.Size, System.Drawing">
-    <value>40, 32</value>
+    <value>40, 34</value>
   </data>
   <data name="btnMinimize.TabIndex" type="System.Int32, mscorlib">
     <value>2</value>
@@ -4388,7 +4286,7 @@ If you have permissions issues, run as Administrator.</value>
     <value>3, 4, 3, 4</value>
   </data>
   <data name="btnClose.Size" type="System.Drawing.Size, System.Drawing">
-    <value>40, 32</value>
+    <value>40, 34</value>
   </data>
   <data name="btnClose.TabIndex" type="System.Int32, mscorlib">
     <value>1</value>
@@ -4408,6 +4306,33 @@ If you have permissions issues, run as Administrator.</value>
   <data name="&gt;&gt;btnClose.ZOrder" xml:space="preserve">
     <value>2</value>
   </data>
+  <data name="titleBar.Dock" type="System.Windows.Forms.DockStyle, System.Windows.Forms">
+    <value>Top</value>
+  </data>
+  <data name="titleBar.Location" type="System.Drawing.Point, System.Drawing">
+    <value>0, 0</value>
+  </data>
+  <data name="titleBar.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>3, 4, 3, 4</value>
+  </data>
+  <data name="titleBar.Size" type="System.Drawing.Size, System.Drawing">
+    <value>798, 34</value>
+  </data>
+  <data name="titleBar.TabIndex" type="System.Int32, mscorlib">
+    <value>100</value>
+  </data>
+  <data name="&gt;&gt;titleBar.Name" xml:space="preserve">
+    <value>titleBar</value>
+  </data>
+  <data name="&gt;&gt;titleBar.Type" xml:space="preserve">
+    <value>System.Windows.Forms.Panel, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;titleBar.Parent" xml:space="preserve">
+    <value>$this</value>
+  </data>
+  <data name="&gt;&gt;titleBar.ZOrder" xml:space="preserve">
+    <value>0</value>
+  </data>
   <metadata name="$this.Localizable" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
     <value>True</value>
   </metadata>
@@ -4415,10 +4340,10 @@ If you have permissions issues, run as Administrator.</value>
     <value>25</value>
   </metadata>
   <data name="$this.AutoScaleDimensions" type="System.Drawing.SizeF, System.Drawing">
-    <value>7, 16</value>
+    <value>7, 17</value>
   </data>
   <data name="$this.ClientSize" type="System.Drawing.Size, System.Drawing">
-    <value>798, 473</value>
+    <value>798, 503</value>
   </data>
   <data name="$this.Icon" type="System.Drawing.Icon, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
     <value>
@@ -6913,10 +6838,10 @@ If you have permissions issues, run as Administrator.</value>
     <value>3, 4, 3, 4</value>
   </data>
   <data name="$this.MaximumSize" type="System.Drawing.Size, System.Drawing">
-    <value>798, 473</value>
+    <value>798, 503</value>
   </data>
   <data name="$this.MinimumSize" type="System.Drawing.Size, System.Drawing">
-    <value>798, 473</value>
+    <value>798, 503</value>
   </data>
   <data name="$this.Text" xml:space="preserve">
     <value>1</value>

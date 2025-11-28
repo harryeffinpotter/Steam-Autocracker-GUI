@@ -105,6 +105,12 @@ namespace SteamAppIdIdentifier
             {
                 int x = parentForm.Left + (parentForm.Width - this.Width) / 2;
                 int y = parentForm.Top + (parentForm.Height - this.Height) / 2;
+
+                // Clamp to screen bounds
+                var screen = Screen.FromControl(parentForm).WorkingArea;
+                x = Math.Max(screen.Left, Math.Min(x, screen.Right - this.Width));
+                y = Math.Max(screen.Top, Math.Min(y, screen.Bottom - this.Height));
+
                 this.Location = new Point(x, y);
             }
         }
@@ -521,19 +527,6 @@ namespace SteamAppIdIdentifier
             // If sharing cracked version, first crack the game
             if (cracked)
             {
-                var result = MessageBox.Show(
-                    $"This will crack {gameName} using Goldberg/ALI213 emulators.\n\n" +
-                    "The game files will be modified. A backup (.bak) will be created.\n\n" +
-                    "Continue?",
-                    "Crack Game First?",
-                    MessageBoxButtons.YesNo,
-                    MessageBoxIcon.Warning);
-
-                if (result != DialogResult.Yes)
-                {
-                    return;
-                }
-
                 // Call the main form's cracking method
                 var parentFormTyped = parentForm as SteamAppId;
                 if (parentFormTyped != null)
@@ -570,7 +563,8 @@ namespace SteamAppIdIdentifier
                         Font = new Font("Segoe UI", 14, FontStyle.Bold),
                         ForeColor = Color.FromArgb(100, 200, 255),
                         TextAlign = ContentAlignment.MiddleCenter,
-                        Dock = DockStyle.Fill
+                        Dock = DockStyle.Fill,
+                        AutoSize = false
                     };
                     // Make label draggable too
                     lblCracking.MouseDown += TitleBar_MouseDown;
@@ -679,7 +673,17 @@ namespace SteamAppIdIdentifier
 
                     if (compressionForm.ShowDialog(this) != DialogResult.OK)
                     {
-                        // User cancelled
+                        // User cancelled - reset the button status
+                        if (cracked)
+                        {
+                            row.Cells["ShareCracked"].Value = "🎮 Cracked";
+                            row.Cells["ShareCracked"].Style.BackColor = Color.FromArgb(5, 8, 20);
+                        }
+                        else
+                        {
+                            row.Cells["ShareClean"].Value = "📦 Clean";
+                            row.Cells["ShareClean"].Style.BackColor = Color.FromArgb(5, 8, 20);
+                        }
                         return;
                     }
 
@@ -1044,18 +1048,8 @@ namespace SteamAppIdIdentifier
         {
             try
             {
-                // Use the embedded 7-Zip from _bin folder (64-bit version)
-                string sevenZipPath = Path.Combine(Environment.CurrentDirectory, "_bin", "7z", "7za.exe");
-
-                // Fallback to Program Files if _bin version doesn't exist
-                if (!File.Exists(sevenZipPath))
-                {
-                    sevenZipPath = @"C:\Program Files\7-Zip\7z.exe";
-                    if (!File.Exists(sevenZipPath))
-                    {
-                        sevenZipPath = @"C:\Program Files (x86)\7-Zip\7z.exe";
-                    }
-                }
+                // Use the embedded 7-Zip from _bin folder (extracts if needed)
+                string sevenZipPath = ResourceExtractor.GetBinFilePath(Path.Combine("7z", "7za.exe"));
 
                 if (File.Exists(sevenZipPath))
                 {
