@@ -61,12 +61,15 @@ namespace SteamAutocrackGUI
             // Apply acrylic effect
             this.Load += (s, e) => ApplyAcrylicEffect();
 
-            // Auto-close when focus is lost
+            // Auto-close when clicking back to parent form only
             this.Deactivate += (s, e) =>
             {
-                // Close the form when it loses focus
-                this.DialogResult = DialogResult.Cancel;
-                this.Close();
+                // Only close if the parent form is being activated, not other windows
+                if (this.Owner != null && Form.ActiveForm == this.Owner)
+                {
+                    this.DialogResult = DialogResult.Cancel;
+                    this.Close();
+                }
             };
         }
 
@@ -190,7 +193,7 @@ namespace SteamAutocrackGUI
         {
             sliderPanel = new Panel
             {
-                Location = new Point(15, 95),
+                Location = new Point(49, 102),
                 Size = new Size(350, 40),
                 BackColor = Color.Transparent
             };

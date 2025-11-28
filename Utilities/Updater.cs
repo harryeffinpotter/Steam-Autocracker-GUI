@@ -254,29 +254,10 @@ namespace APPID
         {
             try
             {
-
-
-                if (!File.Exists(Environment.CurrentDirectory + "\\7z.exe") || !File.Exists(Environment.CurrentDirectory + "\\7z.dll"))
-                {
-                    ServicePointManager.ServerCertificateValidationCallback = delegate { return true; };
-                    using (HttpClient client = new HttpClient())
-                    {
-                        var exeResponse = await client.GetAsync("https://github.com/harryeffinpotter/-Loader/raw/main/7z.exe");
-                        using (var fs = new FileStream("7z.exe", System.IO.FileMode.CreateNew))
-                        {
-                            await exeResponse.Content.CopyToAsync(fs);
-                        }
-
-                        var dllResponse = await client.GetAsync("https://github.com/harryeffinpotter/-Loader/raw/main/7z.dll");
-                        using (var fs2 = new FileStream("7z.dll", System.IO.FileMode.CreateNew))
-                        {
-                            await dllResponse.Content.CopyToAsync(fs2);
-                        }
-                    }
-                }
+                string sevenZipPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "_bin", "7z", "7za.exe");
                 ProcessStartInfo pro = new ProcessStartInfo();
                 pro.WindowStyle = ProcessWindowStyle.Hidden;
-                pro.FileName = $"{Environment.CurrentDirectory}\\7z.exe";
+                pro.FileName = sevenZipPath;
                 pro.Arguments = string.Format("x \"{0}\" -y -o\"{1}\"", sourceArchive, destination);
                 Process x = Process.Start(pro);
                 if (!x.HasExited)
