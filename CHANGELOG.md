@@ -1,7 +1,16 @@
 # Steam Auto-Cracker GUI 2.0 - Changelog
 
+## Latest Updates (October 2025)
+
+### 🔧 Critical Fixes
+- **Fixed UI Freezing**: Resolved deadlocks that completely froze the application during cracking and DLC generation
+- **Removed Broken DLC Generation**: Disabled generate_game_infos.exe due to expired Steam API key
+- **Async Operations**: Made all long-running operations properly asynchronous to keep UI responsive
+
+---
+
 ## Major Version Release: 2.0
-*From version 1.1.0 (November 2023) to 2.0 (January 2025)*
+*From version 1.1.0 (November 2023) to 2.0 (October 2025)*
 
 ---
 
