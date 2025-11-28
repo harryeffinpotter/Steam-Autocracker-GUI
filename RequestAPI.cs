@@ -50,7 +50,10 @@ namespace SteamAppIdIdentifier
                     }
                 }
             }
-            catch { }
+            catch (Exception ex)
+            {
+                APPID.LogHelper.LogError("GetWMIProperty failed", ex);
+            }
             return "Unknown";
         }
 

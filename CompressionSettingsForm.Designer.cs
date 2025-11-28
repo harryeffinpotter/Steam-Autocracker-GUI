@@ -82,10 +82,10 @@ namespace SteamAutocrackGUI
             this.sevenZipRadioButton.UseVisualStyleBackColor = false;
             // 
             // levelTrackBar
-            // 
-            this.levelTrackBar.Location = new System.Drawing.Point(23, 95);
+            //
+            this.levelTrackBar.Location = new System.Drawing.Point(15, 95);
             this.levelTrackBar.Name = "levelTrackBar";
-            this.levelTrackBar.Size = new System.Drawing.Size(334, 45);
+            this.levelTrackBar.Size = new System.Drawing.Size(350, 45);
             this.levelTrackBar.TabIndex = 5;
             this.levelTrackBar.TickStyle = System.Windows.Forms.TickStyle.Both;
             this.levelTrackBar.Scroll += new System.EventHandler(this.levelTrackBar_Scroll);

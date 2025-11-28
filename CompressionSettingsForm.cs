@@ -46,7 +46,7 @@ namespace SteamAutocrackGUI
             rememberCheckBox.Checked = false;
 
             // Load saved password setting and set checkbox state
-            UseRinPassword = APPID.Properties.Settings.Default.UseRinPassword;
+            UseRinPassword = APPID.AppSettings.Default.UseRinPassword;
             rinPasswordCheckBox.Checked = UseRinPassword;
 
             // Hide the default trackbar and create custom slider
@@ -60,6 +60,14 @@ namespace SteamAutocrackGUI
 
             // Apply acrylic effect
             this.Load += (s, e) => ApplyAcrylicEffect();
+
+            // Auto-close when focus is lost
+            this.Deactivate += (s, e) =>
+            {
+                // Close the form when it loses focus
+                this.DialogResult = DialogResult.Cancel;
+                this.Close();
+            };
         }
 
         private void ApplyAcrylicEffect()
@@ -182,8 +190,8 @@ namespace SteamAutocrackGUI
         {
             sliderPanel = new Panel
             {
-                Location = new Point(55, 95),
-                Size = new Size(270, 40),
+                Location = new Point(15, 95),
+                Size = new Size(350, 40),
                 BackColor = Color.Transparent
             };
 
@@ -201,8 +209,8 @@ namespace SteamAutocrackGUI
             g.CompositingQuality = System.Drawing.Drawing2D.CompositingQuality.HighQuality;
 
             int trackY = 20;
-            int trackStart = 15;
-            int trackEnd = 255;
+            int trackStart = 10;
+            int trackEnd = 340;
             int trackWidth = trackEnd - trackStart;
 
             // Glass track background with blur effect
@@ -343,7 +351,9 @@ namespace SteamAutocrackGUI
 
         private void UpdateSliderValue(int mouseX)
         {
-            int value = (int)Math.Round((mouseX - 10) / 25.0);
+            int trackStart = 10;
+            int trackWidth = 330;
+            int value = (int)Math.Round(((mouseX - trackStart) / (double)trackWidth) * 10);
             sliderValue = Math.Max(0, Math.Min(10, value));
             sliderPanel.Invalidate();
             UpdateLevelDescription();
@@ -379,8 +389,8 @@ namespace SteamAutocrackGUI
             UseRinPassword = rinPasswordCheckBox.Checked;
 
             // Save password preference
-            APPID.Properties.Settings.Default.UseRinPassword = UseRinPassword;
-            APPID.Properties.Settings.Default.Save();
+            APPID.AppSettings.Default.UseRinPassword = UseRinPassword;
+            APPID.AppSettings.Default.Save();
 
             this.DialogResult = DialogResult.OK;
             this.Close();

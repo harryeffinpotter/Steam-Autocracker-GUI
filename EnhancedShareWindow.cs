@@ -2430,7 +2430,7 @@ namespace SteamAppIdIdentifier
             var result = new Dictionary<string, string>();
             try
             {
-                string data = APPID.Properties.Settings.Default.SharedGamesData;
+                string data = APPID.AppSettings.Default.SharedGamesData;
                 if (!string.IsNullOrEmpty(data))
                 {
                     // Format: appid_buildid:type,type|appid_buildid:type,type|...
@@ -2477,8 +2477,8 @@ namespace SteamAppIdIdentifier
 
                 // Save back to settings
                 var entries = sharedGames.Select(kvp => $"{kvp.Key}:{kvp.Value}");
-                APPID.Properties.Settings.Default.SharedGamesData = string.Join("|", entries);
-                APPID.Properties.Settings.Default.Save();
+                APPID.AppSettings.Default.SharedGamesData = string.Join("|", entries);
+                APPID.AppSettings.Default.Save();
 
                 System.Diagnostics.Debug.WriteLine($"[SHARED GAMES] Saved {appId} build {buildId} as {shareType}");
             }

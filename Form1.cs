@@ -72,7 +72,7 @@ namespace APPID
             (s, certificate, chain, sslPolicyErrors) => true;
 
             // Load auto-crack setting FIRST before anything else - directly assign the value
-            autoCrackEnabled = Properties.Settings.Default.AutoCrack;
+            autoCrackEnabled = AppSettings.Default.AutoCrack;
             System.Diagnostics.Debug.WriteLine($"[CONSTRUCTOR] Loaded autoCrackEnabled = {autoCrackEnabled} from Settings");
 
             dataTableGeneration = new DataTableGeneration();
@@ -90,7 +90,7 @@ namespace APPID
             }
 
             // Apply saved pin state
-            if (Properties.Settings.Default.Pinned)
+            if (AppSettings.Default.Pinned)
             {
                 this.TopMost = true;
                 unPin.BringToFront();
@@ -491,10 +491,10 @@ namespace APPID
         public async void SteamAppId_Load(object sender, EventArgs e)
         {
             // Load LAN multiplayer setting
-            enableLanMultiplayer = Properties.Settings.Default.LANMultiplayer;
+            enableLanMultiplayer = AppSettings.Default.LANMultiplayer;
             lanMultiplayerCheckBox.Checked = enableLanMultiplayer;
 
-            if (Properties.Settings.Default.Pinned)
+            if (AppSettings.Default.Pinned)
             {
                 this.TopMost = true;
                 unPin.BringToFront();
@@ -517,7 +517,7 @@ namespace APPID
                 autoCrackOff.BringToFront();  // Show red button when disabled
             }
 
-            if (Properties.Settings.Default.Goldy)
+            if (AppSettings.Default.Goldy)
             {
                 dllSelect.SelectedIndex = 0;
                 lanMultiplayerCheckBox.Visible = true;
@@ -2124,13 +2124,11 @@ oLink3.Save";
         }
         private void pictureBox2_Click(object sender, EventArgs e)
         {
-            OpenDir.Visible = false;
-            OpenDir.SendToBack();
             FolderSelectDialog folderSelectDialog = new FolderSelectDialog();
             folderSelectDialog.Title = "Select the game's main folder.";
 
-            if (Properties.Settings.Default.lastDir.Length > 0)
-                folderSelectDialog.InitialDirectory = Properties.Settings.Default.lastDir;
+            if (AppSettings.Default.lastDir.Length > 0)
+                folderSelectDialog.InitialDirectory = AppSettings.Default.lastDir;
 
             if (folderSelectDialog.Show(Handle))
             {
@@ -2138,6 +2136,7 @@ oLink3.Save";
 
                 // Hide OpenDir and ZipToShare when new directory selected
                 OpenDir.Visible = false;
+                OpenDir.SendToBack();
                 ZipToShare.Visible = false;
                 parentOfSelection = Directory.GetParent(gameDir).FullName;
                 gameDirName = Path.GetFileName(gameDir);
@@ -2203,8 +2202,8 @@ oLink3.Save";
                 // Stop label5 timer when game dir is selected
                 label5Timer.Stop();
                 label5.Visible = false;
-                Properties.Settings.Default.lastDir = parentOfSelection;
-                Properties.Settings.Default.Save();
+                AppSettings.Default.lastDir = parentOfSelection;
+                AppSettings.Default.Save();
             }
             else
             { 
@@ -2260,28 +2259,28 @@ oLink3.Save";
         private void lanMultiplayerCheckBox_CheckedChanged(object sender, EventArgs e)
         {
             enableLanMultiplayer = lanMultiplayerCheckBox.Checked;
-            Properties.Settings.Default.LANMultiplayer = enableLanMultiplayer;
-            Properties.Settings.Default.Save();
+            AppSettings.Default.LANMultiplayer = enableLanMultiplayer;
+            AppSettings.Default.Save();
         }
         private void dllSelect_SelectedIndexChanged(object sender, EventArgs e)
         {
             if (dllSelect.SelectedIndex == 0)
             {
                 goldy = true;
-                Properties.Settings.Default.Goldy = true;
+                AppSettings.Default.Goldy = true;
                 // Show LAN checkbox for Goldberg
                 lanMultiplayerCheckBox.Visible = true;
             }
             else if (dllSelect.SelectedIndex == 1)
             {
                 goldy = false;
-                Properties.Settings.Default.Goldy = false;
+                AppSettings.Default.Goldy = false;
                 // Hide LAN checkbox for Ali213 (not supported)
                 lanMultiplayerCheckBox.Visible = false;
                 lanMultiplayerCheckBox.Checked = false;
                 enableLanMultiplayer = false;
             }
-            Properties.Settings.Default.Save();
+            AppSettings.Default.Save();
         }
         private void selectDir_MouseEnter(object sender, EventArgs e)
         {
@@ -2418,8 +2417,8 @@ oLink3.Save";
                     isInitialFolderSearch = true;  // This is the initial search
                     searchTextBox.Text = gameDirName;
                     isFirstClickAfterSelection = true;  // Set AFTER changing text to avoid race condition
-                    Properties.Settings.Default.lastDir = parentOfSelection;
-                    Properties.Settings.Default.Save();
+                    AppSettings.Default.lastDir = parentOfSelection;
+                    AppSettings.Default.Save();
                 }
                 else
                 {
@@ -2436,8 +2435,8 @@ oLink3.Save";
         {
             this.TopMost = false;
             pin.BringToFront();
-            Properties.Settings.Default.Pinned = false;
-            Properties.Settings.Default.Save();
+            AppSettings.Default.Pinned = false;
+            AppSettings.Default.Save();
 
             // Unpin share window too if it's open
             if (shareWindow != null && !shareWindow.IsDisposed)
@@ -2450,8 +2449,8 @@ oLink3.Save";
         {
             this.TopMost = true;
             unPin.BringToFront();
-            Properties.Settings.Default.Pinned = true;
-            Properties.Settings.Default.Save();
+            AppSettings.Default.Pinned = true;
+            AppSettings.Default.Save();
 
             // Pin share window too if it's open
             if (shareWindow != null && !shareWindow.IsDisposed)
@@ -2464,16 +2463,16 @@ oLink3.Save";
         {
             autoCrackEnabled = true;
             autoCrackOn.BringToFront();
-            Properties.Settings.Default.AutoCrack = true;
-            Properties.Settings.Default.Save();
+            AppSettings.Default.AutoCrack = true;
+            AppSettings.Default.Save();
         }
 
         private void autoCrackOn_Click(object sender, EventArgs e)
         {
             autoCrackEnabled = false;
             autoCrackOff.BringToFront();
-            Properties.Settings.Default.AutoCrack = false;
-            Properties.Settings.Default.Save();
+            AppSettings.Default.AutoCrack = false;
+            AppSettings.Default.Save();
         }
 
         private void SteamAppId_FormClosing(object sender, FormClosingEventArgs e)
@@ -2492,8 +2491,8 @@ oLink3.Save";
             if (keyData == (Keys.Control | Keys.S))
             {
                 // Force show compression settings dialog
-                Properties.Settings.Default.ZipDontAsk = false;
-                Properties.Settings.Default.Save();
+                AppSettings.Default.ZipDontAsk = false;
+                AppSettings.Default.Save();
 
                 if (ZipToShare.Visible && ZipToShare.Enabled)
                 {
@@ -3044,14 +3043,13 @@ oLink3.Save";
             {
                 zipCancellationTokenSource?.Cancel();
                 ZipToShare.Text = "Zip Dir";
+                // Reset button appearance (remove orange glow)
+                ZipToShare.FlatAppearance.BorderColor = Color.FromArgb(55, 55, 60);
+                ZipToShare.FlatAppearance.BorderSize = 1;
+                ZipToShare.ForeColor = Color.FromArgb(220, 220, 225);
                 Tit("Compression cancelled", Color.Orange);
                 return;
             }
-
-            // Start compression - change button to Cancel
-            zipCancellationTokenSource = new System.Threading.CancellationTokenSource();
-            ZipToShare.Enabled = true;  // Keep enabled so it can be clicked to cancel
-            ZipToShare.Text = "Cancel";
 
             string zipPath = "";  // Declare outside try block so finally can access it
             bool compressionCancelled = false;
@@ -3061,9 +3059,9 @@ oLink3.Save";
                 string gameName = gameDirName;
                 string desktopPath = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
 
-                string compressionType = Properties.Settings.Default.ZipFormat;
-                string compressionLevelStr = Properties.Settings.Default.ZipLevel;
-                bool skipDialog = Properties.Settings.Default.ZipDontAsk;
+                string compressionType = AppSettings.Default.ZipFormat;
+                string compressionLevelStr = AppSettings.Default.ZipLevel;
+                bool skipDialog = AppSettings.Default.ZipDontAsk;
 
                 // Show dialog if not saved or if user wants to be asked (or Ctrl+S was pressed)
                 if (!skipDialog || string.IsNullOrEmpty(compressionType))
@@ -3091,13 +3089,16 @@ oLink3.Save";
                         // Save preferences if requested
                         if (compressionForm.RememberChoice)
                     {
-                            Properties.Settings.Default.ZipFormat = compressionType;
-                            Properties.Settings.Default.ZipLevel = compressionLevelStr;
-                            Properties.Settings.Default.ZipDontAsk = true;
-                            Properties.Settings.Default.Save();
+                            AppSettings.Default.ZipFormat = compressionType;
+                            AppSettings.Default.ZipLevel = compressionLevelStr;
+                            AppSettings.Default.ZipDontAsk = true;
+                            AppSettings.Default.Save();
                         }
                     }
                 }
+
+                // Prepare cancellation token but DON'T change button yet
+                zipCancellationTokenSource = new System.Threading.CancellationTokenSource();
 
                 bool use7z = true;  // Always use 7z for both .zip and .7z
                 System.IO.Compression.CompressionLevel compressionLevel;
@@ -3184,6 +3185,16 @@ oLink3.Save";
                             compressionCancelled = true;
                             return;
                         }
+
+                        // NOW change button to Cancel with orange glow (compression is actually starting)
+                        this.Invoke(new Action(() =>
+                        {
+                            ZipToShare.Enabled = true;
+                            ZipToShare.Text = "Cancel";
+                            ZipToShare.FlatAppearance.BorderColor = Color.FromArgb(255, 150, 0);
+                            ZipToShare.FlatAppearance.BorderSize = 2;
+                            ZipToShare.ForeColor = Color.FromArgb(255, 180, 100);
+                        }));
 
                         // Use 7za.exe from _bin folder
                         string sevenZipPath = $"{Environment.CurrentDirectory}\\_bin\\7z\\7za.exe";
@@ -3405,6 +3416,11 @@ oLink3.Save";
             finally
             {
                 ZipToShare.Enabled = true;
+
+                // Reset button appearance (remove orange glow)
+                ZipToShare.FlatAppearance.BorderColor = Color.FromArgb(55, 55, 60);
+                ZipToShare.FlatAppearance.BorderSize = 1;
+                ZipToShare.ForeColor = Color.FromArgb(220, 220, 225);
 
                 // If cancelled, reset to Zip Dir
                 if (compressionCancelled)
@@ -3632,9 +3648,9 @@ oLink3.Save";
             shareWindow.Resize += ShareWindow_Resize;
 
             // Sync pin state - use actual saved setting, not the form's TopMost which might be wrong
-            shareWindow.TopMost = Properties.Settings.Default.Pinned;
+            shareWindow.TopMost = AppSettings.Default.Pinned;
             // Also fix the main form's TopMost to match the setting
-            this.TopMost = Properties.Settings.Default.Pinned;
+            this.TopMost = AppSettings.Default.Pinned;
 
             shareWindow.Show();
             shareWindow.BringToFront();

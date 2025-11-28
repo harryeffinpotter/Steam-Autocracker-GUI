@@ -37,9 +37,9 @@ namespace APPID
                 var obj = JsonConvert.DeserializeObject<dynamic>(queryResult.Content);
                 return obj;
             }
-            catch
+            catch (Exception ex)
             {
-
+                LogHelper.LogError($"getJson failed for {requestURL}", ex);
                 return null;
             }
         }
@@ -74,6 +74,8 @@ namespace APPID
             string localVersion = File.ReadAllText($"_bin\\{Repo}.ver").Trim();
             if (localVersion != latestGitHubVersion)
             {
+                LogHelper.LogUpdate($"Steamless", $"{localVersion} -> {latestGitHubVersion}");
+
                 if (Directory.Exists("_bin\\Steamless"))
                 {
                     Directory.Delete("_bin\\Steamless", true);
@@ -131,6 +133,8 @@ namespace APPID
 
                 if (localVersion != latestVersion)
                 {
+                    LogHelper.LogUpdate($"GoldBerg (gbe_fork)", $"{localVersion} -> {latestVersion}");
+
                     // Find the Windows release asset
                     string downloadUrl = "";
                     foreach (var asset in obj.assets)
@@ -242,6 +246,7 @@ namespace APPID
             }
             catch (Exception ex)
             {
+                LogHelper.LogError("UpdateGoldBerg failed", ex);
                 MessageBox.Show($"Unable to update GoldBerg: {ex.Message}");
             }
         }
@@ -277,8 +282,9 @@ namespace APPID
                 if (!x.HasExited)
                     await System.Threading.Tasks.Task.Run(() => x.WaitForExit());
             }
-            catch
+            catch (Exception ex)
             {
+                LogHelper.LogError($"ExtractFileAsync failed for {sourceArchive}", ex);
                 MessageBox.Show("Unable to extract updated files. If you have WINRAR try uninstalling it then trying again! If you have not installed FFAIO since version 2.0.13 then ");
             }
         }
@@ -301,8 +307,9 @@ namespace APPID
                     return true;
                 }
             }
-            catch
+            catch (Exception ex)
             {
+                LogHelper.LogNetwork($"Internet check failed for {host}: {ex.Message}");
                 hasinternet = false;
                 offline = true;
                 return false;
