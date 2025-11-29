@@ -37,6 +37,7 @@ namespace SteamAutocrackGUI
         private Dictionary<int, string> detectedAppIds = new Dictionary<int, string>();
         private Dictionary<string, string> convertingUrls = new Dictionary<string, string>(); // gamePath -> 1fichier URL during conversion
         private Dictionary<string, string> finalUrls = new Dictionary<string, string>(); // gamePath -> final URL (pydrive or 1fichier)
+        private Dictionary<string, APPID.SteamAppId.CrackDetails> crackDetailsMap = new Dictionary<string, APPID.SteamAppId.CrackDetails>(); // gamePath -> crack details
         private Label compressionLabel;
 
         public List<BatchGameItem> SelectedGames { get; private set; } = new List<BatchGameItem>();
@@ -225,6 +226,22 @@ namespace SteamAutocrackGUI
             };
             gameGrid.Columns.Add(statusCol);
 
+            var detailsCol = new DataGridViewButtonColumn
+            {
+                Name = "Details",
+                HeaderText = "📋",
+                Width = 35,
+                Text = "📋",
+                UseColumnTextForButtonValue = true,
+                DefaultCellStyle = new DataGridViewCellStyle
+                {
+                    Alignment = DataGridViewContentAlignment.MiddleCenter,
+                    ForeColor = Color.White,
+                    BackColor = Color.FromArgb(45, 45, 50)
+                }
+            };
+            gameGrid.Columns.Add(detailsCol);
+
             // Add game rows
             for (int i = 0; i < gamePaths.Count; i++)
             {
@@ -359,6 +376,21 @@ namespace SteamAutocrackGUI
                     // Note: Crack is now fully independent - unchecking it does NOT affect Zip/Upload
 
                     UpdateCountLabel();
+                }
+
+                // Handle Details button click
+                if (colName == "Details")
+                {
+                    string gamePath = gameGrid.Rows[e.RowIndex].Tag?.ToString();
+                    if (!string.IsNullOrEmpty(gamePath) && crackDetailsMap.ContainsKey(gamePath))
+                    {
+                        ShowCrackDetails(crackDetailsMap[gamePath]);
+                    }
+                    else
+                    {
+                        MessageBox.Show("No crack details available yet.\nDetails are populated after cracking.",
+                            "No Details", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    }
                 }
             };
 
@@ -1081,6 +1113,144 @@ namespace SteamAutocrackGUI
             btn.Region = Region.FromHrgn(CreateRoundRectRgn(0, 0, btn.Width, btn.Height, 8, 8));
 
             return btn;
+        }
+
+        /// <summary>
+        /// Store crack details for a game path - called by Form1 after cracking
+        /// </summary>
+        public void StoreCrackDetails(string gamePath, APPID.SteamAppId.CrackDetails details)
+        {
+            if (string.IsNullOrEmpty(gamePath) || details == null) return;
+            crackDetailsMap[gamePath] = details;
+        }
+
+        /// <summary>
+        /// Show crack details in a popup dialog
+        /// </summary>
+        private void ShowCrackDetails(APPID.SteamAppId.CrackDetails details)
+        {
+            if (details == null) return;
+
+            var detailForm = new Form
+            {
+                Text = $"Crack Details - {details.GameName}",
+                Size = new Size(600, 500),
+                StartPosition = FormStartPosition.CenterParent,
+                BackColor = Color.FromArgb(25, 28, 40),
+                ForeColor = Color.White,
+                FormBorderStyle = FormBorderStyle.FixedDialog,
+                MaximizeBox = false,
+                MinimizeBox = false
+            };
+
+            var textBox = new RichTextBox
+            {
+                Dock = DockStyle.Fill,
+                BackColor = Color.FromArgb(30, 33, 45),
+                ForeColor = Color.White,
+                Font = new Font("Consolas", 9),
+                ReadOnly = true,
+                BorderStyle = BorderStyle.None,
+                Padding = new Padding(10)
+            };
+
+            // Build colored text
+            textBox.Text = "";
+            textBox.SelectionFont = new Font("Segoe UI", 12, FontStyle.Bold);
+            textBox.SelectionColor = Color.Cyan;
+            textBox.AppendText($"Crack Details for {details.GameName}\n");
+            textBox.SelectionFont = new Font("Consolas", 9);
+            textBox.SelectionColor = Color.Gray;
+            textBox.AppendText($"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
+            textBox.AppendText($"Path: {details.GamePath}\n");
+            textBox.AppendText($"AppID: {details.AppId}\n");
+            textBox.AppendText($"Time: {details.Timestamp:yyyy-MM-dd HH:mm:ss}\n");
+
+            textBox.SelectionColor = details.Success ? Color.LightGreen : Color.Red;
+            textBox.AppendText($"Success: {(details.Success ? "✓ Yes" : "✗ No")}\n\n");
+
+            if (details.DllsBackedUp.Count > 0)
+            {
+                textBox.SelectionColor = Color.Yellow;
+                textBox.AppendText($"DLLs Backed Up ({details.DllsBackedUp.Count}):\n");
+                textBox.SelectionColor = Color.White;
+                foreach (var dll in details.DllsBackedUp)
+                    textBox.AppendText($"  • {dll}\n");
+                textBox.AppendText("\n");
+            }
+
+            if (details.DllsReplaced.Count > 0)
+            {
+                textBox.SelectionColor = Color.LightGreen;
+                textBox.AppendText($"DLLs Replaced ({details.DllsReplaced.Count}):\n");
+                textBox.SelectionColor = Color.White;
+                foreach (var dll in details.DllsReplaced)
+                    textBox.AppendText($"  • {dll}\n");
+                textBox.AppendText("\n");
+            }
+
+            if (details.ExesUnpacked.Count > 0)
+            {
+                textBox.SelectionColor = Color.Cyan;
+                textBox.AppendText($"EXEs Unpacked by Steamless ({details.ExesUnpacked.Count}):\n");
+                textBox.SelectionColor = Color.White;
+                foreach (var exe in details.ExesUnpacked)
+                    textBox.AppendText($"  • {exe}\n");
+                textBox.AppendText("\n");
+            }
+
+            if (details.ExesSkipped.Count > 0)
+            {
+                textBox.SelectionColor = Color.Gray;
+                textBox.AppendText($"EXEs Skipped (Utilities) ({details.ExesSkipped.Count}):\n");
+                textBox.SelectionColor = Color.DarkGray;
+                foreach (var exe in details.ExesSkipped)
+                    textBox.AppendText($"  • {exe}\n");
+                textBox.AppendText("\n");
+            }
+
+            if (details.Errors.Count > 0)
+            {
+                textBox.SelectionColor = Color.Red;
+                textBox.AppendText($"Errors ({details.Errors.Count}):\n");
+                textBox.SelectionColor = Color.Orange;
+                foreach (var err in details.Errors)
+                    textBox.AppendText($"  ⚠ {err}\n");
+            }
+
+            if (!details.HasAnyChanges && details.Errors.Count == 0)
+            {
+                textBox.SelectionColor = Color.Orange;
+                textBox.AppendText("\nNo modifications were made to this game.\n");
+                textBox.AppendText("This could mean:\n");
+                textBox.AppendText("  • No steam_api.dll or steam_api64.dll was found\n");
+                textBox.AppendText("  • No Steam-protected EXEs were found\n");
+            }
+
+            // Copy button
+            var copyBtn = new Button
+            {
+                Text = "Copy to Clipboard",
+                Dock = DockStyle.Bottom,
+                Height = 35,
+                BackColor = Color.FromArgb(40, 45, 55),
+                ForeColor = Color.White,
+                FlatStyle = FlatStyle.Flat
+            };
+            copyBtn.FlatAppearance.BorderColor = Color.FromArgb(60, 65, 75);
+            copyBtn.Click += (s, e) =>
+            {
+                try
+                {
+                    Clipboard.SetText(details.GetSummary());
+                    MessageBox.Show("Details copied to clipboard!", "Copied", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                }
+                catch { }
+            };
+
+            detailForm.Controls.Add(textBox);
+            detailForm.Controls.Add(copyBtn);
+            detailForm.ShowDialog(this);
         }
 
         [DllImport("Gdi32.dll", EntryPoint = "CreateRoundRectRgn")]

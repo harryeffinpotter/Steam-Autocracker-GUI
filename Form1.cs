@@ -62,6 +62,203 @@ namespace APPID
         private const int ACCENT_ENABLE_ACRYLICBLURBEHIND = 4;
         #endregion
 
+        #region Crack Details Tracking
+        /// <summary>
+        /// Tracks details about what was cracked during a crack operation
+        /// </summary>
+        public class CrackDetails
+        {
+            public string GameName { get; set; }
+            public string GamePath { get; set; }
+            public string AppId { get; set; }
+            public List<string> DllsBackedUp { get; } = new List<string>();
+            public List<string> DllsReplaced { get; } = new List<string>();
+            public List<string> ExesUnpacked { get; } = new List<string>();
+            public List<string> ExesSkipped { get; } = new List<string>();
+            public List<string> Errors { get; } = new List<string>();
+            public bool Success { get; set; }
+            public DateTime Timestamp { get; set; } = DateTime.Now;
+
+            public bool HasAnyChanges => DllsReplaced.Count > 0 || ExesUnpacked.Count > 0;
+
+            public string GetSummary()
+            {
+                var sb = new StringBuilder();
+                sb.AppendLine($"=== Crack Details for {GameName} ===");
+                sb.AppendLine($"Path: {GamePath}");
+                sb.AppendLine($"AppID: {AppId}");
+                sb.AppendLine($"Time: {Timestamp:yyyy-MM-dd HH:mm:ss}");
+                sb.AppendLine($"Success: {Success}");
+                sb.AppendLine();
+
+                if (DllsBackedUp.Count > 0)
+                {
+                    sb.AppendLine($"DLLs Backed Up ({DllsBackedUp.Count}):");
+                    foreach (var dll in DllsBackedUp)
+                        sb.AppendLine($"  - {dll}");
+                    sb.AppendLine();
+                }
+
+                if (DllsReplaced.Count > 0)
+                {
+                    sb.AppendLine($"DLLs Replaced ({DllsReplaced.Count}):");
+                    foreach (var dll in DllsReplaced)
+                        sb.AppendLine($"  - {dll}");
+                    sb.AppendLine();
+                }
+
+                if (ExesUnpacked.Count > 0)
+                {
+                    sb.AppendLine($"EXEs Unpacked by Steamless ({ExesUnpacked.Count}):");
+                    foreach (var exe in ExesUnpacked)
+                        sb.AppendLine($"  - {exe}");
+                    sb.AppendLine();
+                }
+
+                if (ExesSkipped.Count > 0)
+                {
+                    sb.AppendLine($"EXEs Skipped (Non-game utilities) ({ExesSkipped.Count}):");
+                    foreach (var exe in ExesSkipped)
+                        sb.AppendLine($"  - {exe}");
+                    sb.AppendLine();
+                }
+
+                if (Errors.Count > 0)
+                {
+                    sb.AppendLine($"Errors ({Errors.Count}):");
+                    foreach (var err in Errors)
+                        sb.AppendLine($"  - {err}");
+                }
+
+                return sb.ToString();
+            }
+        }
+
+        /// <summary>
+        /// Current crack details being populated during a crack operation
+        /// </summary>
+        public CrackDetails CurrentCrackDetails { get; private set; }
+
+        /// <summary>
+        /// History of crack operations for the current session
+        /// </summary>
+        public List<CrackDetails> CrackHistory { get; } = new List<CrackDetails>();
+
+        /// <summary>
+        /// Patterns for EXE files that should be skipped during Steamless unpacking.
+        /// These are utility/installer EXEs, not actual game executables.
+        /// </summary>
+        private static readonly string[] SkipExePatterns = new string[]
+        {
+            // Crash handlers
+            @"(?i)crash.*report",
+            @"(?i)crash.*handler",
+            @"(?i)crash.*pad",
+            @"(?i)unity.*crash",
+            @"(?i)CrashReportClient",
+            @"(?i)UnityCrashHandler",
+
+            // Redistributables and installers
+            @"(?i)vc_?redist",
+            @"(?i)vcredist",
+            @"(?i)dxsetup",
+            @"(?i)dxwebsetup",
+            @"(?i)directx",
+            @"(?i)dotnet",
+            @"(?i)\.net.*install",
+            @"(?i)physx",
+            @"(?i)openal",
+            @"(?i)oalinst",
+            @"(?i)UE.*Prereq",
+            @"(?i)UEPrereq",
+
+            // Uninstallers
+            @"(?i)unins\d*",
+            @"(?i)uninstall",
+            @"(?i)uninst",
+
+            // Development/Editor tools
+            @"(?i)sdk",
+            @"(?i)editor",
+            @"(?i)modkit",
+
+            // Launchers and helpers
+            @"(?i)_?lobby_connect",
+            @"(?i)webhelper",
+            @"(?i)cefsubprocess",
+            @"(?i)browsersubprocess",
+            @"(?i)steamwebhelper",
+
+            // Easy Anti-Cheat and anti-cheat
+            @"(?i)easyanticheat",
+            @"(?i)eac_",
+            @"(?i)battleye",
+            @"(?i)beclient",
+            @"(?i)beservice",
+
+            // Updaters and launchers
+            @"(?i)updater",
+            @"(?i)patcher",
+            @"(?i)launcher.*helper",
+
+            // Specific known utilities
+            @"(?i)cleanup",
+            @"(?i)^7z",
+            @"(?i)^rar",
+            @"(?i)^setup",
+            @"(?i)install",
+        };
+
+        /// <summary>
+        /// Folder names that typically contain non-game executables
+        /// </summary>
+        private static readonly string[] SkipFolderNames = new string[]
+        {
+            "_CommonRedist",
+            "CommonRedist",
+            "Redist",
+            "Redistributables",
+            "__Installer",
+            "_Installer",
+            "DirectX",
+            "VCRedist",
+            "DotNetFX",
+            ".NET",
+            "Support",
+            "Prerequisites",
+            "Prereqs",
+        };
+
+        /// <summary>
+        /// Checks if an EXE file should be skipped during Steamless unpacking
+        /// </summary>
+        private static bool ShouldSkipExe(string exePath)
+        {
+            string fileName = Path.GetFileName(exePath);
+            string directory = Path.GetDirectoryName(exePath) ?? "";
+
+            // Check if the file is in a skip folder
+            foreach (var skipFolder in SkipFolderNames)
+            {
+                if (directory.IndexOf(skipFolder, StringComparison.OrdinalIgnoreCase) >= 0)
+                    return true;
+            }
+
+            // Check against skip patterns
+            foreach (var pattern in SkipExePatterns)
+            {
+                try
+                {
+                    if (Regex.IsMatch(fileName, pattern, RegexOptions.IgnoreCase))
+                        return true;
+                }
+                catch { }
+            }
+
+            return false;
+        }
+        #endregion
+
         protected DataTableGeneration dataTableGeneration;
         public static int CurrentCell = 0;
         public static string APPNAME = "";
@@ -1418,6 +1615,14 @@ namespace APPID
             bool steamlessUnpacked = false;  // Track if Steamless unpacked anything
             string originalGameDir = gameDir;  // Keep track of original location
 
+            // Initialize crack details tracking
+            CurrentCrackDetails = new CrackDetails
+            {
+                GameName = gameDirName ?? Path.GetFileName(gameDir),
+                GamePath = gameDir,
+                AppId = APPID
+            };
+
             System.Diagnostics.Debug.WriteLine($"[CRACK] === Starting CrackCoreAsync ===");
             System.Diagnostics.Debug.WriteLine($"[CRACK] Game Directory: {gameDir}");
             System.Diagnostics.Debug.WriteLine($"[CRACK] AppID: {APPID}");
@@ -1476,11 +1681,13 @@ namespace APPID
                             {
                                 // Create backup and replace with emulator
                                 File.Move(file, $"{file}.bak");
+                                CurrentCrackDetails.DllsBackedUp.Add(file);
                                 if (goldy)
                                 {
                                     Directory.CreateDirectory(steam);
                                 }
                                 File.Copy(sourceEmulatorDll, file);
+                                CurrentCrackDetails.DllsReplaced.Add($"{file} ({emulatorName})");
                                 cracked = true;
                             }
                         }
@@ -1550,11 +1757,13 @@ namespace APPID
                             {
                                 // Create backup and replace with emulator
                                 File.Move(file, $"{file}.bak");
+                                CurrentCrackDetails.DllsBackedUp.Add(file);
                                 if (goldy)
                                 {
                                     Directory.CreateDirectory(steam);
                                 }
                                 File.Copy(sourceEmulatorDll, file);
+                                CurrentCrackDetails.DllsReplaced.Add($"{file} ({emulatorName})");
                                 cracked = true;
                             }
                         }
@@ -1594,6 +1803,14 @@ namespace APPID
 
                     if (Path.GetExtension(file) == ".exe")
                     {
+                        // Check if this EXE should be skipped (non-game utility executables)
+                        if (ShouldSkipExe(file))
+                        {
+                            System.Diagnostics.Debug.WriteLine($"[CRACK] Skipping non-game EXE: {file}");
+                            CurrentCrackDetails.ExesSkipped.Add(Path.GetFileName(file));
+                            continue;
+                        }
+
                         // Check if Steamless exists before trying to use it
                         string steamlessPath = $"{Environment.CurrentDirectory}\\_bin\\Steamless\\Steamless.exe";
                         System.Diagnostics.Debug.WriteLine($"[CRACK] Checking for Steamless at: {steamlessPath}");
@@ -1654,6 +1871,7 @@ namespace APPID
                             File.Move(file, file + ".bak");
                             File.Move($"{file}.unpacked.exe", file);
                             steamlessUnpacked = true;  // Mark that we unpacked something
+                            CurrentCrackDetails.ExesUnpacked.Add(file);
                         }
                         else
                         {
@@ -2007,8 +2225,24 @@ oLink3.Save";
 
             System.Diagnostics.Debug.WriteLine($"[CRACK] === Crack Complete ===");
             System.Diagnostics.Debug.WriteLine($"[CRACK] Cracked: {cracked}, Steamless Unpacked: {steamlessUnpacked}");
+
+            // Finalize crack details
+            bool success = cracked || steamlessUnpacked;
+            CurrentCrackDetails.Success = success;
+
+            // Check if no steam_api DLLs were found
+            if (CurrentCrackDetails.DllsReplaced.Count == 0 && CurrentCrackDetails.DllsBackedUp.Count == 0)
+            {
+                CurrentCrackDetails.Errors.Add("No steam_api.dll or steam_api64.dll found in game folder");
+            }
+
+            // Add to history
+            CrackHistory.Add(CurrentCrackDetails);
+
+            System.Diagnostics.Debug.WriteLine($"[CRACK] Details - DLLs replaced: {CurrentCrackDetails.DllsReplaced.Count}, EXEs unpacked: {CurrentCrackDetails.ExesUnpacked.Count}, EXEs skipped: {CurrentCrackDetails.ExesSkipped.Count}");
+
             // Return true only if we actually cracked something
-            return cracked || steamlessUnpacked;
+            return success;
         }
 
         public void IniFileEdit(string args)
@@ -3825,6 +4059,12 @@ oLink3.Save";
                     suppressStatusUpdates = false;
 
                     crackResults[game.Path] = crackSucceeded;
+
+                    // Store crack details for this game
+                    if (CurrentCrackDetails != null)
+                    {
+                        batchForm.StoreCrackDetails(game.Path, CurrentCrackDetails);
+                    }
 
                     if (crackSucceeded)
                     {
