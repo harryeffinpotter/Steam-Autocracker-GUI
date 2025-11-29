@@ -265,7 +265,7 @@ Enter to select top result.
     <value>On</value>
   </data>
   <data name="tgDisc.Location" type="System.Drawing.Point, System.Drawing">
-    <value>600, 479</value>
+    <value>603, 481</value>
   </data>
   <data name="tgDisc.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
     <value>2, 0, 2, 0</value>
@@ -4214,7 +4214,7 @@ If you have issues, run as Admin.</value>
     <value>0</value>
   </data>
   <data name="lblTitle.Text" xml:space="preserve">
-    <value>SACGUI 2.0</value>
+    <value>SACGUI 2.1</value>
   </data>
   <data name="&gt;&gt;lblTitle.Name" xml:space="preserve">
     <value>lblTitle</value>
