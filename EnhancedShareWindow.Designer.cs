@@ -43,12 +43,16 @@ namespace SteamAppIdIdentifier
             System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle3 = new System.Windows.Forms.DataGridViewCellStyle();
             this.mainPanel = new System.Windows.Forms.Panel();
             this.gamesGrid = new System.Windows.Forms.DataGridView();
+            this.SelectGame = new System.Windows.Forms.DataGridViewCheckBoxColumn();
             this.GameName = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.InstallPath = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.GameSize = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.BuildID = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.AppID = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.LastUpdated = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.BatchCrack = new System.Windows.Forms.DataGridViewCheckBoxColumn();
+            this.BatchZip = new System.Windows.Forms.DataGridViewCheckBoxColumn();
+            this.BatchUpload = new System.Windows.Forms.DataGridViewCheckBoxColumn();
             this.CrackOnly = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.ShareClean = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.ShareCracked = new System.Windows.Forms.DataGridViewTextBoxColumn();
@@ -101,12 +105,16 @@ namespace SteamAppIdIdentifier
             this.gamesGrid.ColumnHeadersHeight = 35;
             this.gamesGrid.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.DisableResizing;
             this.gamesGrid.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
+            this.SelectGame,
             this.GameName,
             this.InstallPath,
             this.GameSize,
             this.BuildID,
             this.AppID,
             this.LastUpdated,
+            this.BatchCrack,
+            this.BatchZip,
+            this.BatchUpload,
             this.CrackOnly,
             this.ShareClean,
             this.ShareCracked});
@@ -147,9 +155,17 @@ namespace SteamAppIdIdentifier
             this.gamesGrid.CellFormatting += new System.Windows.Forms.DataGridViewCellFormattingEventHandler(this.GamesGrid_CellFormatting);
             this.gamesGrid.CellMouseEnter += new System.Windows.Forms.DataGridViewCellEventHandler(this.GamesGrid_CellMouseEnter);
             this.gamesGrid.CellMouseLeave += new System.Windows.Forms.DataGridViewCellEventHandler(this.GamesGrid_CellMouseLeave);
-            // 
+            //
+            // SelectGame
+            //
+            this.SelectGame.HeaderText = "☑";
+            this.SelectGame.MinimumWidth = 30;
+            this.SelectGame.Name = "SelectGame";
+            this.SelectGame.Width = 35;
+            this.SelectGame.FillWeight = 20;
+            //
             // GameName
-            // 
+            //
             this.GameName.HeaderText = "Game";
             this.GameName.MinimumWidth = 8;
             this.GameName.Name = "GameName";
@@ -182,16 +198,40 @@ namespace SteamAppIdIdentifier
             this.AppID.MinimumWidth = 8;
             this.AppID.Name = "AppID";
             this.AppID.ReadOnly = true;
-            // 
+            //
             // LastUpdated
-            // 
+            //
             this.LastUpdated.HeaderText = "Last Updated";
             this.LastUpdated.MinimumWidth = 8;
             this.LastUpdated.Name = "LastUpdated";
             this.LastUpdated.ReadOnly = true;
-            // 
+            //
+            // BatchCrack
+            //
+            this.BatchCrack.HeaderText = "Crack";
+            this.BatchCrack.MinimumWidth = 40;
+            this.BatchCrack.Name = "BatchCrack";
+            this.BatchCrack.Width = 50;
+            this.BatchCrack.FillWeight = 30;
+            //
+            // BatchZip
+            //
+            this.BatchZip.HeaderText = "Zip";
+            this.BatchZip.MinimumWidth = 35;
+            this.BatchZip.Name = "BatchZip";
+            this.BatchZip.Width = 40;
+            this.BatchZip.FillWeight = 25;
+            //
+            // BatchUpload
+            //
+            this.BatchUpload.HeaderText = "Upload";
+            this.BatchUpload.MinimumWidth = 45;
+            this.BatchUpload.Name = "BatchUpload";
+            this.BatchUpload.Width = 55;
+            this.BatchUpload.FillWeight = 35;
+            //
             // CrackOnly
-            // 
+            //
             this.CrackOnly.HeaderText = "Crack Only";
             this.CrackOnly.MinimumWidth = 8;
             this.CrackOnly.Name = "CrackOnly";
@@ -356,12 +396,16 @@ namespace SteamAppIdIdentifier
 
         #endregion
 
+        private System.Windows.Forms.DataGridViewCheckBoxColumn SelectGame;
         private System.Windows.Forms.DataGridViewTextBoxColumn GameName;
         private System.Windows.Forms.DataGridViewTextBoxColumn InstallPath;
         private System.Windows.Forms.DataGridViewTextBoxColumn GameSize;
         private System.Windows.Forms.DataGridViewTextBoxColumn BuildID;
         private System.Windows.Forms.DataGridViewTextBoxColumn AppID;
         private System.Windows.Forms.DataGridViewTextBoxColumn LastUpdated;
+        private System.Windows.Forms.DataGridViewCheckBoxColumn BatchCrack;
+        private System.Windows.Forms.DataGridViewCheckBoxColumn BatchZip;
+        private System.Windows.Forms.DataGridViewCheckBoxColumn BatchUpload;
         private System.Windows.Forms.DataGridViewTextBoxColumn CrackOnly;
         private System.Windows.Forms.DataGridViewTextBoxColumn ShareClean;
         private System.Windows.Forms.DataGridViewTextBoxColumn ShareCracked;

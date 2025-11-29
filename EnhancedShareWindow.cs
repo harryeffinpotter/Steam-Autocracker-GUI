@@ -263,8 +263,37 @@ namespace SteamAppIdIdentifier
             var gameName = row.Cells["GameName"].Value?.ToString();
             var appId = row.Cells["AppID"].Value?.ToString();
             var installPath = row.Cells["InstallPath"].Value?.ToString();
+            var colName = gamesGrid.Columns[e.ColumnIndex].Name;
 
-            // No request button anymore - this window is for sharing YOUR games
+            // Handle batch checkbox columns with dependency logic
+            if (colName == "SelectGame" || colName == "BatchCrack" || colName == "BatchZip" || colName == "BatchUpload")
+            {
+                var cell = row.Cells[e.ColumnIndex];
+                bool currentValue = cell.Value != null && (bool)cell.Value;
+                bool newValue = !currentValue;
+                cell.Value = newValue;
+
+                // Dependency logic - Upload requires Zip, Crack is independent
+                if (colName == "BatchUpload" && newValue)
+                {
+                    // Upload requires Zip (but not Crack - can share uncracked games)
+                    row.Cells["BatchZip"].Value = true;
+                }
+                else if (colName == "BatchZip" && !newValue)
+                {
+                    // Unchecking Zip unchecks Upload
+                    row.Cells["BatchUpload"].Value = false;
+                }
+
+                // If any batch action is checked, also check SelectGame
+                if ((colName == "BatchCrack" || colName == "BatchZip" || colName == "BatchUpload") && newValue)
+                {
+                    row.Cells["SelectGame"].Value = true;
+                }
+
+                UpdateBatchCountLabel();
+                return;
+            }
 
             // Handle Crack Only button
             if (e.ColumnIndex == gamesGrid.Columns["CrackOnly"].Index)
@@ -1610,7 +1639,432 @@ namespace SteamAppIdIdentifier
 
         private void EnhancedShareWindow_Load(object sender, EventArgs e)
         {
+            CreateBatchActionButtons();
             _ = LoadGames();
+        }
+
+        private Label batchCountLabel;
+        private Button btnProcessSelected;
+        private Panel batchPanel;
+
+        private void CreateBatchActionButtons()
+        {
+            // Create batch action panel at the bottom of the title bar
+            batchPanel = new Panel
+            {
+                Location = new Point(340, 7),
+                Size = new Size(600, 33),
+                BackColor = Color.Transparent
+            };
+
+            // Batch count label
+            batchCountLabel = new Label
+            {
+                Text = "0 selected",
+                Location = new Point(0, 8),
+                Size = new Size(80, 20),
+                ForeColor = Color.Gray,
+                BackColor = Color.Transparent,
+                Font = new Font("Segoe UI", 8)
+            };
+            batchPanel.Controls.Add(batchCountLabel);
+
+            // All Crack button
+            var btnAllCrack = CreateBatchButton("All Crack", new Point(85, 0), new Size(70, 28));
+            btnAllCrack.Click += (s, e) => SetAllBatchCheckboxes("BatchCrack", true);
+            batchPanel.Controls.Add(btnAllCrack);
+
+            // All Zip button
+            var btnAllZip = CreateBatchButton("All Zip", new Point(160, 0), new Size(55, 28));
+            btnAllZip.Click += (s, e) => SetAllBatchCheckboxes("BatchZip", true);
+            batchPanel.Controls.Add(btnAllZip);
+
+            // All Upload button
+            var btnAllUpload = CreateBatchButton("All Upload", new Point(220, 0), new Size(75, 28));
+            btnAllUpload.Click += (s, e) => SetAllBatchCheckboxes("BatchUpload", true);
+            batchPanel.Controls.Add(btnAllUpload);
+
+            // Clear All button
+            var btnClearAll = CreateBatchButton("Clear", new Point(300, 0), new Size(50, 28));
+            btnClearAll.Click += (s, e) =>
+            {
+                foreach (DataGridViewRow row in gamesGrid.Rows)
+                {
+                    row.Cells["SelectGame"].Value = false;
+                    row.Cells["BatchCrack"].Value = false;
+                    row.Cells["BatchZip"].Value = false;
+                    row.Cells["BatchUpload"].Value = false;
+                }
+                UpdateBatchCountLabel();
+            };
+            batchPanel.Controls.Add(btnClearAll);
+
+            // Compression settings button
+            var btnSettings = CreateBatchButton("⚙", new Point(355, 0), new Size(30, 28));
+            btnSettings.Font = new Font("Segoe UI", 10);
+            btnSettings.Click += (s, e) => OpenBatchCompressionSettings();
+            toolTip.SetToolTip(btnSettings, "Compression settings for batch processing");
+            batchPanel.Controls.Add(btnSettings);
+
+            // Process Selected button
+            btnProcessSelected = CreateBatchButton("Process Selected", new Point(390, 0), new Size(110, 28));
+            btnProcessSelected.BackColor = Color.FromArgb(0, 80, 60);
+            btnProcessSelected.Click += async (s, e) => await ProcessSelectedGames();
+            batchPanel.Controls.Add(btnProcessSelected);
+
+            titleBar.Controls.Add(batchPanel);
+        }
+
+        private Button CreateBatchButton(string text, Point location, Size size)
+        {
+            var btn = new Button
+            {
+                Text = text,
+                Location = location,
+                Size = size,
+                BackColor = Color.FromArgb(38, 38, 42),
+                ForeColor = Color.FromArgb(200, 200, 210),
+                FlatStyle = FlatStyle.Flat,
+                Font = new Font("Segoe UI", 8),
+                Cursor = Cursors.Hand
+            };
+            btn.FlatAppearance.BorderColor = Color.FromArgb(55, 55, 60);
+            btn.FlatAppearance.MouseOverBackColor = Color.FromArgb(48, 48, 52);
+            btn.FlatAppearance.MouseDownBackColor = Color.FromArgb(28, 28, 32);
+            return btn;
+        }
+
+        private void SetAllBatchCheckboxes(string columnName, bool value)
+        {
+            foreach (DataGridViewRow row in gamesGrid.Rows)
+            {
+                row.Cells[columnName].Value = value;
+
+                // If enabling Upload, also enable Zip
+                if (value && columnName == "BatchUpload")
+                {
+                    row.Cells["BatchZip"].Value = true;
+                }
+
+                // Auto-select the row if enabling any action
+                if (value)
+                {
+                    row.Cells["SelectGame"].Value = true;
+                }
+            }
+            UpdateBatchCountLabel();
+        }
+
+        private void UpdateBatchCountLabel()
+        {
+            if (batchCountLabel == null) return;
+
+            int selectedCount = 0;
+            int crackCount = 0;
+            int zipCount = 0;
+            int uploadCount = 0;
+
+            foreach (DataGridViewRow row in gamesGrid.Rows)
+            {
+                if (row.Cells["SelectGame"].Value != null && (bool)row.Cells["SelectGame"].Value)
+                    selectedCount++;
+                if (row.Cells["BatchCrack"].Value != null && (bool)row.Cells["BatchCrack"].Value)
+                    crackCount++;
+                if (row.Cells["BatchZip"].Value != null && (bool)row.Cells["BatchZip"].Value)
+                    zipCount++;
+                if (row.Cells["BatchUpload"].Value != null && (bool)row.Cells["BatchUpload"].Value)
+                    uploadCount++;
+            }
+
+            string text = $"{selectedCount} sel";
+            if (crackCount > 0) text += $", {crackCount} crack";
+            if (zipCount > 0) text += $", {zipCount} zip";
+            if (uploadCount > 0) text += $", {uploadCount} upload";
+            batchCountLabel.Text = text;
+        }
+
+        // Batch compression settings
+        private string batchCompressionFormat = "ZIP";
+        private string batchCompressionLevel = "0";
+        private bool batchUsePassword = false;
+
+        private void OpenBatchCompressionSettings()
+        {
+            using (var form = new SteamAutocrackGUI.CompressionSettingsForm())
+            {
+                form.Owner = this;
+                if (form.ShowDialog(this) == DialogResult.OK)
+                {
+                    batchCompressionFormat = form.SelectedFormat;
+                    batchCompressionLevel = form.SelectedLevel;
+                    batchUsePassword = form.UseRinPassword;
+                }
+            }
+        }
+
+        /// <summary>
+        /// Processes selected games in batch - crack, zip, upload (async, parallel where possible)
+        /// </summary>
+        private async Task ProcessSelectedGames()
+        {
+            // Collect selected games with their actions
+            var gamesToProcess = new List<(DataGridViewRow row, string name, string path, string appId, bool crack, bool zip, bool upload)>();
+
+            foreach (DataGridViewRow row in gamesGrid.Rows)
+            {
+                bool selected = row.Cells["SelectGame"].Value != null && (bool)row.Cells["SelectGame"].Value;
+                if (!selected) continue;
+
+                bool crack = row.Cells["BatchCrack"].Value != null && (bool)row.Cells["BatchCrack"].Value;
+                bool zip = row.Cells["BatchZip"].Value != null && (bool)row.Cells["BatchZip"].Value;
+                bool upload = row.Cells["BatchUpload"].Value != null && (bool)row.Cells["BatchUpload"].Value;
+
+                if (!crack && !zip && !upload) continue; // No actions selected
+
+                string name = row.Cells["GameName"].Value?.ToString();
+                string path = row.Cells["InstallPath"].Value?.ToString();
+                string appId = row.Cells["AppID"].Value?.ToString();
+
+                gamesToProcess.Add((row, name, path, appId, crack, zip, upload));
+            }
+
+            if (gamesToProcess.Count == 0)
+            {
+                MessageBox.Show("Please select at least one game with at least one action (Crack, Zip, or Upload).",
+                    "No Selection", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            // Disable batch buttons during processing
+            btnProcessSelected.Enabled = false;
+            batchPanel.Enabled = false;
+
+            var mainForm = parentForm as SteamAppId;
+            if (mainForm == null)
+            {
+                MessageBox.Show("Cannot access main form for cracking.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                btnProcessSelected.Enabled = true;
+                batchPanel.Enabled = true;
+                return;
+            }
+
+            // Track results
+            var crackResults = new Dictionary<string, bool>();
+            var archivePaths = new Dictionary<string, string>();
+            var uploadResults = new List<(string name, string url)>();
+
+            // ========== PHASE 1: CRACK (Sequential due to shared state) ==========
+            foreach (var game in gamesToProcess.Where(g => g.crack))
+            {
+                game.row.Cells["CrackOnly"].Value = "⏳ Cracking...";
+                game.row.Cells["CrackOnly"].Style.ForeColor = Color.Yellow;
+
+                if (string.IsNullOrEmpty(game.appId))
+                {
+                    game.row.Cells["CrackOnly"].Value = "❌ No AppID";
+                    game.row.Cells["CrackOnly"].Style.ForeColor = Color.Orange;
+                    crackResults[game.path] = false;
+                    continue;
+                }
+
+                try
+                {
+                    mainForm.GameDirectory = game.path;
+                    SteamAppId.APPID = game.appId;
+                    mainForm.SetSuppressStatusUpdates(true);
+
+                    bool success = await mainForm.CrackAsync();
+                    crackResults[game.path] = success;
+
+                    mainForm.SetSuppressStatusUpdates(false);
+
+                    if (success)
+                    {
+                        game.row.Cells["CrackOnly"].Value = "✅ Cracked!";
+                        game.row.Cells["CrackOnly"].Style.ForeColor = Color.LightGreen;
+                        game.row.Cells["CrackOnly"].Style.BackColor = Color.FromArgb(60, 0, 60);
+                    }
+                    else
+                    {
+                        game.row.Cells["CrackOnly"].Value = "❌ Failed";
+                        game.row.Cells["CrackOnly"].Style.ForeColor = Color.Red;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    mainForm.SetSuppressStatusUpdates(false);
+                    crackResults[game.path] = false;
+                    game.row.Cells["CrackOnly"].Value = "❌ Error";
+                    game.row.Cells["CrackOnly"].Style.ForeColor = Color.Red;
+                    System.Diagnostics.Debug.WriteLine($"[BATCH] Crack error for {game.name}: {ex.Message}");
+                }
+            }
+
+            // Games that didn't need cracking are considered successful
+            foreach (var game in gamesToProcess.Where(g => !g.crack))
+            {
+                crackResults[game.path] = true;
+            }
+
+            // ========== PHASE 2: ZIP (Parallel) ==========
+            var gamesToZip = gamesToProcess.Where(g => g.zip && crackResults.ContainsKey(g.path) && crackResults[g.path]).ToList();
+
+            if (gamesToZip.Count > 0)
+            {
+                // Update all to "Zipping..."
+                foreach (var game in gamesToZip)
+                {
+                    game.row.Cells["ShareClean"].Value = "⏳ Zipping...";
+                    game.row.Cells["ShareClean"].Style.ForeColor = Color.Cyan;
+                }
+
+                string sevenZipPath = ResourceExtractor.GetBinFilePath(Path.Combine("7z", "7za.exe"));
+                string password = batchUsePassword ? "rin" : null;
+
+                var zipTasks = gamesToZip.Select(async game =>
+                {
+                    string ext = batchCompressionFormat == "7Z" ? ".7z" : ".zip";
+                    string desktopPath = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
+                    string safeGameName = game.name;
+                    foreach (char c in Path.GetInvalidFileNameChars())
+                        safeGameName = safeGameName.Replace(c.ToString(), "");
+
+                    // Determine prefix based on whether it was cracked
+                    string prefix = game.crack ? "[SACGUI] CRACKED" : "[SACGUI] CLEAN";
+                    string archivePath = Path.Combine(desktopPath, $"{prefix} {safeGameName}{ext}");
+                    archivePaths[game.path] = archivePath;
+
+                    string zipError = null;
+                    bool zipSuccess = await Task.Run(() =>
+                    {
+                        try
+                        {
+                            string formatArg = batchCompressionFormat == "7Z" ? "-t7z" : "-tzip";
+                            string args = $"a {formatArg} -mx={batchCompressionLevel} \"{archivePath}\" \"{game.path}\\*\"";
+                            if (!string.IsNullOrEmpty(password)) args += $" -p{password}";
+
+                            var psi = new System.Diagnostics.ProcessStartInfo
+                            {
+                                FileName = sevenZipPath,
+                                Arguments = args,
+                                UseShellExecute = false,
+                                CreateNoWindow = true,
+                                RedirectStandardOutput = true,
+                                RedirectStandardError = true
+                            };
+
+                            using (var proc = System.Diagnostics.Process.Start(psi))
+                            {
+                                string stderr = proc.StandardError.ReadToEnd();
+                                proc.WaitForExit();
+                                if (proc.ExitCode != 0 && !string.IsNullOrEmpty(stderr))
+                                    zipError = stderr.Length > 100 ? stderr.Substring(0, 100) + "..." : stderr;
+                                return proc.ExitCode == 0;
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            zipError = ex.Message;
+                            return false;
+                        }
+                    });
+
+                    return (game, zipSuccess, zipError);
+                }).ToList();
+
+                var zipResults = await Task.WhenAll(zipTasks);
+
+                foreach (var result in zipResults)
+                {
+                    var game = result.game;
+                    if (result.zipSuccess)
+                    {
+                        game.row.Cells["ShareClean"].Value = "✅ Zipped";
+                        game.row.Cells["ShareClean"].Style.ForeColor = Color.LightGreen;
+                    }
+                    else
+                    {
+                        game.row.Cells["ShareClean"].Value = "❌ Zip Failed";
+                        game.row.Cells["ShareClean"].Style.ForeColor = Color.Red;
+                    }
+                }
+            }
+
+            // ========== PHASE 3: UPLOAD (Sequential uploads, parallel conversions) ==========
+            var gamesToUpload = gamesToProcess.Where(g => g.upload && crackResults.ContainsKey(g.path) && crackResults[g.path]).ToList();
+
+            foreach (var game in gamesToUpload)
+            {
+                string archivePath = archivePaths.ContainsKey(game.path) ? archivePaths[game.path] : null;
+                if (string.IsNullOrEmpty(archivePath) || !File.Exists(archivePath))
+                {
+                    game.row.Cells["ShareCracked"].Value = "❌ No Archive";
+                    game.row.Cells["ShareCracked"].Style.ForeColor = Color.Orange;
+                    continue;
+                }
+
+                game.row.Cells["ShareCracked"].Value = "⏳ Uploading...";
+                game.row.Cells["ShareCracked"].Style.ForeColor = Color.Magenta;
+
+                try
+                {
+                    using (var uploader = new SAC_GUI.OneFichierUploader())
+                    {
+                        var gamePath = game.path;
+                        var gameRow = game.row;
+
+                        var progress = new Progress<double>(p =>
+                        {
+                            int pct = (int)(p * 100);
+                            if (!this.IsDisposed)
+                            {
+                                this.BeginInvoke(new Action(() =>
+                                {
+                                    gameRow.Cells["ShareCracked"].Value = $"⏳ {pct}%";
+                                }));
+                            }
+                        });
+
+                        var result = await Task.Run(() => uploader.UploadFileAsync(archivePath, progress));
+
+                        if (result != null && !string.IsNullOrEmpty(result.DownloadUrl))
+                        {
+                            uploadResults.Add((game.name, result.DownloadUrl));
+                            game.row.Cells["ShareCracked"].Value = "✅ Uploaded";
+                            game.row.Cells["ShareCracked"].Style.ForeColor = Color.LightGreen;
+                            game.row.Cells["ShareCracked"].Style.BackColor = Color.FromArgb(0, 60, 0);
+                        }
+                        else
+                        {
+                            game.row.Cells["ShareCracked"].Value = "❌ Upload Failed";
+                            game.row.Cells["ShareCracked"].Style.ForeColor = Color.Red;
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    game.row.Cells["ShareCracked"].Value = "❌ Error";
+                    game.row.Cells["ShareCracked"].Style.ForeColor = Color.Red;
+                    System.Diagnostics.Debug.WriteLine($"[BATCH] Upload error for {game.name}: {ex.Message}");
+                }
+            }
+
+            // Re-enable batch buttons
+            btnProcessSelected.Enabled = true;
+            batchPanel.Enabled = true;
+
+            // Show summary if uploads were done
+            if (uploadResults.Count > 0)
+            {
+                var links = string.Join("\n", uploadResults.Select(r => $"{r.name}: {r.url}"));
+                try { Clipboard.SetText(links); } catch { }
+                MessageBox.Show($"Batch processing complete!\n\n{uploadResults.Count} file(s) uploaded.\nLinks copied to clipboard.",
+                    "Batch Complete", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+            else if (gamesToProcess.Count > 0)
+            {
+                MessageBox.Show("Batch processing complete!", "Batch Complete", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
         }
 
         private async void ShowUploadSuccessWithConvert(string url, string gameName, bool cracked, bool isOneFichier, long fileSize)
