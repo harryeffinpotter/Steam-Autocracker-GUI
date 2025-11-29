@@ -2134,6 +2134,39 @@ oLink3.Save";
             {
                 gameDir = folderSelectDialog.FileName;
 
+                // Always remember parent folder for next time
+                try
+                {
+                    var parent = Directory.GetParent(gameDir);
+                    if (parent != null)
+                    {
+                        AppSettings.Default.lastDir = parent.FullName;
+                        AppSettings.Default.Save();
+                    }
+                }
+                catch { }
+
+                // Check if this is a folder containing multiple games (batch mode)
+                if (!IsGameFolder(gameDir))
+                {
+                    var gamesInFolder = DetectGamesInFolder(gameDir);
+                    if (gamesInFolder.Count > 0)
+                    {
+                        // For batch folders, remember the batch folder itself (not parent)
+                        AppSettings.Default.lastDir = gameDir;
+                        AppSettings.Default.Save();
+
+                        // It's a batch folder! Show selection dialog
+                        var (selectedGames, format, level, usePassword) = ShowBatchGameSelection(gamesInFolder);
+                        if (selectedGames.Count > 0)
+                        {
+                            // Process batch with compression settings
+                            _ = ProcessBatchGames(selectedGames, format, level, usePassword);
+                        }
+                        return; // Don't continue with single-game flow
+                    }
+                }
+
                 // Hide OpenDir and ZipToShare when new directory selected
                 OpenDir.Visible = false;
                 OpenDir.SendToBack();
@@ -3678,5 +3711,339 @@ oLink3.Save";
         {
 
         }
+
+        #region Batch Game Detection
+
+        /// <summary>
+        /// Detects if a folder is a game folder
+        /// </summary>
+        private bool IsGameFolder(string path)
+        {
+            if (!Directory.Exists(path)) return false;
+
+            try
+            {
+                // Has exe in folder = game
+                var exeFiles = Directory.GetFiles(path, "*.exe", SearchOption.TopDirectoryOnly);
+                if (exeFiles.Length > 0) return true;
+
+                // Has Engine folder = Unreal game
+                if (Directory.Exists(Path.Combine(path, "Engine"))) return true;
+
+                // Unity pattern: *_Data folder = game
+                var dirs = Directory.GetDirectories(path);
+                foreach (var dir in dirs)
+                {
+                    if (dir.EndsWith("_Data", StringComparison.OrdinalIgnoreCase))
+                        return true;
+                }
+
+                return false;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Detects games in subfolders when user selects a folder containing multiple games
+        /// </summary>
+        private List<string> DetectGamesInFolder(string path)
+        {
+            var games = new List<string>();
+            if (!Directory.Exists(path)) return games;
+
+            try
+            {
+                // Only check direct children - don't recurse into subfolders
+                var subfolders = Directory.GetDirectories(path);
+                foreach (var subfolder in subfolders)
+                {
+                    if (IsGameFolder(subfolder))
+                    {
+                        games.Add(subfolder);
+                    }
+                }
+            }
+            catch { }
+
+            return games;
+        }
+
+        /// <summary>
+        /// Shows batch game selection dialog and returns selected game paths
+        /// </summary>
+        private (List<BatchGameItem> games, string format, string level, bool usePassword) ShowBatchGameSelection(List<string> gamePaths)
+        {
+            using (var form = new BatchGameSelectionForm(gamePaths))
+            {
+                if (form.ShowDialog(this) == DialogResult.OK)
+                {
+                    return (form.SelectedGames, form.CompressionFormat, form.CompressionLevel, form.UseRinPassword);
+                }
+                return (new List<BatchGameItem>(), "ZIP", "0", false);
+            }
+        }
+
+        /// <summary>
+        /// Processes multiple games in batch with per-game actions
+        /// </summary>
+        private async Task ProcessBatchGames(List<BatchGameItem> games, string compressionFormat, string compressionLevel, bool usePassword)
+        {
+            int total = games.Count;
+            int current = 0;
+            int success = 0;
+            int failed = 0;
+            int zipped = 0;
+            int zipFailed = 0;
+            int uploaded = 0;
+            int uploadFailed = 0;
+
+            // Track failures with reasons
+            var failureReasons = new List<(string gameName, string reason)>();
+
+            // Track successful uploads with URLs
+            var uploadResults = new List<(string gameName, string url)>();
+
+            foreach (var game in games)
+            {
+                current++;
+                Tit($"🔄 Batch ({current}/{total}): {game.Name}...", Color.Yellow);
+
+                try
+                {
+                    // Set up the game directory
+                    gameDir = game.Path;
+                    gameDirName = game.Name;
+                    parentOfSelection = Directory.GetParent(game.Path).FullName;
+
+                    bool crackSucceeded = false;
+
+                    // Crack step (if enabled)
+                    if (game.Crack)
+                    {
+                        // Use pre-detected AppID from batch selection
+                        if (!string.IsNullOrEmpty(game.AppId))
+                        {
+                            APPID = game.AppId;
+                        }
+                        else
+                        {
+                            // Skip games without AppID
+                            Tit($"⚠️ Skipping {game.Name} - no AppID", Color.Orange);
+                            failureReasons.Add((game.Name, "No AppID found"));
+                            failed++;
+                            await Task.Delay(500);
+                            continue;
+                        }
+
+                        // Perform the crack
+                        suppressStatusUpdates = true;
+                        try
+                        {
+                            crackSucceeded = await CrackAsync();
+                        }
+                        catch (Exception crackEx)
+                        {
+                            crackSucceeded = false;
+                            failureReasons.Add((game.Name, $"Crack exception: {crackEx.Message}"));
+                        }
+                        suppressStatusUpdates = false;
+
+                        if (crackSucceeded)
+                        {
+                            success++;
+                        }
+                        else
+                        {
+                            failed++;
+                            if (!failureReasons.Any(f => f.gameName == game.Name))
+                            {
+                                failureReasons.Add((game.Name, "Crack returned false (no DLLs replaced, Steamless failed, or no changes made)"));
+                            }
+                        }
+                    }
+                    else
+                    {
+                        crackSucceeded = true; // No crack needed
+                    }
+
+                    // Zip step (if enabled and crack succeeded or wasn't needed)
+                    if (game.Zip && crackSucceeded)
+                    {
+                        Tit($"📦 Zipping {game.Name}...", Color.Cyan);
+                        string ext = compressionFormat == "7Z" ? ".7z" : ".zip";
+                        string archivePath = Path.Combine(parentOfSelection, game.Name + ext);
+
+                        string sevenZipPath = ResourceExtractor.GetBinFilePath(Path.Combine("7z", "7za.exe"));
+                        string password = usePassword ? "rin" : null;
+
+                        string zipError = null;
+                        bool zipSuccess = await Task.Run(() =>
+                        {
+                            try
+                            {
+                                string formatArg = compressionFormat == "7Z" ? "-t7z" : "-tzip";
+                                string args = $"a {formatArg} -mx={compressionLevel} \"{archivePath}\" \"{game.Path}\\*\"";
+                                if (!string.IsNullOrEmpty(password))
+                                {
+                                    args += $" -p{password}";
+                                }
+
+                                var psi = new System.Diagnostics.ProcessStartInfo
+                                {
+                                    FileName = sevenZipPath,
+                                    Arguments = args,
+                                    UseShellExecute = false,
+                                    CreateNoWindow = true,
+                                    RedirectStandardOutput = true,
+                                    RedirectStandardError = true
+                                };
+
+                                using (var proc = System.Diagnostics.Process.Start(psi))
+                                {
+                                    string stderr = proc.StandardError.ReadToEnd();
+                                    proc.WaitForExit();
+                                    if (proc.ExitCode != 0 && !string.IsNullOrEmpty(stderr))
+                                    {
+                                        zipError = stderr.Length > 100 ? stderr.Substring(0, 100) + "..." : stderr;
+                                    }
+                                    return proc.ExitCode == 0;
+                                }
+                            }
+                            catch (Exception ex)
+                            {
+                                zipError = ex.Message;
+                                return false;
+                            }
+                        });
+
+                        if (zipSuccess)
+                        {
+                            zipped++;
+                        }
+                        else
+                        {
+                            zipFailed++;
+                            failureReasons.Add((game.Name, $"Zip failed: {zipError ?? "Unknown error"}"));
+                        }
+                    }
+
+                    // Upload step
+                    if (game.Upload && crackSucceeded)
+                    {
+                        // Need to have zipped first
+                        string ext = compressionFormat == "7Z" ? ".7z" : ".zip";
+                        string archivePath = Path.Combine(parentOfSelection, game.Name + ext);
+
+                        if (!File.Exists(archivePath))
+                        {
+                            failureReasons.Add((game.Name, "Upload failed: Archive file not found (zip step may have failed)"));
+                        }
+                        else
+                        {
+                            Tit($"📤 Uploading {game.Name}...", Color.Magenta);
+
+                            try
+                            {
+                                using (var uploader = new SAC_GUI.OneFichierUploader())
+                                {
+                                    var progress = new Progress<double>(p =>
+                                    {
+                                        int pct = (int)(p * 100);
+                                        Tit($"📤 Uploading {game.Name}... {pct}%", Color.Magenta);
+                                    });
+
+                                    var result = await uploader.UploadFileAsync(archivePath, progress);
+
+                                    if (result != null && !string.IsNullOrEmpty(result.DownloadUrl))
+                                    {
+                                        uploadResults.Add((game.Name, result.DownloadUrl));
+                                        uploaded++;
+                                        System.Diagnostics.Debug.WriteLine($"[BATCH] Uploaded {game.Name}: {result.DownloadUrl}");
+                                        Tit($"✅ Uploaded {game.Name}", Color.LightGreen);
+                                    }
+                                    else
+                                    {
+                                        uploadFailed++;
+                                        failureReasons.Add((game.Name, "Upload failed: No download URL returned"));
+                                    }
+                                }
+                            }
+                            catch (Exception uploadEx)
+                            {
+                                uploadFailed++;
+                                failureReasons.Add((game.Name, $"Upload failed: {uploadEx.Message}"));
+                            }
+                        }
+                    }
+
+                    await Task.Delay(300); // Small delay between games
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Batch error for {game.Name}: {ex.Message}");
+                    failureReasons.Add((game.Name, $"Exception: {ex.Message}"));
+                    failed++;
+                }
+            }
+
+            suppressStatusUpdates = false;
+
+            // Build summary
+            var summaryParts = new List<string>();
+            if (success > 0) summaryParts.Add($"✅ {success} cracked");
+            if (zipped > 0) summaryParts.Add($"📦 {zipped} zipped");
+            if (uploaded > 0) summaryParts.Add($"📤 {uploaded} uploaded");
+            if (failed > 0) summaryParts.Add($"❌ {failed} crack failed");
+            if (zipFailed > 0) summaryParts.Add($"📦❌ {zipFailed} zip failed");
+            if (uploadFailed > 0) summaryParts.Add($"📤❌ {uploadFailed} upload failed");
+
+            string summary = string.Join(", ", summaryParts);
+            if (string.IsNullOrEmpty(summary)) summary = "No actions performed";
+
+            Tit($"✅ Batch complete! {summary}", Color.LightGreen);
+
+            // Build detailed message
+            string message = $"Batch processing complete!\n\n{summary}";
+
+            // Show upload URLs
+            if (uploadResults.Count > 0)
+            {
+                message += "\n\n--- Upload Links ---";
+                foreach (var (gameName, url) in uploadResults)
+                {
+                    message += $"\n{gameName}:\n{url}";
+                }
+
+                // Copy all URLs to clipboard
+                string allUrls = string.Join("\n", uploadResults.Select(r => r.url));
+                try
+                {
+                    Clipboard.SetText(allUrls);
+                    message += "\n\n(All URLs copied to clipboard)";
+                }
+                catch { }
+            }
+
+            if (failureReasons.Count > 0)
+            {
+                message += "\n\n--- Failures ---";
+                foreach (var (gameName, reason) in failureReasons.Take(10))
+                {
+                    message += $"\n\n{gameName}:\n  {reason}";
+                }
+                if (failureReasons.Count > 10)
+                {
+                    message += $"\n\n...and {failureReasons.Count - 10} more failures";
+                }
+            }
+
+            MessageBox.Show(message, "Batch Complete", MessageBoxButtons.OK,
+                failureReasons.Count > 0 ? MessageBoxIcon.Warning : MessageBoxIcon.Information);
+        }
+
+        #endregion
     }
 }
