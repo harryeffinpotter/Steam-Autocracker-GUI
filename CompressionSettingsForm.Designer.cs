@@ -161,7 +161,7 @@ namespace SteamAutocrackGUI
             this.okButton.Name = "okButton";
             this.okButton.Size = new System.Drawing.Size(93, 39);
             this.okButton.TabIndex = 8;
-            this.okButton.Text = "ZIP IT";
+            this.okButton.Text = "Apply";
             this.okButton.UseVisualStyleBackColor = false;
             this.okButton.Click += new System.EventHandler(this.okButton_Click);
             // 

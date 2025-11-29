@@ -343,29 +343,20 @@ namespace SteamAutocrackGUI
                     bool newValue = !currentValue;
                     cell.Value = newValue;
 
-                    // Dependency logic
+                    // Dependency logic - Updated to allow zip/share without crack
+                    // Valid combos: crack, crack+zip, crack+zip+upload, zip, zip+upload
+                    // Invalid: upload without zip (1fichier requires zipped file)
                     if (colName == "Upload" && newValue)
                     {
-                        // Upload requires Zip and Crack
+                        // Upload requires Zip only (not Crack - can share uncracked games)
                         gameGrid.Rows[e.RowIndex].Cells["Zip"].Value = true;
-                        gameGrid.Rows[e.RowIndex].Cells["Crack"].Value = true;
-                    }
-                    else if (colName == "Zip" && newValue)
-                    {
-                        // Zip requires Crack
-                        gameGrid.Rows[e.RowIndex].Cells["Crack"].Value = true;
-                    }
-                    else if (colName == "Crack" && !newValue)
-                    {
-                        // Unchecking Crack unchecks Zip and Upload
-                        gameGrid.Rows[e.RowIndex].Cells["Zip"].Value = false;
-                        gameGrid.Rows[e.RowIndex].Cells["Upload"].Value = false;
                     }
                     else if (colName == "Zip" && !newValue)
                     {
-                        // Unchecking Zip unchecks Upload
+                        // Unchecking Zip unchecks Upload (can't upload without zip)
                         gameGrid.Rows[e.RowIndex].Cells["Upload"].Value = false;
                     }
+                    // Note: Crack is now fully independent - unchecking it does NOT affect Zip/Upload
 
                     UpdateCountLabel();
                 }
@@ -724,12 +715,8 @@ namespace SteamAutocrackGUI
             {
                 row.Cells[columnName].Value = value;
 
-                // If enabling Zip or Upload, also enable Crack
-                if (value && (columnName == "Zip" || columnName == "Upload"))
-                {
-                    row.Cells["Crack"].Value = true;
-                }
-                // If enabling Upload, also enable Zip
+                // If enabling Upload, also enable Zip (required for 1fichier)
+                // Note: Crack is now independent - Zip/Upload don't require Crack
                 if (value && columnName == "Upload")
                 {
                     row.Cells["Zip"].Value = true;
@@ -911,8 +898,15 @@ namespace SteamAutocrackGUI
                     }
                 }
 
-                // Last resort: search Steam games database by folder name
+                // Try Steam Store Search API first (better fuzzy matching)
                 string folderName = Path.GetFileName(gamePath);
+                string apiAppId = SearchSteamStoreApi(folderName);
+                if (!string.IsNullOrEmpty(apiAppId))
+                {
+                    return apiAppId;
+                }
+
+                // Fall back to local database search
                 string foundAppId = SearchSteamDbByFolderName(folderName);
                 if (!string.IsNullOrEmpty(foundAppId))
                 {
@@ -921,6 +915,95 @@ namespace SteamAutocrackGUI
             }
             catch { }
             return null;
+        }
+
+        /// <summary>
+        /// Searches the Steam Store API for a game by name. Has excellent fuzzy matching.
+        /// Returns the AppID of the best match, or null if not found.
+        /// </summary>
+        private string SearchSteamStoreApi(string gameName)
+        {
+            try
+            {
+                // Clean up the search term
+                string searchTerm = gameName
+                    .Replace("_", " ")
+                    .Replace("-", " ")
+                    .Replace(".", " ")
+                    .Trim();
+
+                // URL encode the search term
+                string encodedTerm = System.Web.HttpUtility.UrlEncode(searchTerm);
+                string url = $"https://store.steampowered.com/api/storesearch?term={encodedTerm}&cc=us&l=en-us";
+
+                using (var client = new System.Net.WebClient())
+                {
+                    client.Headers.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36");
+                    string json = client.DownloadString(url);
+
+                    // Parse JSON response
+                    var response = Newtonsoft.Json.JsonConvert.DeserializeObject<SteamStoreSearchResponse>(json);
+
+                    if (response?.items == null || response.items.Count == 0)
+                        return null;
+
+                    // Filter out unwanted results (soundtracks, DLC, demos, etc.)
+                    var filteredItems = response.items.Where(item =>
+                    {
+                        if (item.type != "app") return false;
+
+                        string nameLower = item.name?.ToLower() ?? "";
+
+                        // Filter out common non-game content
+                        if (nameLower.Contains("soundtrack")) return false;
+                        if (nameLower.Contains("dlc")) return false;
+                        if (nameLower.Contains("demo")) return false;
+                        if (nameLower.Contains("beta")) return false;
+                        if (nameLower.Contains("test")) return false;
+                        if (nameLower.Contains("server")) return false;
+                        if (nameLower.Contains("playtest")) return false;
+                        if (nameLower.Contains("dedicated")) return false;
+                        if (nameLower.Contains("sdk")) return false;
+                        if (nameLower.Contains("editor")) return false;
+                        if (nameLower.Contains("tool")) return false;
+                        if (nameLower.Contains("artbook")) return false;
+                        if (nameLower.Contains("art book")) return false;
+                        if (nameLower.Contains("original score")) return false;
+                        if (nameLower.Contains("ost")) return false;
+
+                        return true;
+                    }).ToList();
+
+                    if (filteredItems.Count == 0)
+                    {
+                        // If all results were filtered, try the first app-type result
+                        var firstApp = response.items.FirstOrDefault(i => i.type == "app");
+                        return firstApp?.id.ToString();
+                    }
+
+                    // Return the first (best) match
+                    return filteredItems[0].id.ToString();
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[STEAM API] Search error for '{gameName}': {ex.Message}");
+            }
+            return null;
+        }
+
+        // Classes for Steam Store API response
+        private class SteamStoreSearchResponse
+        {
+            public int total { get; set; }
+            public List<SteamStoreSearchItem> items { get; set; }
+        }
+
+        private class SteamStoreSearchItem
+        {
+            public string type { get; set; }
+            public string name { get; set; }
+            public int id { get; set; }
         }
 
         private string SearchSteamDbByFolderName(string folderName)
