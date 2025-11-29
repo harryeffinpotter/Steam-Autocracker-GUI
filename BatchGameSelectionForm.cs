@@ -52,15 +52,36 @@ namespace SteamAutocrackGUI
             gamePaths = paths;
             InitializeForm();
 
-            this.Load += (s, e) => ApplyAcrylicEffect();
+            this.Load += (s, e) =>
+            {
+                ApplyAcrylicEffect();
+                CenterToParentWithScreenClamp();
+            };
             this.MouseDown += Form_MouseDown;
+        }
+
+        private void CenterToParentWithScreenClamp()
+        {
+            if (this.Owner != null)
+            {
+                // Center relative to parent
+                int x = this.Owner.Location.X + (this.Owner.Width - this.Width) / 2;
+                int y = this.Owner.Location.Y + (this.Owner.Height - this.Height) / 2;
+
+                // Clamp to screen bounds
+                var screen = Screen.FromControl(this.Owner).WorkingArea;
+                x = Math.Max(screen.Left, Math.Min(x, screen.Right - this.Width));
+                y = Math.Max(screen.Top, Math.Min(y, screen.Bottom - this.Height));
+
+                this.Location = new Point(x, y);
+            }
         }
 
         private void InitializeForm()
         {
             this.Text = "Batch Process - Select Games";
             this.Size = new Size(760, 520);
-            this.StartPosition = FormStartPosition.CenterParent;
+            this.StartPosition = FormStartPosition.Manual;
             this.BackColor = Color.FromArgb(5, 8, 20);
             this.ForeColor = Color.White;
             this.FormBorderStyle = FormBorderStyle.None;
@@ -383,17 +404,17 @@ namespace SteamAutocrackGUI
             this.Controls.Add(compressionLabel);
 
             // Bulk action buttons - compact, minimal padding
-            var selectAllCrackBtn = CreateStyledButton("All Crack", new Point(290, 388), new Size(68, 28));
+            var selectAllCrackBtn = CreateStyledButton("All Crack", new Point(313, 388), new Size(68, 28));
             selectAllCrackBtn.Font = new Font("Segoe UI", 8);
             selectAllCrackBtn.Click += (s, e) => SetAllCheckboxes("Crack", true);
             this.Controls.Add(selectAllCrackBtn);
 
-            var selectAllZipBtn = CreateStyledButton("All Zip", new Point(361, 388), new Size(55, 28));
+            var selectAllZipBtn = CreateStyledButton("All Zip", new Point(384, 388), new Size(55, 28));
             selectAllZipBtn.Font = new Font("Segoe UI", 8);
             selectAllZipBtn.Click += (s, e) => SetAllCheckboxes("Zip", true);
             this.Controls.Add(selectAllZipBtn);
 
-            var clearAllBtn = CreateStyledButton("Clear All", new Point(419, 388), new Size(62, 28));
+            var clearAllBtn = CreateStyledButton("Clear All", new Point(442, 388), new Size(62, 28));
             clearAllBtn.Font = new Font("Segoe UI", 8);
             clearAllBtn.Click += (s, e) =>
             {
