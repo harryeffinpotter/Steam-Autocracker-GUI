@@ -58,7 +58,6 @@ namespace APPID
             this.OpenDir = new System.Windows.Forms.Button();
             this.ZipToShare = new System.Windows.Forms.Button();
             this.currDIrText = new System.Windows.Forms.Label();
-            this.dllSelect = new APPID.TransparentComboBox();
             this.lanMultiplayerCheckBox = new System.Windows.Forms.CheckBox();
             this.donePic = new System.Windows.Forms.PictureBox();
             this.startCrackPic = new System.Windows.Forms.PictureBox();
@@ -77,6 +76,7 @@ namespace APPID
             this.lblTitle = new System.Windows.Forms.Label();
             this.btnMinimize = new System.Windows.Forms.Button();
             this.btnClose = new System.Windows.Forms.Button();
+            this.dllSelect = new APPID.TransparentComboBox();
             ((System.ComponentModel.ISupportInitialize)(this.dataGridView1)).BeginInit();
             this.mainPanel.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.pin)).BeginInit();
@@ -351,23 +351,6 @@ namespace APPID
             this.currDIrText.ForeColor = System.Drawing.Color.AliceBlue;
             this.currDIrText.Name = "currDIrText";
             // 
-            // dllSelect
-            // 
-            this.dllSelect.AutoCompleteCustomSource.AddRange(new string[] {
-            resources.GetString("dllSelect.AutoCompleteCustomSource"),
-            resources.GetString("dllSelect.AutoCompleteCustomSource1")});
-            this.dllSelect.BorderColor = System.Drawing.Color.FromArgb(((int)(((byte)(100)))), ((int)(((byte)(150)))), ((int)(((byte)(200)))));
-            this.dllSelect.DrawMode = System.Windows.Forms.DrawMode.OwnerDrawFixed;
-            this.dllSelect.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
-            resources.ApplyResources(this.dllSelect, "dllSelect");
-            this.dllSelect.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(192)))), ((int)(((byte)(255)))), ((int)(((byte)(255)))));
-            this.dllSelect.FormattingEnabled = true;
-            this.dllSelect.Items.AddRange(new object[] {
-            resources.GetString("dllSelect.Items"),
-            resources.GetString("dllSelect.Items1")});
-            this.dllSelect.Name = "dllSelect";
-            this.dllSelect.SelectedIndexChanged += new System.EventHandler(this.dllSelect_SelectedIndexChanged);
-            // 
             // lanMultiplayerCheckBox
             // 
             resources.ApplyResources(this.lanMultiplayerCheckBox, "lanMultiplayerCheckBox");
@@ -560,6 +543,23 @@ namespace APPID
             this.btnClose.Name = "btnClose";
             this.btnClose.UseVisualStyleBackColor = false;
             this.btnClose.Click += new System.EventHandler(this.BtnClose_Click);
+            // 
+            // dllSelect
+            // 
+            this.dllSelect.AutoCompleteCustomSource.AddRange(new string[] {
+            resources.GetString("dllSelect.AutoCompleteCustomSource"),
+            resources.GetString("dllSelect.AutoCompleteCustomSource1")});
+            this.dllSelect.BorderColor = System.Drawing.Color.FromArgb(((int)(((byte)(100)))), ((int)(((byte)(150)))), ((int)(((byte)(200)))));
+            this.dllSelect.DrawMode = System.Windows.Forms.DrawMode.OwnerDrawFixed;
+            this.dllSelect.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            resources.ApplyResources(this.dllSelect, "dllSelect");
+            this.dllSelect.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(192)))), ((int)(((byte)(255)))), ((int)(((byte)(255)))));
+            this.dllSelect.FormattingEnabled = true;
+            this.dllSelect.Items.AddRange(new object[] {
+            resources.GetString("dllSelect.Items"),
+            resources.GetString("dllSelect.Items1")});
+            this.dllSelect.Name = "dllSelect";
+            this.dllSelect.SelectedIndexChanged += new System.EventHandler(this.dllSelect_SelectedIndexChanged);
             // 
             // SteamAppId
             // 

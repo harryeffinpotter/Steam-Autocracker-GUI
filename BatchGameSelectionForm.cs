@@ -35,12 +35,17 @@ namespace SteamAutocrackGUI
         private DataGridView gameGrid;
         private List<string> gamePaths;
         private Dictionary<int, string> detectedAppIds = new Dictionary<int, string>();
+        private Dictionary<string, string> convertingUrls = new Dictionary<string, string>(); // gamePath -> 1fichier URL during conversion
+        private Dictionary<string, string> finalUrls = new Dictionary<string, string>(); // gamePath -> final URL (pydrive or 1fichier)
         private Label compressionLabel;
 
         public List<BatchGameItem> SelectedGames { get; private set; } = new List<BatchGameItem>();
         public string CompressionFormat { get; private set; } = "ZIP";
         public string CompressionLevel { get; private set; } = "0";
         public bool UseRinPassword { get; private set; } = false;
+
+        // Event for when Process is clicked
+        public event Action<List<BatchGameItem>, string, string, bool> ProcessRequested;
 
         public BatchGameSelectionForm(List<string> paths)
         {
@@ -54,7 +59,7 @@ namespace SteamAutocrackGUI
         private void InitializeForm()
         {
             this.Text = "Batch Process - Select Games";
-            this.Size = new Size(620, 520);
+            this.Size = new Size(760, 520);
             this.StartPosition = FormStartPosition.CenterParent;
             this.BackColor = Color.FromArgb(5, 8, 20);
             this.ForeColor = Color.White;
@@ -91,7 +96,7 @@ namespace SteamAutocrackGUI
             gameGrid = new DataGridView
             {
                 Location = new Point(15, 75),
-                Size = new Size(585, 300),
+                Size = new Size(725, 300),
                 BackgroundColor = Color.FromArgb(15, 18, 30),
                 ForeColor = Color.FromArgb(220, 255, 255),
                 GridColor = Color.FromArgb(40, 40, 45),
@@ -185,6 +190,20 @@ namespace SteamAutocrackGUI
             };
             gameGrid.Columns.Add(uploadCol);
 
+            var statusCol = new DataGridViewTextBoxColumn
+            {
+                Name = "Status",
+                HeaderText = "Status",
+                AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill,
+                ReadOnly = true,
+                DefaultCellStyle = new DataGridViewCellStyle
+                {
+                    Alignment = DataGridViewContentAlignment.MiddleCenter,
+                    ForeColor = Color.Gray
+                }
+            };
+            gameGrid.Columns.Add(statusCol);
+
             // Add game rows
             for (int i = 0; i < gamePaths.Count; i++)
             {
@@ -208,17 +227,94 @@ namespace SteamAutocrackGUI
                 gameGrid.Rows[rowIndex].Cells["Crack"].Value = true;
                 gameGrid.Rows[rowIndex].Cells["Zip"].Value = false;
                 gameGrid.Rows[rowIndex].Cells["Upload"].Value = false;
+                gameGrid.Rows[rowIndex].Cells["Status"].Value = "Pending";
                 gameGrid.Rows[rowIndex].Tag = path;
             }
 
-            // Handle checkbox clicks - manually toggle since EditProgrammatically blocks normal editing
+            // Handle clicks on cells
             gameGrid.CellClick += (s, e) =>
             {
                 if (e.RowIndex < 0) return;
 
                 string colName = gameGrid.Columns[e.ColumnIndex].Name;
 
-                // Only handle checkbox columns
+                // Single-click on AppID opens search dialog (works for any value)
+                if (colName == "AppId")
+                {
+                    string gameName = gameGrid.Rows[e.RowIndex].Cells["GameName"].Value?.ToString() ?? "";
+                    string currentAppId = gameGrid.Rows[e.RowIndex].Cells["AppId"].Value?.ToString() ?? "";
+                    if (currentAppId == "?") currentAppId = "";
+
+                    string newAppId = ShowAppIdSearchDialog(gameName, currentAppId);
+                    if (newAppId != null)
+                    {
+                        detectedAppIds[e.RowIndex] = newAppId;
+                        gameGrid.Rows[e.RowIndex].Cells["AppId"].Value = string.IsNullOrEmpty(newAppId) ? "?" : newAppId;
+
+                        var cell = gameGrid.Rows[e.RowIndex].Cells["AppId"];
+                        if (string.IsNullOrEmpty(newAppId))
+                        {
+                            cell.Style.ForeColor = Color.Orange;
+                            cell.Style.Font = new Font("Segoe UI", 9, FontStyle.Bold);
+                        }
+                        else
+                        {
+                            cell.Style.ForeColor = Color.FromArgb(100, 200, 255);
+                            cell.Style.Font = new Font("Segoe UI", 9, FontStyle.Regular);
+                        }
+                    }
+                    return;
+                }
+
+                // Single-click on Status column - copy URL if available
+                if (colName == "Status")
+                {
+                    string gamePath = gameGrid.Rows[e.RowIndex].Tag?.ToString();
+                    string status = gameGrid.Rows[e.RowIndex].Cells["Status"].Value?.ToString() ?? "";
+                    string urlToCopy = null;
+
+                    // Check for converting URL (1fichier link during conversion)
+                    if (status.StartsWith("Converting") && !string.IsNullOrEmpty(gamePath) && convertingUrls.ContainsKey(gamePath))
+                    {
+                        urlToCopy = convertingUrls[gamePath];
+                    }
+                    // Check for final URL (PyDrive or 1fichier after completion)
+                    else if ((status.Contains("PyDrive") || status.Contains("1fichier")) && !string.IsNullOrEmpty(gamePath) && finalUrls.ContainsKey(gamePath))
+                    {
+                        urlToCopy = finalUrls[gamePath];
+                    }
+
+                    if (!string.IsNullOrEmpty(urlToCopy))
+                    {
+                        try
+                        {
+                            Clipboard.SetText(urlToCopy);
+                            // Visual feedback - show "Copied! ✓" for 3 seconds
+                            string originalStatus = status;
+                            Color originalColor = gameGrid.Rows[e.RowIndex].Cells["Status"].Style.ForeColor;
+                            gameGrid.Rows[e.RowIndex].Cells["Status"].Value = "Copied! ✓";
+                            gameGrid.Rows[e.RowIndex].Cells["Status"].Style.ForeColor = Color.Cyan;
+
+                            var timer = new Timer { Interval = 3000 };
+                            int rowIdx = e.RowIndex;
+                            timer.Tick += (ts, te) =>
+                            {
+                                timer.Stop();
+                                timer.Dispose();
+                                if (!this.IsDisposed && rowIdx < gameGrid.Rows.Count)
+                                {
+                                    gameGrid.Rows[rowIdx].Cells["Status"].Value = originalStatus;
+                                    gameGrid.Rows[rowIdx].Cells["Status"].Style.ForeColor = originalColor;
+                                }
+                            };
+                            timer.Start();
+                        }
+                        catch { }
+                    }
+                    return;
+                }
+
+                // Handle checkbox columns
                 if (colName == "Crack" || colName == "Zip" || colName == "Upload")
                 {
                     var cell = gameGrid.Rows[e.RowIndex].Cells[e.ColumnIndex];
@@ -254,37 +350,6 @@ namespace SteamAutocrackGUI
                 }
             };
 
-            // Handle double-click on AppID column to edit
-            gameGrid.CellDoubleClick += (s, e) =>
-            {
-                if (e.RowIndex >= 0 && gameGrid.Columns[e.ColumnIndex].Name == "AppId")
-                {
-                    string gameName = gameGrid.Rows[e.RowIndex].Cells["GameName"].Value?.ToString() ?? "";
-                    string currentAppId = gameGrid.Rows[e.RowIndex].Cells["AppId"].Value?.ToString() ?? "";
-                    if (currentAppId == "?") currentAppId = "";
-
-                    string newAppId = ShowAppIdSearchDialog(gameName, currentAppId);
-                    if (newAppId != null)
-                    {
-                        detectedAppIds[e.RowIndex] = newAppId;
-                        gameGrid.Rows[e.RowIndex].Cells["AppId"].Value = string.IsNullOrEmpty(newAppId) ? "?" : newAppId;
-
-                        // Update style - reset font to normal and set appropriate color
-                        var cell = gameGrid.Rows[e.RowIndex].Cells["AppId"];
-                        if (string.IsNullOrEmpty(newAppId))
-                        {
-                            cell.Style.ForeColor = Color.Orange;
-                            cell.Style.Font = new Font("Segoe UI", 9, FontStyle.Bold);
-                        }
-                        else
-                        {
-                            cell.Style.ForeColor = Color.FromArgb(100, 200, 255);
-                            cell.Style.Font = new Font("Segoe UI", 9, FontStyle.Regular);
-                        }
-                    }
-                }
-            };
-
             this.Controls.Add(gameGrid);
 
             // Count label
@@ -317,16 +382,19 @@ namespace SteamAutocrackGUI
             };
             this.Controls.Add(compressionLabel);
 
-            // Bulk action buttons
-            var selectAllCrackBtn = CreateStyledButton("All Crack", new Point(270, 410), new Size(75, 35));
+            // Bulk action buttons - compact, minimal padding
+            var selectAllCrackBtn = CreateStyledButton("All Crack", new Point(290, 388), new Size(68, 28));
+            selectAllCrackBtn.Font = new Font("Segoe UI", 8);
             selectAllCrackBtn.Click += (s, e) => SetAllCheckboxes("Crack", true);
             this.Controls.Add(selectAllCrackBtn);
 
-            var selectAllZipBtn = CreateStyledButton("All Zip", new Point(350, 410), new Size(65, 35));
+            var selectAllZipBtn = CreateStyledButton("All Zip", new Point(361, 388), new Size(55, 28));
+            selectAllZipBtn.Font = new Font("Segoe UI", 8);
             selectAllZipBtn.Click += (s, e) => SetAllCheckboxes("Zip", true);
             this.Controls.Add(selectAllZipBtn);
 
-            var clearAllBtn = CreateStyledButton("Clear All", new Point(420, 410), new Size(75, 35));
+            var clearAllBtn = CreateStyledButton("Clear All", new Point(419, 388), new Size(62, 28));
+            clearAllBtn.Font = new Font("Segoe UI", 8);
             clearAllBtn.Click += (s, e) =>
             {
                 foreach (DataGridViewRow row in gameGrid.Rows)
@@ -340,7 +408,7 @@ namespace SteamAutocrackGUI
             this.Controls.Add(clearAllBtn);
 
             // Process button
-            var processBtn = CreateStyledButton("Process", new Point(420, 455), new Size(90, 40));
+            var processBtn = CreateStyledButton("Process", new Point(560, 455), new Size(90, 40));
             processBtn.BackColor = Color.FromArgb(0, 100, 70);
             processBtn.Click += (s, e) =>
             {
@@ -400,19 +468,233 @@ namespace SteamAutocrackGUI
                     return;
                 }
 
-                this.DialogResult = DialogResult.OK;
-                this.Close();
+                // Fire the event - form stays open
+                ProcessRequested?.Invoke(SelectedGames, CompressionFormat, CompressionLevel, UseRinPassword);
             };
             this.Controls.Add(processBtn);
 
             // Cancel button
-            var cancelBtn = CreateStyledButton("Cancel", new Point(520, 455), new Size(80, 40));
+            var cancelBtn = CreateStyledButton("Cancel", new Point(660, 455), new Size(80, 40));
             cancelBtn.Click += (s, e) =>
             {
-                this.DialogResult = DialogResult.Cancel;
                 this.Close();
             };
             this.Controls.Add(cancelBtn);
+        }
+
+        /// <summary>
+        /// Updates the status for a game by its path
+        /// </summary>
+        public void UpdateStatus(string gamePath, string status, Color? color = null)
+        {
+            if (this.IsDisposed) return;
+
+            if (this.InvokeRequired)
+            {
+                try { this.BeginInvoke(new Action(() => UpdateStatus(gamePath, status, color))); } catch { }
+                return;
+            }
+
+            for (int i = 0; i < gameGrid.Rows.Count; i++)
+            {
+                if (gameGrid.Rows[i].Tag?.ToString() == gamePath)
+                {
+                    gameGrid.Rows[i].Cells["Status"].Value = status;
+                    if (color.HasValue)
+                    {
+                        gameGrid.Rows[i].Cells["Status"].Style.ForeColor = color.Value;
+                    }
+                    break;
+                }
+            }
+        }
+
+        /// <summary>
+        /// Updates the status for a game by row index
+        /// </summary>
+        public void UpdateStatusByIndex(int rowIndex, string status, Color? color = null)
+        {
+            if (this.IsDisposed) return;
+
+            if (this.InvokeRequired)
+            {
+                try { this.BeginInvoke(new Action(() => UpdateStatusByIndex(rowIndex, status, color))); } catch { }
+                return;
+            }
+
+            if (rowIndex >= 0 && rowIndex < gameGrid.Rows.Count)
+            {
+                gameGrid.Rows[rowIndex].Cells["Status"].Value = status;
+                if (color.HasValue)
+                {
+                    gameGrid.Rows[rowIndex].Cells["Status"].Style.ForeColor = color.Value;
+                }
+            }
+        }
+
+        /// <summary>
+        /// Stores the 1fichier URL for a game during conversion (allows click-to-copy)
+        /// </summary>
+        public void SetConvertingUrl(string gamePath, string oneFichierUrl)
+        {
+            if (this.IsDisposed) return;
+
+            if (this.InvokeRequired)
+            {
+                try { this.BeginInvoke(new Action(() => SetConvertingUrl(gamePath, oneFichierUrl))); } catch { }
+                return;
+            }
+
+            if (!string.IsNullOrEmpty(gamePath) && !string.IsNullOrEmpty(oneFichierUrl))
+            {
+                convertingUrls[gamePath] = oneFichierUrl;
+            }
+        }
+
+        /// <summary>
+        /// Clears the converting URL for a game (after conversion completes)
+        /// </summary>
+        public void ClearConvertingUrl(string gamePath)
+        {
+            if (this.IsDisposed) return;
+
+            if (this.InvokeRequired)
+            {
+                try { this.BeginInvoke(new Action(() => ClearConvertingUrl(gamePath))); } catch { }
+                return;
+            }
+
+            if (convertingUrls.ContainsKey(gamePath))
+            {
+                convertingUrls.Remove(gamePath);
+            }
+        }
+
+        /// <summary>
+        /// Stores the final URL for a game (for click-to-copy after completion)
+        /// </summary>
+        public void SetFinalUrl(string gamePath, string finalUrl)
+        {
+            if (this.IsDisposed) return;
+
+            if (this.InvokeRequired)
+            {
+                try { this.BeginInvoke(new Action(() => SetFinalUrl(gamePath, finalUrl))); } catch { }
+                return;
+            }
+
+            if (!string.IsNullOrEmpty(gamePath) && !string.IsNullOrEmpty(finalUrl))
+            {
+                finalUrls[gamePath] = finalUrl;
+            }
+        }
+
+        private string allLinksPhpBB = "";
+        private string allLinksMarkdown = "";
+        private Button copyRinBtn;
+        private Button copyDiscordBtn;
+
+        /// <summary>
+        /// Shows Copy All buttons after processing completes
+        /// </summary>
+        public void ShowCopyAllButton(string phpBBLinks)
+        {
+            if (this.IsDisposed) return;
+
+            if (this.InvokeRequired)
+            {
+                try { this.BeginInvoke(new Action(() => ShowCopyAllButton(phpBBLinks))); } catch { }
+                return;
+            }
+
+            allLinksPhpBB = phpBBLinks;
+
+            // Build markdown version from finalUrls
+            var mdLinks = new List<string>();
+            foreach (var kvp in finalUrls)
+            {
+                string gameName = Path.GetFileName(kvp.Key);
+                mdLinks.Add($"[{gameName}]({kvp.Value})");
+            }
+            allLinksMarkdown = string.Join("\n", mdLinks);
+
+            if (string.IsNullOrEmpty(allLinksPhpBB) && string.IsNullOrEmpty(allLinksMarkdown))
+                return;
+
+            // Create Copy for Rin button
+            copyRinBtn = CreateStyledButton("Copy for Rin", new Point(15, 455), new Size(100, 40));
+            copyRinBtn.BackColor = Color.FromArgb(70, 50, 0);
+            copyRinBtn.Click += (s, e) =>
+            {
+                if (!string.IsNullOrEmpty(allLinksPhpBB))
+                {
+                    try
+                    {
+                        Clipboard.SetText(allLinksPhpBB);
+                        copyRinBtn.Text = "Copied! ✓";
+                        var timer = new Timer { Interval = 2000 };
+                        timer.Tick += (ts, te) => { timer.Stop(); timer.Dispose(); copyRinBtn.Text = "Copy for Rin"; };
+                        timer.Start();
+                    }
+                    catch { }
+                }
+            };
+            this.Controls.Add(copyRinBtn);
+
+            // Create Copy for Discord button
+            copyDiscordBtn = CreateStyledButton("Copy for Discord", new Point(125, 455), new Size(120, 40));
+            copyDiscordBtn.BackColor = Color.FromArgb(88, 101, 242); // Discord blurple
+            copyDiscordBtn.Click += (s, e) =>
+            {
+                if (!string.IsNullOrEmpty(allLinksMarkdown))
+                {
+                    try
+                    {
+                        Clipboard.SetText(allLinksMarkdown);
+                        copyDiscordBtn.Text = "Copied! ✓";
+                        var timer = new Timer { Interval = 2000 };
+                        timer.Tick += (ts, te) => { timer.Stop(); timer.Dispose(); copyDiscordBtn.Text = "Copy for Discord"; };
+                        timer.Start();
+                    }
+                    catch { }
+                }
+            };
+            this.Controls.Add(copyDiscordBtn);
+
+            // Make sure they're on top
+            copyRinBtn.BringToFront();
+            copyDiscordBtn.BringToFront();
+        }
+
+        /// <summary>
+        /// Disables checkboxes and buttons during processing
+        /// </summary>
+        public void SetProcessingMode(bool processing)
+        {
+            if (this.IsDisposed) return;
+
+            if (this.InvokeRequired)
+            {
+                try { this.BeginInvoke(new Action(() => SetProcessingMode(processing))); } catch { }
+                return;
+            }
+
+            // Disable/enable grid interactions
+            gameGrid.ReadOnly = processing;
+
+            // Hide count label and buttons during processing
+            var countLabel = this.Controls["countLabel"] as Label;
+            if (countLabel != null) countLabel.Visible = !processing;
+            if (compressionLabel != null) compressionLabel.Visible = !processing;
+
+            // Find and disable/enable buttons
+            foreach (Control c in this.Controls)
+            {
+                if (c is Button btn)
+                {
+                    btn.Visible = !processing;
+                }
+            }
         }
 
         private void SetAllCheckboxes(string columnName, bool value)
