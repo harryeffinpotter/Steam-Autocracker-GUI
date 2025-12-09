@@ -17,6 +17,7 @@ namespace APPID
     {
         public static bool hasinternet = false;
         private static string[] hosts = { "1.1.1.1", "8.8.8.8", "208.67.222.222" };
+        private static readonly string BinPath = Path.Combine(Path.GetDirectoryName(Environment.ProcessPath) ?? Environment.CurrentDirectory, "_bin");
 
 
         public static dynamic getJson(string requestURL)
@@ -71,14 +72,14 @@ namespace APPID
             IReadOnlyList<Release> releases = await client.Repository.Release.GetAll(User, Repo);
             string balls = releases.ToString();
             string latestGitHubVersion = releases[0].TagName.ToString().Replace("v", "");
-            string localVersion = File.ReadAllText($"_bin\\{Repo}.ver").Trim();
+            string localVersion = File.ReadAllText(Path.Combine(BinPath, $"{Repo}.ver")).Trim();
             if (localVersion != latestGitHubVersion)
             {
                 LogHelper.LogUpdate($"Steamless", $"{localVersion} -> {latestGitHubVersion}");
 
-                if (Directory.Exists("_bin\\Steamless"))
+                if (Directory.Exists(Path.Combine(BinPath, "Steamless")))
                 {
-                    Directory.Delete("_bin\\Steamless", true);
+                    Directory.Delete(Path.Combine(BinPath, "Steamless"), true);
                 }
                 foreach (var o in obj[0])
                 {
@@ -95,10 +96,10 @@ namespace APPID
                                 await response.Content.CopyToAsync(fs);
                             }
                         }
-                        await ExtractFileAsync("SLS.zip", "_bin\\Steamless");
+                        await ExtractFileAsync("SLS.zip", Path.Combine(BinPath, "Steamless"));
                         File.Delete("SLS.zip");
-                        File.Delete($"_bin\\{Repo}.ver");
-                        File.WriteAllText($"_bin\\{Repo}.ver", latestGitHubVersion);
+                        File.Delete(Path.Combine(BinPath, $"{Repo}.ver"));
+                        File.WriteAllText(Path.Combine(BinPath, $"{Repo}.ver"), latestGitHubVersion);
                     }
                 }
             }
@@ -123,7 +124,7 @@ namespace APPID
                 }
 
                 string latestVersion = obj.tag_name.ToString().Replace("release-", "");
-                string versionFile = $"_bin\\Goldberg\\version.txt";
+                string versionFile = Path.Combine(BinPath, "Goldberg", "version.txt");
 
                 string localVersion = "";
                 if (File.Exists(versionFile))
@@ -160,7 +161,7 @@ namespace APPID
                         }
 
                         // Extract to temporary directory
-                        string tempDir = "_bin\\temp_goldberg";
+                        string tempDir = Path.Combine(BinPath, "temp_goldberg");
                         if (Directory.Exists(tempDir))
                         {
                             Directory.Delete(tempDir, true);
@@ -169,9 +170,9 @@ namespace APPID
                         await ExtractFileAsync("gbe_fork.7z", tempDir);
 
                         // Copy the DLL files to Goldberg directory
-                        if (!Directory.Exists("_bin\\Goldberg"))
+                        if (!Directory.Exists(Path.Combine(BinPath, "Goldberg")))
                         {
-                            Directory.CreateDirectory("_bin\\Goldberg");
+                            Directory.CreateDirectory(Path.Combine(BinPath, "Goldberg"));
                         }
 
                         // Copy the specific DLL files from known paths
@@ -181,12 +182,12 @@ namespace APPID
 
                         if (File.Exists(steam64Path))
                         {
-                            File.Copy(steam64Path, "_bin\\Goldberg\\steam_api64.dll", true);
+                            File.Copy(steam64Path, Path.Combine(BinPath, "Goldberg", "steam_api64.dll"), true);
                         }
 
                         if (File.Exists(steam32Path))
                         {
-                            File.Copy(steam32Path, "_bin\\Goldberg\\steam_api.dll", true);
+                            File.Copy(steam32Path, Path.Combine(BinPath, "Goldberg", "steam_api.dll"), true);
                         }
 
                         // Copy generate_interfaces tools if they exist
@@ -205,7 +206,7 @@ namespace APPID
                             if (File.Exists(toolPath))
                             {
                                 string fileName = Path.GetFileName(toolPath);
-                                string destPath = Path.Combine("_bin\\Goldberg", fileName);
+                                string destPath = Path.Combine(BinPath, "Goldberg", fileName);
                                 File.Copy(toolPath, destPath, true);
                                 Console.WriteLine($"Copied tool: {fileName}");
                             }
@@ -225,7 +226,7 @@ namespace APPID
                             {
                                 string fileName = Path.GetFileName(lobbyPath);
                                 // Copy to _bin folder for LAN multiplayer feature
-                                string destPath = Path.Combine("_bin", fileName);
+                                string destPath = Path.Combine(BinPath, fileName);
                                 File.Copy(lobbyPath, destPath, true);
                                 Console.WriteLine($"Copied lobby_connect tool to _bin: {fileName}");
                             }
@@ -254,7 +255,7 @@ namespace APPID
         {
             try
             {
-                string sevenZipPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "_bin", "7z", "7za.exe");
+                string sevenZipPath = Path.Combine(BinPath, "7z", "7za.exe");
                 ProcessStartInfo pro = new ProcessStartInfo();
                 pro.WindowStyle = ProcessWindowStyle.Hidden;
                 pro.FileName = sevenZipPath;

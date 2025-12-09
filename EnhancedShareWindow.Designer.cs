@@ -50,12 +50,15 @@ namespace SteamAppIdIdentifier
             this.BuildID = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.AppID = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.LastUpdated = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.BatchCrack = new System.Windows.Forms.DataGridViewCheckBoxColumn();
-            this.BatchZip = new System.Windows.Forms.DataGridViewCheckBoxColumn();
-            this.BatchUpload = new System.Windows.Forms.DataGridViewCheckBoxColumn();
-            this.CrackOnly = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.ShareClean = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.ShareCracked = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.CrackOnly = new System.Windows.Forms.DataGridViewButtonColumn();
+            this.ShareClean = new System.Windows.Forms.DataGridViewButtonColumn();
+            this.ShareCracked = new System.Windows.Forms.DataGridViewButtonColumn();
+            this.lblSelectedCount = new System.Windows.Forms.Label();
+            this.btnToggleCrack = new System.Windows.Forms.Button();
+            this.btnToggleZip = new System.Windows.Forms.Button();
+            this.btnToggleShare = new System.Windows.Forms.Button();
+            this.btnSettings = new System.Windows.Forms.Button();
+            this.btnProcessSelected = new System.Windows.Forms.Button();
             this.lblStatus = new System.Windows.Forms.Label();
             this.progressBar = new System.Windows.Forms.ProgressBar();
             this.titleBar = new System.Windows.Forms.Panel();
@@ -112,9 +115,6 @@ namespace SteamAppIdIdentifier
             this.BuildID,
             this.AppID,
             this.LastUpdated,
-            this.BatchCrack,
-            this.BatchZip,
-            this.BatchUpload,
             this.CrackOnly,
             this.ShareClean,
             this.ShareCracked});
@@ -206,51 +206,36 @@ namespace SteamAppIdIdentifier
             this.LastUpdated.Name = "LastUpdated";
             this.LastUpdated.ReadOnly = true;
             //
-            // BatchCrack
-            //
-            this.BatchCrack.HeaderText = "Crack";
-            this.BatchCrack.MinimumWidth = 40;
-            this.BatchCrack.Name = "BatchCrack";
-            this.BatchCrack.Width = 50;
-            this.BatchCrack.FillWeight = 30;
-            //
-            // BatchZip
-            //
-            this.BatchZip.HeaderText = "Zip";
-            this.BatchZip.MinimumWidth = 35;
-            this.BatchZip.Name = "BatchZip";
-            this.BatchZip.Width = 40;
-            this.BatchZip.FillWeight = 25;
-            //
-            // BatchUpload
-            //
-            this.BatchUpload.HeaderText = "Upload";
-            this.BatchUpload.MinimumWidth = 45;
-            this.BatchUpload.Name = "BatchUpload";
-            this.BatchUpload.Width = 55;
-            this.BatchUpload.FillWeight = 35;
-            //
             // CrackOnly
             //
-            this.CrackOnly.HeaderText = "Crack Only";
-            this.CrackOnly.MinimumWidth = 8;
+            this.CrackOnly.HeaderText = "Crack";
+            this.CrackOnly.MinimumWidth = 70;
             this.CrackOnly.Name = "CrackOnly";
-            this.CrackOnly.ReadOnly = true;
-            // 
+            this.CrackOnly.Text = "⚡ Crack";
+            this.CrackOnly.UseColumnTextForButtonValue = false;
+            this.CrackOnly.FillWeight = 45;
+            this.CrackOnly.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            //
             // ShareClean
-            // 
-            this.ShareClean.HeaderText = "Share Clean";
-            this.ShareClean.MinimumWidth = 8;
+            //
+            this.ShareClean.HeaderText = "Clean";
+            this.ShareClean.MinimumWidth = 70;
             this.ShareClean.Name = "ShareClean";
-            this.ShareClean.ReadOnly = true;
-            // 
+            this.ShareClean.Text = "📦 Clean";
+            this.ShareClean.UseColumnTextForButtonValue = false;
+            this.ShareClean.FillWeight = 45;
+            this.ShareClean.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            //
             // ShareCracked
-            // 
-            this.ShareCracked.HeaderText = "Share Cracked";
-            this.ShareCracked.MinimumWidth = 8;
+            //
+            this.ShareCracked.HeaderText = "Cracked";
+            this.ShareCracked.MinimumWidth = 80;
             this.ShareCracked.Name = "ShareCracked";
-            this.ShareCracked.ReadOnly = true;
-            // 
+            this.ShareCracked.Text = "🎮 Cracked";
+            this.ShareCracked.UseColumnTextForButtonValue = false;
+            this.ShareCracked.FillWeight = 50;
+            this.ShareCracked.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            //
             // lblStatus
             // 
             this.lblStatus.BackColor = System.Drawing.Color.Transparent;
@@ -282,6 +267,12 @@ namespace SteamAppIdIdentifier
             this.titleBar.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(60)))), ((int)(((byte)(50)))), ((int)(((byte)(60)))), ((int)(((byte)(80)))));
             this.titleBar.Controls.Add(this.lblTitle);
             this.titleBar.Controls.Add(this.btnCustomPath);
+            this.titleBar.Controls.Add(this.lblSelectedCount);
+            this.titleBar.Controls.Add(this.btnToggleCrack);
+            this.titleBar.Controls.Add(this.btnToggleZip);
+            this.titleBar.Controls.Add(this.btnToggleShare);
+            this.titleBar.Controls.Add(this.btnSettings);
+            this.titleBar.Controls.Add(this.btnProcessSelected);
             this.titleBar.Controls.Add(this.btnMinimize);
             this.titleBar.Controls.Add(this.btnClose);
             this.titleBar.Dock = System.Windows.Forms.DockStyle.Top;
@@ -325,7 +316,101 @@ namespace SteamAppIdIdentifier
         "irectory.");
             this.btnCustomPath.UseVisualStyleBackColor = false;
             this.btnCustomPath.Click += new System.EventHandler(this.BtnCustomPath_Click);
-            // 
+            //
+            // lblSelectedCount
+            //
+            this.lblSelectedCount.AutoSize = true;
+            this.lblSelectedCount.BackColor = System.Drawing.Color.Transparent;
+            this.lblSelectedCount.Font = new System.Drawing.Font("Segoe UI", 9F);
+            this.lblSelectedCount.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(150)))), ((int)(((byte)(150)))), ((int)(((byte)(160)))));
+            this.lblSelectedCount.Location = new System.Drawing.Point(340, 14);
+            this.lblSelectedCount.Name = "lblSelectedCount";
+            this.lblSelectedCount.Size = new System.Drawing.Size(70, 15);
+            this.lblSelectedCount.Text = "Selected 0";
+            //
+            // btnToggleCrack
+            //
+            this.btnToggleCrack.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(35)))), ((int)(((byte)(35)))), ((int)(((byte)(42)))));
+            this.btnToggleCrack.FlatAppearance.BorderColor = System.Drawing.Color.FromArgb(((int)(((byte)(60)))), ((int)(((byte)(60)))), ((int)(((byte)(70)))));
+            this.btnToggleCrack.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btnToggleCrack.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
+            this.btnToggleCrack.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(140)))), ((int)(((byte)(140)))), ((int)(((byte)(150)))));
+            this.btnToggleCrack.Location = new System.Drawing.Point(430, 7);
+            this.btnToggleCrack.Name = "btnToggleCrack";
+            this.btnToggleCrack.Size = new System.Drawing.Size(65, 33);
+            this.btnToggleCrack.TabIndex = 10;
+            this.btnToggleCrack.Text = "Crack";
+            this.btnToggleCrack.Tag = false;
+            this.toolTip.SetToolTip(this.btnToggleCrack, "Toggle: Apply crack to selected games");
+            this.btnToggleCrack.UseVisualStyleBackColor = false;
+            this.btnToggleCrack.Click += new System.EventHandler(this.BtnToggleCrack_Click);
+            //
+            // btnToggleZip
+            //
+            this.btnToggleZip.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(35)))), ((int)(((byte)(35)))), ((int)(((byte)(42)))));
+            this.btnToggleZip.FlatAppearance.BorderColor = System.Drawing.Color.FromArgb(((int)(((byte)(60)))), ((int)(((byte)(60)))), ((int)(((byte)(70)))));
+            this.btnToggleZip.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btnToggleZip.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
+            this.btnToggleZip.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(140)))), ((int)(((byte)(140)))), ((int)(((byte)(150)))));
+            this.btnToggleZip.Location = new System.Drawing.Point(500, 7);
+            this.btnToggleZip.Name = "btnToggleZip";
+            this.btnToggleZip.Size = new System.Drawing.Size(50, 33);
+            this.btnToggleZip.TabIndex = 11;
+            this.btnToggleZip.Text = "Zip";
+            this.btnToggleZip.Tag = false;
+            this.toolTip.SetToolTip(this.btnToggleZip, "Toggle: Compress selected games");
+            this.btnToggleZip.UseVisualStyleBackColor = false;
+            this.btnToggleZip.Click += new System.EventHandler(this.BtnToggleZip_Click);
+            //
+            // btnToggleShare
+            //
+            this.btnToggleShare.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(35)))), ((int)(((byte)(35)))), ((int)(((byte)(42)))));
+            this.btnToggleShare.FlatAppearance.BorderColor = System.Drawing.Color.FromArgb(((int)(((byte)(60)))), ((int)(((byte)(60)))), ((int)(((byte)(70)))));
+            this.btnToggleShare.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btnToggleShare.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
+            this.btnToggleShare.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(140)))), ((int)(((byte)(140)))), ((int)(((byte)(150)))));
+            this.btnToggleShare.Location = new System.Drawing.Point(555, 7);
+            this.btnToggleShare.Name = "btnToggleShare";
+            this.btnToggleShare.Size = new System.Drawing.Size(60, 33);
+            this.btnToggleShare.TabIndex = 12;
+            this.btnToggleShare.Text = "Share";
+            this.btnToggleShare.Tag = false;
+            this.toolTip.SetToolTip(this.btnToggleShare, "Toggle: Upload to share (auto-enables Zip)");
+            this.btnToggleShare.UseVisualStyleBackColor = false;
+            this.btnToggleShare.Click += new System.EventHandler(this.BtnToggleShare_Click);
+            //
+            // btnSettings
+            //
+            this.btnSettings.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(60)))), ((int)(((byte)(40)))), ((int)(((byte)(20)))));
+            this.btnSettings.FlatAppearance.BorderColor = System.Drawing.Color.FromArgb(((int)(((byte)(180)))), ((int)(((byte)(120)))), ((int)(((byte)(60)))));
+            this.btnSettings.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btnSettings.Font = new System.Drawing.Font("Segoe UI", 11F);
+            this.btnSettings.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(180)))), ((int)(((byte)(80)))));
+            this.btnSettings.Location = new System.Drawing.Point(625, 7);
+            this.btnSettings.Name = "btnSettings";
+            this.btnSettings.Size = new System.Drawing.Size(40, 33);
+            this.btnSettings.TabIndex = 14;
+            this.btnSettings.Text = "⚙";
+            this.toolTip.SetToolTip(this.btnSettings, "Compression settings");
+            this.btnSettings.UseVisualStyleBackColor = false;
+            this.btnSettings.Click += new System.EventHandler(this.BtnSettings_Click);
+            //
+            // btnProcessSelected
+            //
+            this.btnProcessSelected.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(30)))), ((int)(((byte)(80)))), ((int)(((byte)(30)))));
+            this.btnProcessSelected.FlatAppearance.BorderColor = System.Drawing.Color.FromArgb(((int)(((byte)(60)))), ((int)(((byte)(140)))), ((int)(((byte)(60)))));
+            this.btnProcessSelected.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btnProcessSelected.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
+            this.btnProcessSelected.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(150)))), ((int)(((byte)(255)))), ((int)(((byte)(150)))));
+            this.btnProcessSelected.Location = new System.Drawing.Point(675, 7);
+            this.btnProcessSelected.Name = "btnProcessSelected";
+            this.btnProcessSelected.Size = new System.Drawing.Size(90, 33);
+            this.btnProcessSelected.TabIndex = 13;
+            this.btnProcessSelected.Text = "▶ Start";
+            this.toolTip.SetToolTip(this.btnProcessSelected, "Process selected games with chosen actions");
+            this.btnProcessSelected.UseVisualStyleBackColor = false;
+            this.btnProcessSelected.Click += new System.EventHandler(this.BtnProcessSelected_Click);
+            //
             // btnMinimize
             // 
             this.btnMinimize.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
@@ -403,11 +488,14 @@ namespace SteamAppIdIdentifier
         private System.Windows.Forms.DataGridViewTextBoxColumn BuildID;
         private System.Windows.Forms.DataGridViewTextBoxColumn AppID;
         private System.Windows.Forms.DataGridViewTextBoxColumn LastUpdated;
-        private System.Windows.Forms.DataGridViewCheckBoxColumn BatchCrack;
-        private System.Windows.Forms.DataGridViewCheckBoxColumn BatchZip;
-        private System.Windows.Forms.DataGridViewCheckBoxColumn BatchUpload;
-        private System.Windows.Forms.DataGridViewTextBoxColumn CrackOnly;
-        private System.Windows.Forms.DataGridViewTextBoxColumn ShareClean;
-        private System.Windows.Forms.DataGridViewTextBoxColumn ShareCracked;
+        private System.Windows.Forms.DataGridViewButtonColumn CrackOnly;
+        private System.Windows.Forms.DataGridViewButtonColumn ShareClean;
+        private System.Windows.Forms.DataGridViewButtonColumn ShareCracked;
+        private System.Windows.Forms.Label lblSelectedCount;
+        private System.Windows.Forms.Button btnToggleCrack;
+        private System.Windows.Forms.Button btnToggleZip;
+        private System.Windows.Forms.Button btnToggleShare;
+        private System.Windows.Forms.Button btnSettings;
+        private System.Windows.Forms.Button btnProcessSelected;
     }
 }

@@ -7,14 +7,14 @@ namespace SteamAppIdIdentifier
 {
     public static class ResourceExtractor
     {
-        private static readonly string BinPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "_bin");
+        private static readonly string BinPath = Path.Combine(Path.GetDirectoryName(Environment.ProcessPath) ?? Environment.CurrentDirectory, "_bin");
 
         public static void ExtractBinFiles()
         {
             try
             {
-                // Get current assembly
-                var assembly = Assembly.GetExecutingAssembly();
+                // Get current assembly (use typeof for .NET 8 single-file compatibility)
+                var assembly = typeof(ResourceExtractor).Assembly;
 
                 // Get all embedded resource names that start with _bin.
                 var resourceNames = assembly.GetManifestResourceNames()

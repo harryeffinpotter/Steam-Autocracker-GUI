@@ -21,6 +21,57 @@ namespace SteamAutocrackGUI
         public bool Upload { get; set; } = false;
     }
 
+    /// <summary>
+    /// Custom progress bar with neon blue gradient styling
+    /// </summary>
+    public class NeonProgressBar : ProgressBar
+    {
+        public NeonProgressBar()
+        {
+            this.SetStyle(ControlStyles.UserPaint | ControlStyles.AllPaintingInWmPaint | ControlStyles.OptimizedDoubleBuffer, true);
+        }
+
+        protected override void OnPaint(PaintEventArgs e)
+        {
+            var rect = this.ClientRectangle;
+
+            // Dark background
+            using (var bgBrush = new SolidBrush(Color.FromArgb(10, 12, 20)))
+            {
+                e.Graphics.FillRectangle(bgBrush, rect);
+            }
+
+            // Border
+            using (var borderPen = new Pen(Color.FromArgb(40, 50, 70)))
+            {
+                e.Graphics.DrawRectangle(borderPen, 0, 0, rect.Width - 1, rect.Height - 1);
+            }
+
+            // Progress fill with neon blue gradient
+            if (this.Value > 0)
+            {
+                int fillWidth = (int)((rect.Width - 4) * ((double)this.Value / this.Maximum));
+                if (fillWidth > 0)
+                {
+                    using (var brush = new LinearGradientBrush(
+                        new Rectangle(2, 2, fillWidth, rect.Height - 4),
+                        Color.FromArgb(0, 150, 255),   // Bright neon blue
+                        Color.FromArgb(0, 100, 200),   // Darker blue
+                        LinearGradientMode.Vertical))
+                    {
+                        e.Graphics.FillRectangle(brush, 2, 2, fillWidth, rect.Height - 4);
+                    }
+
+                    // Add glow effect on top
+                    using (var glowBrush = new SolidBrush(Color.FromArgb(40, 150, 220, 255)))
+                    {
+                        e.Graphics.FillRectangle(glowBrush, 2, 2, fillWidth, (rect.Height - 4) / 3);
+                    }
+                }
+            }
+        }
+    }
+
     public class BatchGameSelectionForm : Form
     {
         [DllImport("user32.dll")]
@@ -39,6 +90,14 @@ namespace SteamAutocrackGUI
         private Dictionary<string, string> finalUrls = new Dictionary<string, string>(); // gamePath -> final URL (pydrive or 1fichier)
         private Dictionary<string, APPID.SteamAppId.CrackDetails> crackDetailsMap = new Dictionary<string, APPID.SteamAppId.CrackDetails>(); // gamePath -> crack details
         private Label compressionLabel;
+
+        // Upload details panel
+        private Panel uploadDetailsPanel;
+        private Label lblUploadGame;
+        private Label lblUploadSize;
+        private Label lblUploadSpeed;
+        private Label lblUploadEta;
+        private NeonProgressBar uploadProgressBar;
 
         public List<BatchGameItem> SelectedGames { get; private set; } = new List<BatchGameItem>();
         public string CompressionFormat { get; private set; } = "ZIP";
@@ -81,7 +140,7 @@ namespace SteamAutocrackGUI
         private void InitializeForm()
         {
             this.Text = "Batch Process - Select Games";
-            this.Size = new Size(760, 520);
+            this.Size = new Size(760, 580);
             this.StartPosition = FormStartPosition.Manual;
             this.BackColor = Color.FromArgb(5, 8, 20);
             this.ForeColor = Color.White;
@@ -229,18 +288,64 @@ namespace SteamAutocrackGUI
             var detailsCol = new DataGridViewButtonColumn
             {
                 Name = "Details",
-                HeaderText = "📋",
-                Width = 35,
-                Text = "📋",
+                HeaderText = "",
+                Width = 50,
+                Text = "Info",
                 UseColumnTextForButtonValue = true,
+                FlatStyle = FlatStyle.Flat,
                 DefaultCellStyle = new DataGridViewCellStyle
                 {
                     Alignment = DataGridViewContentAlignment.MiddleCenter,
-                    ForeColor = Color.White,
-                    BackColor = Color.FromArgb(45, 45, 50)
+                    ForeColor = Color.FromArgb(150, 200, 255),
+                    BackColor = Color.FromArgb(35, 40, 55),
+                    Font = new Font("Segoe UI", 8)
                 }
             };
             gameGrid.Columns.Add(detailsCol);
+
+            // Custom paint for Details buttons to match dark theme with icon
+            Image infoIcon = null;
+            try { infoIcon = APPID.Properties.Resources.info_icon; } catch { }
+
+            gameGrid.CellPainting += (s, e) =>
+            {
+                if (e.ColumnIndex >= 0 && gameGrid.Columns[e.ColumnIndex].Name == "Details" && e.RowIndex >= 0)
+                {
+                    e.Paint(e.CellBounds, DataGridViewPaintParts.All & ~DataGridViewPaintParts.ContentForeground);
+
+                    using (var brush = new SolidBrush(Color.FromArgb(35, 40, 55)))
+                    {
+                        var buttonRect = new Rectangle(e.CellBounds.X + 3, e.CellBounds.Y + 3,
+                            e.CellBounds.Width - 6, e.CellBounds.Height - 6);
+                        e.Graphics.FillRectangle(brush, buttonRect);
+
+                        using (var pen = new Pen(Color.FromArgb(70, 90, 120)))
+                        {
+                            e.Graphics.DrawRectangle(pen, buttonRect);
+                        }
+
+                        // Draw icon if available, otherwise fall back to text
+                        if (infoIcon != null)
+                        {
+                            int iconSize = Math.Min(buttonRect.Width - 4, buttonRect.Height - 4);
+                            iconSize = Math.Min(iconSize, 20); // Cap at 20px
+                            int iconX = buttonRect.X + (buttonRect.Width - iconSize) / 2;
+                            int iconY = buttonRect.Y + (buttonRect.Height - iconSize) / 2;
+                            e.Graphics.DrawImage(infoIcon, iconX, iconY, iconSize, iconSize);
+                        }
+                        else
+                        {
+                            using (var textBrush = new SolidBrush(Color.FromArgb(150, 200, 255)))
+                            using (var font = new Font("Segoe UI", 8))
+                            {
+                                var sf = new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center };
+                                e.Graphics.DrawString("Info", font, textBrush, buttonRect, sf);
+                            }
+                        }
+                    }
+                    e.Handled = true;
+                }
+            };
 
             // Add game rows
             for (int i = 0; i < gamePaths.Count; i++)
@@ -451,8 +556,76 @@ namespace SteamAutocrackGUI
             };
             this.Controls.Add(clearAllBtn);
 
+            // Upload details panel (hidden by default, shown during uploads)
+            // Position right below the grid (grid ends at Y=375)
+            uploadDetailsPanel = new Panel
+            {
+                Location = new Point(15, 378),
+                Size = new Size(725, 40),
+                BackColor = Color.FromArgb(20, 23, 35),
+                Visible = false
+            };
+
+            // Game name being uploaded (left side)
+            lblUploadGame = new Label
+            {
+                Location = new Point(5, 3),
+                Size = new Size(350, 16),
+                ForeColor = Color.FromArgb(100, 200, 255),
+                Font = new Font("Segoe UI", 8, FontStyle.Bold),
+                Text = "Uploading: "
+            };
+            uploadDetailsPanel.Controls.Add(lblUploadGame);
+
+            // Custom-painted progress bar (modern neon blue style)
+            uploadProgressBar = new NeonProgressBar
+            {
+                Location = new Point(5, 21),
+                Size = new Size(450, 14),
+                Maximum = 100
+            };
+            uploadDetailsPanel.Controls.Add(uploadProgressBar);
+
+            // Size info (e.g., "1.2 GB / 7.6 GB")
+            lblUploadSize = new Label
+            {
+                Location = new Point(460, 21),
+                Size = new Size(95, 14),
+                ForeColor = Color.FromArgb(180, 180, 185),
+                Font = new Font("Segoe UI", 8),
+                Text = "",
+                TextAlign = ContentAlignment.MiddleLeft
+            };
+            uploadDetailsPanel.Controls.Add(lblUploadSize);
+
+            // Speed (e.g., "12.5 MB/s")
+            lblUploadSpeed = new Label
+            {
+                Location = new Point(555, 21),
+                Size = new Size(80, 14),
+                ForeColor = Color.FromArgb(100, 255, 150),
+                Font = new Font("Segoe UI", 8),
+                Text = "",
+                TextAlign = ContentAlignment.MiddleLeft
+            };
+            uploadDetailsPanel.Controls.Add(lblUploadSpeed);
+
+            // ETA (e.g., "ETA: 5:32")
+            lblUploadEta = new Label
+            {
+                Location = new Point(640, 21),
+                Size = new Size(80, 14),
+                ForeColor = Color.FromArgb(255, 200, 100),
+                Font = new Font("Segoe UI", 8),
+                Text = "",
+                TextAlign = ContentAlignment.MiddleLeft
+            };
+            uploadDetailsPanel.Controls.Add(lblUploadEta);
+
+            this.Controls.Add(uploadDetailsPanel);
+
             // Process button
-            var processBtn = CreateStyledButton("Process", new Point(560, 455), new Size(90, 40));
+            var processBtn = CreateStyledButton("Process", new Point(560, 495), new Size(90, 40));
             processBtn.BackColor = Color.FromArgb(0, 100, 70);
             processBtn.Click += (s, e) =>
             {
@@ -518,7 +691,7 @@ namespace SteamAutocrackGUI
             this.Controls.Add(processBtn);
 
             // Cancel button
-            var cancelBtn = CreateStyledButton("Cancel", new Point(660, 455), new Size(80, 40));
+            var cancelBtn = CreateStyledButton("Cancel", new Point(660, 495), new Size(80, 40));
             cancelBtn.Click += (s, e) =>
             {
                 this.Close();
@@ -633,6 +806,98 @@ namespace SteamAutocrackGUI
             }
         }
 
+        /// <summary>
+        /// Shows the upload details panel with initial info
+        /// </summary>
+        public void ShowUploadDetails(string gameName, long totalBytes)
+        {
+            if (this.IsDisposed) return;
+
+            if (this.InvokeRequired)
+            {
+                try { this.BeginInvoke(new Action(() => ShowUploadDetails(gameName, totalBytes))); } catch { }
+                return;
+            }
+
+            uploadDetailsPanel.Visible = true;
+            lblUploadGame.Text = $"Uploading: {gameName}";
+            lblUploadSize.Text = $"0 / {FormatBytes(totalBytes)}";
+            lblUploadSpeed.Text = "";
+            lblUploadEta.Text = "";
+            uploadProgressBar.Value = 0;
+            uploadProgressBar.Invalidate(); // Force repaint for custom drawing
+        }
+
+        /// <summary>
+        /// Updates the upload progress with speed and ETA
+        /// </summary>
+        public void UpdateUploadProgress(int percent, long uploadedBytes, long totalBytes, double bytesPerSecond)
+        {
+            if (this.IsDisposed) return;
+
+            if (this.InvokeRequired)
+            {
+                try { this.BeginInvoke(new Action(() => UpdateUploadProgress(percent, uploadedBytes, totalBytes, bytesPerSecond))); } catch { }
+                return;
+            }
+
+            uploadProgressBar.Value = Math.Min(percent, 100);
+            uploadProgressBar.Invalidate(); // Force repaint for custom drawing
+            lblUploadSize.Text = $"{FormatBytes(uploadedBytes)} / {FormatBytes(totalBytes)}";
+
+            if (bytesPerSecond > 0)
+            {
+                lblUploadSpeed.Text = $"{FormatBytes((long)bytesPerSecond)}/s";
+
+                long remainingBytes = totalBytes - uploadedBytes;
+                if (remainingBytes > 0)
+                {
+                    double secondsRemaining = remainingBytes / bytesPerSecond;
+                    lblUploadEta.Text = FormatEta(secondsRemaining);
+                }
+                else
+                {
+                    lblUploadEta.Text = "";
+                }
+            }
+        }
+
+        /// <summary>
+        /// Hides the upload details panel
+        /// </summary>
+        public void HideUploadDetails()
+        {
+            if (this.IsDisposed) return;
+
+            if (this.InvokeRequired)
+            {
+                try { this.BeginInvoke(new Action(() => HideUploadDetails())); } catch { }
+                return;
+            }
+
+            uploadDetailsPanel.Visible = false;
+        }
+
+        private string FormatBytes(long bytes)
+        {
+            if (bytes >= 1024L * 1024 * 1024)
+                return $"{bytes / (1024.0 * 1024 * 1024):F2} GB";
+            if (bytes >= 1024L * 1024)
+                return $"{bytes / (1024.0 * 1024):F1} MB";
+            if (bytes >= 1024)
+                return $"{bytes / 1024.0:F0} KB";
+            return $"{bytes} B";
+        }
+
+        private string FormatEta(double seconds)
+        {
+            if (seconds < 60)
+                return $"{seconds:F0}s";
+            if (seconds < 3600)
+                return $"{(int)(seconds / 60)}:{(int)(seconds % 60):D2}";
+            return $"{(int)(seconds / 3600)}:{(int)((seconds % 3600) / 60):D2}:{(int)(seconds % 60):D2}";
+        }
+
         private string allLinksPhpBB = "";
         private string allLinksMarkdown = "";
         private Button copyRinBtn;
@@ -666,7 +931,7 @@ namespace SteamAutocrackGUI
                 return;
 
             // Create Copy for Rin button
-            copyRinBtn = CreateStyledButton("Copy for Rin", new Point(15, 455), new Size(100, 40));
+            copyRinBtn = CreateStyledButton("Copy for Rin", new Point(15, 495), new Size(100, 40));
             copyRinBtn.BackColor = Color.FromArgb(70, 50, 0);
             copyRinBtn.Click += (s, e) =>
             {
@@ -686,7 +951,7 @@ namespace SteamAutocrackGUI
             this.Controls.Add(copyRinBtn);
 
             // Create Copy for Discord button
-            copyDiscordBtn = CreateStyledButton("Copy for Discord", new Point(125, 455), new Size(120, 40));
+            copyDiscordBtn = CreateStyledButton("Copy for Discord", new Point(125, 495), new Size(120, 40));
             copyDiscordBtn.BackColor = Color.FromArgb(88, 101, 242); // Discord blurple
             copyDiscordBtn.Click += (s, e) =>
             {
@@ -965,7 +1230,7 @@ namespace SteamAutocrackGUI
                     .Trim();
 
                 // URL encode the search term
-                string encodedTerm = System.Web.HttpUtility.UrlEncode(searchTerm);
+                string encodedTerm = Uri.EscapeDataString(searchTerm);
                 string url = $"https://store.steampowered.com/api/storesearch?term={encodedTerm}&cc=us&l=en-us";
 
                 using (var client = new System.Net.WebClient())
@@ -1125,6 +1390,55 @@ namespace SteamAutocrackGUI
         }
 
         /// <summary>
+        /// Update zip status for a game's crack details
+        /// </summary>
+        public void UpdateZipStatus(string gamePath, bool success, string zipPath = null, string error = null)
+        {
+            if (string.IsNullOrEmpty(gamePath)) return;
+
+            if (!crackDetailsMap.ContainsKey(gamePath))
+            {
+                // Create a minimal CrackDetails if one doesn't exist
+                crackDetailsMap[gamePath] = new APPID.SteamAppId.CrackDetails
+                {
+                    GameName = Path.GetFileName(gamePath),
+                    GamePath = gamePath
+                };
+            }
+
+            var details = crackDetailsMap[gamePath];
+            details.ZipAttempted = true;
+            details.ZipSuccess = success;
+            details.ZipPath = zipPath;
+            details.ZipError = error;
+        }
+
+        /// <summary>
+        /// Update upload status for a game's crack details
+        /// </summary>
+        public void UpdateUploadStatus(string gamePath, bool success, string url = null, string error = null, int retryCount = 0)
+        {
+            if (string.IsNullOrEmpty(gamePath)) return;
+
+            if (!crackDetailsMap.ContainsKey(gamePath))
+            {
+                // Create a minimal CrackDetails if one doesn't exist
+                crackDetailsMap[gamePath] = new APPID.SteamAppId.CrackDetails
+                {
+                    GameName = Path.GetFileName(gamePath),
+                    GamePath = gamePath
+                };
+            }
+
+            var details = crackDetailsMap[gamePath];
+            details.UploadAttempted = true;
+            details.UploadSuccess = success;
+            details.UploadUrl = url;
+            details.UploadError = error;
+            details.UploadRetryCount = retryCount;
+        }
+
+        /// <summary>
         /// Show crack details in a popup dialog
         /// </summary>
         private void ShowCrackDetails(APPID.SteamAppId.CrackDetails details)
@@ -1215,16 +1529,64 @@ namespace SteamAutocrackGUI
                 textBox.AppendText($"Errors ({details.Errors.Count}):\n");
                 textBox.SelectionColor = Color.Orange;
                 foreach (var err in details.Errors)
-                    textBox.AppendText($"  ⚠ {err}\n");
+                    textBox.AppendText($"  ! {err}\n");
+                textBox.AppendText("\n");
             }
 
-            if (!details.HasAnyChanges && details.Errors.Count == 0)
+            // Zip status
+            if (details.ZipAttempted)
+            {
+                textBox.SelectionColor = Color.Gray;
+                textBox.AppendText("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
+                textBox.SelectionColor = details.ZipSuccess ? Color.LightGreen : Color.Red;
+                textBox.AppendText($"Zip: {(details.ZipSuccess ? "Success" : "Failed")}\n");
+                if (!string.IsNullOrEmpty(details.ZipPath))
+                {
+                    textBox.SelectionColor = Color.Gray;
+                    textBox.AppendText($"  Path: {details.ZipPath}\n");
+                }
+                if (!string.IsNullOrEmpty(details.ZipError))
+                {
+                    textBox.SelectionColor = Color.Orange;
+                    textBox.AppendText($"  Error: {details.ZipError}\n");
+                }
+                textBox.AppendText("\n");
+            }
+
+            // Upload status
+            if (details.UploadAttempted)
+            {
+                if (!details.ZipAttempted)
+                {
+                    textBox.SelectionColor = Color.Gray;
+                    textBox.AppendText("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
+                }
+                textBox.SelectionColor = details.UploadSuccess ? Color.LightGreen : Color.Red;
+                textBox.AppendText($"Upload: {(details.UploadSuccess ? "Success" : "Failed")}\n");
+                if (details.UploadRetryCount > 0)
+                {
+                    textBox.SelectionColor = Color.Yellow;
+                    textBox.AppendText($"  Retries: {details.UploadRetryCount}\n");
+                }
+                if (!string.IsNullOrEmpty(details.UploadUrl))
+                {
+                    textBox.SelectionColor = Color.Cyan;
+                    textBox.AppendText($"  URL: {details.UploadUrl}\n");
+                }
+                if (!string.IsNullOrEmpty(details.UploadError))
+                {
+                    textBox.SelectionColor = Color.Orange;
+                    textBox.AppendText($"  Error: {details.UploadError}\n");
+                }
+            }
+
+            if (!details.HasAnyChanges && details.Errors.Count == 0 && !details.ZipAttempted && !details.UploadAttempted)
             {
                 textBox.SelectionColor = Color.Orange;
                 textBox.AppendText("\nNo modifications were made to this game.\n");
                 textBox.AppendText("This could mean:\n");
-                textBox.AppendText("  • No steam_api.dll or steam_api64.dll was found\n");
-                textBox.AppendText("  • No Steam-protected EXEs were found\n");
+                textBox.AppendText("  - No steam_api.dll or steam_api64.dll was found\n");
+                textBox.AppendText("  - No Steam-protected EXEs were found\n");
             }
 
             // Copy button

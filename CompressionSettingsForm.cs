@@ -37,7 +37,7 @@ namespace SteamAutocrackGUI
             // Set icon to match main app
             try
             {
-                this.Icon = System.Drawing.Icon.ExtractAssociatedIcon(System.Reflection.Assembly.GetExecutingAssembly().Location);
+                this.Icon = System.Drawing.Icon.ExtractAssociatedIcon(Environment.ProcessPath);
             }
             catch { }
 
