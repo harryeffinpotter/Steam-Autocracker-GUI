@@ -1,17 +1,17 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <root>
-  <!-- 
-    Microsoft ResX Schema 
-    
+  <!--
+    Microsoft ResX Schema
+
     Version 2.0
-    
-    The primary goals of this format is to allow a simple XML format 
-    that is mostly human readable. The generation and parsing of the 
-    various data types are done through the TypeConverter classes 
+
+    The primary goals of this format is to allow a simple XML format
+    that is mostly human readable. The generation and parsing of the
+    various data types are done through the TypeConverter classes
     associated with the data types.
-    
+
     Example:
-    
+
     ... ado.net/XML headers & schema ...
     <resheader name="resmimetype">text/microsoft-resx</resheader>
     <resheader name="version">2.0</resheader>
@@ -26,36 +26,36 @@
         <value>[base64 mime encoded string representing a byte array form of the .NET Framework object]</value>
         <comment>This is a comment</comment>
     </data>
-                
-    There are any number of "resheader" rows that contain simple 
+
+    There are any number of "resheader" rows that contain simple
     name/value pairs.
-    
-    Each data row contains a name, and value. The row also contains a 
-    type or mimetype. Type corresponds to a .NET class that support 
-    text/value conversion through the TypeConverter architecture. 
-    Classes that don't support this are serialized and stored with the 
+
+    Each data row contains a name, and value. The row also contains a
+    type or mimetype. Type corresponds to a .NET class that support
+    text/value conversion through the TypeConverter architecture.
+    Classes that don't support this are serialized and stored with the
     mimetype set.
-    
-    The mimetype is used for serialized objects, and tells the 
-    ResXResourceReader how to depersist the object. This is currently not 
+
+    The mimetype is used for serialized objects, and tells the
+    ResXResourceReader how to depersist the object. This is currently not
     extensible. For a given mimetype the value must be set accordingly:
-    
-    Note - application/x-microsoft.net.object.binary.base64 is the format 
-    that the ResXResourceWriter will generate, however the reader can 
+
+    Note - application/x-microsoft.net.object.binary.base64 is the format
+    that the ResXResourceWriter will generate, however the reader can
     read any of the formats listed below.
-    
+
     mimetype: application/x-microsoft.net.object.binary.base64
-    value   : The object must be serialized with 
+    value   : The object must be serialized with
             : System.Runtime.Serialization.Formatters.Binary.BinaryFormatter
             : and then encoded with base64 encoding.
-    
+
     mimetype: application/x-microsoft.net.object.soap.base64
-    value   : The object must be serialized with 
+    value   : The object must be serialized with
             : System.Runtime.Serialization.Formatters.Soap.SoapFormatter
             : and then encoded with base64 encoding.
 
     mimetype: application/x-microsoft.net.object.bytearray.base64
-    value   : The object must be serialized into a byte array 
+    value   : The object must be serialized into a byte array
             : using a System.ComponentModel.TypeConverter
             : and then encoded with base64 encoding.
     -->
@@ -122,7 +122,7 @@
     <value>Microsoft Sans Serif, 9.75pt, style=Bold</value>
   </data>
   <data name="searchTextBox.Location" type="System.Drawing.Point, System.Drawing">
-    <value>12, 41</value>
+    <value>12, 36</value>
   </data>
   <assembly alias="System.Windows.Forms" name="System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" />
   <data name="searchTextBox.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
@@ -139,7 +139,7 @@
     <value>searchTextBox</value>
   </data>
   <data name="&gt;&gt;searchTextBox.Type" xml:space="preserve">
-    <value>System.Windows.Forms.TextBox, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+    <value>System.Windows.Forms.TextBox, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
   <data name="&gt;&gt;searchTextBox.Parent" xml:space="preserve">
     <value>$this</value>
@@ -151,7 +151,7 @@
     <value>29</value>
   </data>
   <data name="dataGridView1.Location" type="System.Drawing.Point, System.Drawing">
-    <value>12, 79</value>
+    <value>12, 70</value>
   </data>
   <data name="dataGridView1.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
     <value>3, 4, 3, 4</value>
@@ -160,7 +160,7 @@
     <value>35</value>
   </data>
   <data name="dataGridView1.Size" type="System.Drawing.Size, System.Drawing">
-    <value>772, 338</value>
+    <value>772, 298</value>
   </data>
   <data name="dataGridView1.TabIndex" type="System.Int32, mscorlib">
     <value>1</value>
@@ -169,7 +169,7 @@
     <value>dataGridView1</value>
   </data>
   <data name="&gt;&gt;dataGridView1.Type" xml:space="preserve">
-    <value>System.Windows.Forms.DataGridView, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+    <value>System.Windows.Forms.DataGridView, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
   <data name="&gt;&gt;dataGridView1.Parent" xml:space="preserve">
     <value>$this</value>
@@ -177,6 +177,7 @@
   <data name="&gt;&gt;dataGridView1.ZOrder" xml:space="preserve">
     <value>3</value>
   </data>
+  <assembly alias="System.Windows.Forms" name="System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089" />
   <data name="btnSearch.FlatStyle" type="System.Windows.Forms.FlatStyle, System.Windows.Forms">
     <value>Flat</value>
   </data>
@@ -187,13 +188,13 @@
     <value>On</value>
   </data>
   <data name="btnSearch.Location" type="System.Drawing.Point, System.Drawing">
-    <value>688, 41</value>
+    <value>688, 36</value>
   </data>
   <data name="btnSearch.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
     <value>3, 4, 3, 4</value>
   </data>
   <data name="btnSearch.Size" type="System.Drawing.Size, System.Drawing">
-    <value>96, 29</value>
+    <value>96, 26</value>
   </data>
   <data name="btnSearch.TabIndex" type="System.Int32, mscorlib">
     <value>2</value>
@@ -205,7 +206,7 @@
     <value>btnSearch</value>
   </data>
   <data name="&gt;&gt;btnSearch.Type" xml:space="preserve">
-    <value>System.Windows.Forms.Button, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+    <value>System.Windows.Forms.Button, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
   <data name="&gt;&gt;btnSearch.Parent" xml:space="preserve">
     <value>$this</value>
@@ -223,7 +224,7 @@
     <value>On</value>
   </data>
   <data name="resinstruccZip.Location" type="System.Drawing.Point, System.Drawing">
-    <value>2, 427</value>
+    <value>2, 377</value>
   </data>
   <data name="resinstruccZip.Size" type="System.Drawing.Size, System.Drawing">
     <value>322, 54</value>
@@ -244,7 +245,7 @@ Enter to select top result.
     <value>resinstruccZip</value>
   </data>
   <data name="&gt;&gt;resinstruccZip.Type" xml:space="preserve">
-    <value>System.Windows.Forms.Label, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+    <value>System.Windows.Forms.Label, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
   <data name="&gt;&gt;resinstruccZip.Parent" xml:space="preserve">
     <value>$this</value>
@@ -265,7 +266,7 @@ Enter to select top result.
     <value>On</value>
   </data>
   <data name="tgDisc.Location" type="System.Drawing.Point, System.Drawing">
-    <value>603, 481</value>
+    <value>603, 424</value>
   </data>
   <data name="tgDisc.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
     <value>2, 0, 2, 0</value>
@@ -286,7 +287,7 @@ Enter to select top result.
     <value>tgDisc</value>
   </data>
   <data name="&gt;&gt;tgDisc.Type" xml:space="preserve">
-    <value>System.Windows.Forms.Label, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+    <value>System.Windows.Forms.Label, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
   <data name="&gt;&gt;tgDisc.Parent" xml:space="preserve">
     <value>mainPanel</value>
@@ -301,10 +302,10 @@ Enter to select top result.
     <value>On</value>
   </data>
   <data name="UploadZipButton.Location" type="System.Drawing.Point, System.Drawing">
-    <value>5, 401</value>
+    <value>5, 354</value>
   </data>
   <data name="UploadZipButton.Size" type="System.Drawing.Size, System.Drawing">
-    <value>109, 29</value>
+    <value>109, 26</value>
   </data>
   <data name="UploadZipButton.TabIndex" type="System.Int32, mscorlib">
     <value>26</value>
@@ -319,7 +320,7 @@ Enter to select top result.
     <value>UploadZipButton</value>
   </data>
   <data name="&gt;&gt;UploadZipButton.Type" xml:space="preserve">
-    <value>System.Windows.Forms.Button, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+    <value>System.Windows.Forms.Button, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
   <data name="&gt;&gt;UploadZipButton.Parent" xml:space="preserve">
     <value>mainPanel</value>
@@ -447,13 +448,13 @@ Enter to select top result.
     <value>On</value>
   </data>
   <data name="pin.Location" type="System.Drawing.Point, System.Drawing">
-    <value>30, 38</value>
+    <value>30, 34</value>
   </data>
   <data name="pin.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
     <value>3, 4, 3, 4</value>
   </data>
   <data name="pin.Size" type="System.Drawing.Size, System.Drawing">
-    <value>26, 29</value>
+    <value>26, 26</value>
   </data>
   <data name="pin.SizeMode" type="System.Windows.Forms.PictureBoxSizeMode, System.Windows.Forms">
     <value>StretchImage</value>
@@ -476,7 +477,7 @@ easier to drag files while browsing.</value>
     <value>pin</value>
   </data>
   <data name="&gt;&gt;pin.Type" xml:space="preserve">
-    <value>System.Windows.Forms.PictureBox, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+    <value>System.Windows.Forms.PictureBox, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
   <data name="&gt;&gt;pin.Parent" xml:space="preserve">
     <value>mainPanel</value>
@@ -579,13 +580,13 @@ easier to drag files while browsing.</value>
     <value>On</value>
   </data>
   <data name="unPin.Location" type="System.Drawing.Point, System.Drawing">
-    <value>30, 38</value>
+    <value>30, 34</value>
   </data>
   <data name="unPin.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
     <value>3, 4, 3, 4</value>
   </data>
   <data name="unPin.Size" type="System.Drawing.Size, System.Drawing">
-    <value>26, 29</value>
+    <value>26, 26</value>
   </data>
   <data name="unPin.SizeMode" type="System.Windows.Forms.PictureBoxSizeMode, System.Windows.Forms">
     <value>StretchImage</value>
@@ -604,7 +605,7 @@ covered by other windows normally.</value>
     <value>unPin</value>
   </data>
   <data name="&gt;&gt;unPin.Type" xml:space="preserve">
-    <value>System.Windows.Forms.PictureBox, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+    <value>System.Windows.Forms.PictureBox, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
   <data name="&gt;&gt;unPin.Parent" xml:space="preserve">
     <value>mainPanel</value>
@@ -844,13 +845,13 @@ covered by other windows normally.</value>
     <value>On</value>
   </data>
   <data name="gitHub.Location" type="System.Drawing.Point, System.Drawing">
-    <value>740, 428</value>
+    <value>740, 378</value>
   </data>
   <data name="gitHub.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
     <value>3, 4, 3, 4</value>
   </data>
   <data name="gitHub.Size" type="System.Drawing.Size, System.Drawing">
-    <value>51, 53</value>
+    <value>51, 47</value>
   </data>
   <data name="gitHub.SizeMode" type="System.Windows.Forms.PictureBoxSizeMode, System.Windows.Forms">
     <value>Zoom</value>
@@ -862,7 +863,7 @@ covered by other windows normally.</value>
     <value>gitHub</value>
   </data>
   <data name="&gt;&gt;gitHub.Type" xml:space="preserve">
-    <value>System.Windows.Forms.PictureBox, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+    <value>System.Windows.Forms.PictureBox, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
   <data name="&gt;&gt;gitHub.Parent" xml:space="preserve">
     <value>mainPanel</value>
@@ -883,13 +884,13 @@ covered by other windows normally.</value>
     <value>On</value>
   </data>
   <data name="ShareButton.Location" type="System.Drawing.Point, System.Drawing">
-    <value>-5, 28</value>
+    <value>-5, 25</value>
   </data>
   <data name="ShareButton.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
     <value>3, 4, 3, 4</value>
   </data>
   <data name="ShareButton.Size" type="System.Drawing.Size, System.Drawing">
-    <value>39, 47</value>
+    <value>39, 41</value>
   </data>
   <data name="ShareButton.TabIndex" type="System.Int32, mscorlib">
     <value>24</value>
@@ -904,7 +905,7 @@ covered by other windows normally.</value>
     <value>ShareButton</value>
   </data>
   <data name="&gt;&gt;ShareButton.Type" xml:space="preserve">
-    <value>System.Windows.Forms.Button, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+    <value>System.Windows.Forms.Button, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
   <data name="&gt;&gt;ShareButton.Parent" xml:space="preserve">
     <value>mainPanel</value>
@@ -922,13 +923,13 @@ covered by other windows normally.</value>
     <value>On</value>
   </data>
   <data name="RequestButton.Location" type="System.Drawing.Point, System.Drawing">
-    <value>758, 589</value>
+    <value>758, 520</value>
   </data>
   <data name="RequestButton.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
     <value>3, 4, 3, 4</value>
   </data>
   <data name="RequestButton.Size" type="System.Drawing.Size, System.Drawing">
-    <value>140, 39</value>
+    <value>140, 34</value>
   </data>
   <data name="RequestButton.TabIndex" type="System.Int32, mscorlib">
     <value>25</value>
@@ -940,7 +941,7 @@ covered by other windows normally.</value>
     <value>RequestButton</value>
   </data>
   <data name="&gt;&gt;RequestButton.Type" xml:space="preserve">
-    <value>System.Windows.Forms.Button, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+    <value>System.Windows.Forms.Button, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
   <data name="&gt;&gt;RequestButton.Parent" xml:space="preserve">
     <value>mainPanel</value>
@@ -952,13 +953,13 @@ covered by other windows normally.</value>
     <value>On</value>
   </data>
   <data name="autoCrackOff.Location" type="System.Drawing.Point, System.Drawing">
-    <value>760, 35</value>
+    <value>760, 31</value>
   </data>
   <data name="autoCrackOff.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
     <value>2, 2, 2, 2</value>
   </data>
   <data name="autoCrackOff.Size" type="System.Drawing.Size, System.Drawing">
-    <value>33, 32</value>
+    <value>33, 28</value>
   </data>
   <data name="autoCrackOff.SizeMode" type="System.Windows.Forms.PictureBoxSizeMode, System.Windows.Forms">
     <value>Zoom</value>
@@ -978,7 +979,7 @@ from the search results.</value>
     <value>autoCrackOff</value>
   </data>
   <data name="&gt;&gt;autoCrackOff.Type" xml:space="preserve">
-    <value>System.Windows.Forms.PictureBox, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+    <value>System.Windows.Forms.PictureBox, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
   <data name="&gt;&gt;autoCrackOff.Parent" xml:space="preserve">
     <value>mainPanel</value>
@@ -990,13 +991,13 @@ from the search results.</value>
     <value>On</value>
   </data>
   <data name="autoCrackOn.Location" type="System.Drawing.Point, System.Drawing">
-    <value>760, 35</value>
+    <value>760, 31</value>
   </data>
   <data name="autoCrackOn.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
     <value>2, 2, 2, 2</value>
   </data>
   <data name="autoCrackOn.Size" type="System.Drawing.Size, System.Drawing">
-    <value>33, 32</value>
+    <value>33, 28</value>
   </data>
   <data name="autoCrackOn.SizeMode" type="System.Windows.Forms.PictureBoxSizeMode, System.Windows.Forms">
     <value>Zoom</value>
@@ -1016,7 +1017,7 @@ from the search results.</value>
     <value>autoCrackOn</value>
   </data>
   <data name="&gt;&gt;autoCrackOn.Type" xml:space="preserve">
-    <value>System.Windows.Forms.PictureBox, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+    <value>System.Windows.Forms.PictureBox, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
   <data name="&gt;&gt;autoCrackOn.Parent" xml:space="preserve">
     <value>mainPanel</value>
@@ -1031,10 +1032,10 @@ from the search results.</value>
     <value>On</value>
   </data>
   <data name="StatusLabel.Location" type="System.Drawing.Point, System.Drawing">
-    <value>82, 344</value>
+    <value>82, 304</value>
   </data>
   <data name="StatusLabel.Size" type="System.Drawing.Size, System.Drawing">
-    <value>630, 24</value>
+    <value>630, 21</value>
   </data>
   <data name="StatusLabel.TabIndex" type="System.Int32, mscorlib">
     <value>1</value>
@@ -1046,7 +1047,7 @@ from the search results.</value>
     <value>StatusLabel</value>
   </data>
   <data name="&gt;&gt;StatusLabel.Type" xml:space="preserve">
-    <value>System.Windows.Forms.Label, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+    <value>System.Windows.Forms.Label, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
   <data name="&gt;&gt;StatusLabel.Parent" xml:space="preserve">
     <value>mainPanel</value>
@@ -1064,13 +1065,13 @@ from the search results.</value>
     <value>On</value>
   </data>
   <data name="OpenDir.Location" type="System.Drawing.Point, System.Drawing">
-    <value>5, 464</value>
+    <value>5, 409</value>
   </data>
   <data name="OpenDir.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
     <value>3, 4, 3, 4</value>
   </data>
   <data name="OpenDir.Size" type="System.Drawing.Size, System.Drawing">
-    <value>109, 29</value>
+    <value>109, 26</value>
   </data>
   <data name="OpenDir.TabIndex" type="System.Int32, mscorlib">
     <value>4</value>
@@ -1085,7 +1086,7 @@ from the search results.</value>
     <value>OpenDir</value>
   </data>
   <data name="&gt;&gt;OpenDir.Type" xml:space="preserve">
-    <value>System.Windows.Forms.Button, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+    <value>System.Windows.Forms.Button, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
   <data name="&gt;&gt;OpenDir.Parent" xml:space="preserve">
     <value>mainPanel</value>
@@ -1103,13 +1104,13 @@ from the search results.</value>
     <value>On</value>
   </data>
   <data name="ZipToShare.Location" type="System.Drawing.Point, System.Drawing">
-    <value>5, 432</value>
+    <value>5, 381</value>
   </data>
   <data name="ZipToShare.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
     <value>3, 4, 3, 4</value>
   </data>
   <data name="ZipToShare.Size" type="System.Drawing.Size, System.Drawing">
-    <value>109, 29</value>
+    <value>109, 26</value>
   </data>
   <data name="ZipToShare.TabIndex" type="System.Int32, mscorlib">
     <value>3</value>
@@ -1127,7 +1128,7 @@ from the search results.</value>
     <value>ZipToShare</value>
   </data>
   <data name="&gt;&gt;ZipToShare.Type" xml:space="preserve">
-    <value>System.Windows.Forms.Button, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+    <value>System.Windows.Forms.Button, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
   <data name="&gt;&gt;ZipToShare.Parent" xml:space="preserve">
     <value>mainPanel</value>
@@ -1142,10 +1143,10 @@ from the search results.</value>
     <value>On</value>
   </data>
   <data name="currDIrText.Location" type="System.Drawing.Point, System.Drawing">
-    <value>176, 369</value>
+    <value>176, 326</value>
   </data>
   <data name="currDIrText.Size" type="System.Drawing.Size, System.Drawing">
-    <value>443, 30</value>
+    <value>443, 26</value>
   </data>
   <data name="currDIrText.TabIndex" type="System.Int32, mscorlib">
     <value>10</value>
@@ -1157,7 +1158,7 @@ from the search results.</value>
     <value>currDIrText</value>
   </data>
   <data name="&gt;&gt;currDIrText.Type" xml:space="preserve">
-    <value>System.Windows.Forms.Label, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+    <value>System.Windows.Forms.Label, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
   <data name="&gt;&gt;currDIrText.Parent" xml:space="preserve">
     <value>mainPanel</value>
@@ -1181,7 +1182,7 @@ from the search results.</value>
     <value>ALI213</value>
   </data>
   <data name="dllSelect.Location" type="System.Drawing.Point, System.Drawing">
-    <value>338, 284</value>
+    <value>338, 251</value>
   </data>
   <data name="dllSelect.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
     <value>3, 4, 3, 4</value>
@@ -1196,7 +1197,7 @@ from the search results.</value>
     <value>dllSelect</value>
   </data>
   <data name="&gt;&gt;dllSelect.Type" xml:space="preserve">
-    <value>APPID.TransparentComboBox, SACGUI, Version=1.3.0.0, Culture=neutral, PublicKeyToken=null</value>
+    <value>APPID.TransparentComboBox, SACGUI, Culture=neutral, PublicKeyToken=null</value>
   </data>
   <data name="&gt;&gt;dllSelect.Parent" xml:space="preserve">
     <value>mainPanel</value>
@@ -1211,13 +1212,13 @@ from the search results.</value>
     <value>On</value>
   </data>
   <data name="lanMultiplayerCheckBox.Location" type="System.Drawing.Point, System.Drawing">
-    <value>343, 319</value>
+    <value>343, 281</value>
   </data>
   <data name="lanMultiplayerCheckBox.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
     <value>3, 4, 3, 4</value>
   </data>
   <data name="lanMultiplayerCheckBox.Size" type="System.Drawing.Size, System.Drawing">
-    <value>109, 21</value>
+    <value>102, 19</value>
   </data>
   <data name="lanMultiplayerCheckBox.TabIndex" type="System.Int32, mscorlib">
     <value>1</value>
@@ -1236,7 +1237,7 @@ Perfect for playing with friends on the same network!</value>
     <value>lanMultiplayerCheckBox</value>
   </data>
   <data name="&gt;&gt;lanMultiplayerCheckBox.Type" xml:space="preserve">
-    <value>System.Windows.Forms.CheckBox, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+    <value>System.Windows.Forms.CheckBox, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
   <data name="&gt;&gt;lanMultiplayerCheckBox.Parent" xml:space="preserve">
     <value>mainPanel</value>
@@ -1448,13 +1449,13 @@ Perfect for playing with friends on the same network!</value>
     <value />
   </data>
   <data name="donePic.Location" type="System.Drawing.Point, System.Drawing">
-    <value>338, 168</value>
+    <value>338, 148</value>
   </data>
   <data name="donePic.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
     <value>3, 4, 3, 4</value>
   </data>
   <data name="donePic.Size" type="System.Drawing.Size, System.Drawing">
-    <value>120, 114</value>
+    <value>120, 101</value>
   </data>
   <data name="donePic.SizeMode" type="System.Windows.Forms.PictureBoxSizeMode, System.Windows.Forms">
     <value>Zoom</value>
@@ -1469,7 +1470,7 @@ Perfect for playing with friends on the same network!</value>
     <value>donePic</value>
   </data>
   <data name="&gt;&gt;donePic.Type" xml:space="preserve">
-    <value>System.Windows.Forms.PictureBox, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+    <value>System.Windows.Forms.PictureBox, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
   <data name="&gt;&gt;donePic.Parent" xml:space="preserve">
     <value>mainPanel</value>
@@ -3641,13 +3642,13 @@ Perfect for playing with friends on the same network!</value>
 </value>
   </data>
   <data name="startCrackPic.Location" type="System.Drawing.Point, System.Drawing">
-    <value>338, 168</value>
+    <value>338, 148</value>
   </data>
   <data name="startCrackPic.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
     <value>3, 4, 3, 4</value>
   </data>
   <data name="startCrackPic.Size" type="System.Drawing.Size, System.Drawing">
-    <value>120, 114</value>
+    <value>120, 101</value>
   </data>
   <data name="startCrackPic.SizeMode" type="System.Windows.Forms.PictureBoxSizeMode, System.Windows.Forms">
     <value>Zoom</value>
@@ -3662,7 +3663,7 @@ Perfect for playing with friends on the same network!</value>
     <value>startCrackPic</value>
   </data>
   <data name="&gt;&gt;startCrackPic.Type" xml:space="preserve">
-    <value>System.Windows.Forms.PictureBox, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+    <value>System.Windows.Forms.PictureBox, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
   <data name="&gt;&gt;startCrackPic.Parent" xml:space="preserve">
     <value>mainPanel</value>
@@ -3832,13 +3833,13 @@ Perfect for playing with friends on the same network!</value>
     <value />
   </data>
   <data name="selectDir.Location" type="System.Drawing.Point, System.Drawing">
-    <value>338, 168</value>
+    <value>338, 148</value>
   </data>
   <data name="selectDir.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
     <value>3, 4, 3, 4</value>
   </data>
   <data name="selectDir.Size" type="System.Drawing.Size, System.Drawing">
-    <value>120, 114</value>
+    <value>120, 101</value>
   </data>
   <data name="selectDir.SizeMode" type="System.Windows.Forms.PictureBoxSizeMode, System.Windows.Forms">
     <value>Zoom</value>
@@ -3850,7 +3851,7 @@ Perfect for playing with friends on the same network!</value>
     <value>selectDir</value>
   </data>
   <data name="&gt;&gt;selectDir.Type" xml:space="preserve">
-    <value>System.Windows.Forms.PictureBox, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+    <value>System.Windows.Forms.PictureBox, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
   <data name="&gt;&gt;selectDir.Parent" xml:space="preserve">
     <value>mainPanel</value>
@@ -3865,10 +3866,10 @@ Perfect for playing with friends on the same network!</value>
     <value>On</value>
   </data>
   <data name="label5.Location" type="System.Drawing.Point, System.Drawing">
-    <value>212, 102</value>
+    <value>214, 98</value>
   </data>
   <data name="label5.Size" type="System.Drawing.Size, System.Drawing">
-    <value>370, 32</value>
+    <value>366, 40</value>
   </data>
   <data name="label5.TabIndex" type="System.Int32, mscorlib">
     <value>1</value>
@@ -3884,7 +3885,7 @@ If you have issues, run as Admin.</value>
     <value>label5</value>
   </data>
   <data name="&gt;&gt;label5.Type" xml:space="preserve">
-    <value>System.Windows.Forms.Label, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+    <value>System.Windows.Forms.Label, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
   <data name="&gt;&gt;label5.Parent" xml:space="preserve">
     <value>mainPanel</value>
@@ -3902,7 +3903,7 @@ If you have issues, run as Admin.</value>
     <value>On</value>
   </data>
   <data name="label1.Location" type="System.Drawing.Point, System.Drawing">
-    <value>762, 67</value>
+    <value>762, 59</value>
   </data>
   <data name="label1.Size" type="System.Drawing.Size, System.Drawing">
     <value>29, 13</value>
@@ -3920,7 +3921,7 @@ If you have issues, run as Admin.</value>
     <value>label1</value>
   </data>
   <data name="&gt;&gt;label1.Type" xml:space="preserve">
-    <value>System.Windows.Forms.Label, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+    <value>System.Windows.Forms.Label, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
   <data name="&gt;&gt;label1.Parent" xml:space="preserve">
     <value>mainPanel</value>
@@ -3938,7 +3939,7 @@ If you have issues, run as Admin.</value>
     <value>On</value>
   </data>
   <data name="selectDirLabel.Location" type="System.Drawing.Point, System.Drawing">
-    <value>255, 108</value>
+    <value>264, 108</value>
   </data>
   <data name="selectDirLabel.Size" type="System.Drawing.Size, System.Drawing">
     <value>285, 20</value>
@@ -3956,7 +3957,7 @@ If you have issues, run as Admin.</value>
     <value>selectDirLabel</value>
   </data>
   <data name="&gt;&gt;selectDirLabel.Type" xml:space="preserve">
-    <value>System.Windows.Forms.Label, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+    <value>System.Windows.Forms.Label, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
   <data name="&gt;&gt;selectDirLabel.Parent" xml:space="preserve">
     <value>mainPanel</value>
@@ -3974,10 +3975,10 @@ If you have issues, run as Admin.</value>
     <value>On</value>
   </data>
   <data name="drgdropText.Location" type="System.Drawing.Point, System.Drawing">
-    <value>-2, 4</value>
+    <value>-2, 3</value>
   </data>
   <data name="drgdropText.Size" type="System.Drawing.Size, System.Drawing">
-    <value>798, 495</value>
+    <value>798, 437</value>
   </data>
   <data name="drgdropText.TabIndex" type="System.Int32, mscorlib">
     <value>2</value>
@@ -3995,7 +3996,7 @@ If you have issues, run as Admin.</value>
     <value>drgdropText</value>
   </data>
   <data name="&gt;&gt;drgdropText.Type" xml:space="preserve">
-    <value>System.Windows.Forms.Label, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+    <value>System.Windows.Forms.Label, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
   <data name="&gt;&gt;drgdropText.Parent" xml:space="preserve">
     <value>mainPanel</value>
@@ -4010,7 +4011,7 @@ If you have issues, run as Admin.</value>
     <value>3, 4, 3, 4</value>
   </data>
   <data name="mainPanel.Size" type="System.Drawing.Size, System.Drawing">
-    <value>795, 502</value>
+    <value>795, 443</value>
   </data>
   <data name="mainPanel.TabIndex" type="System.Int32, mscorlib">
     <value>8</value>
@@ -4019,7 +4020,7 @@ If you have issues, run as Admin.</value>
     <value>mainPanel</value>
   </data>
   <data name="&gt;&gt;mainPanel.Type" xml:space="preserve">
-    <value>System.Windows.Forms.Panel, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+    <value>System.Windows.Forms.Panel, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
   <data name="&gt;&gt;mainPanel.Parent" xml:space="preserve">
     <value>$this</value>
@@ -4037,13 +4038,13 @@ If you have issues, run as Admin.</value>
     <value>On</value>
   </data>
   <data name="btnManualEntry.Location" type="System.Drawing.Point, System.Drawing">
-    <value>599, 423</value>
+    <value>599, 373</value>
   </data>
   <data name="btnManualEntry.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
     <value>3, 4, 3, 4</value>
   </data>
   <data name="btnManualEntry.Size" type="System.Drawing.Size, System.Drawing">
-    <value>185, 36</value>
+    <value>185, 32</value>
   </data>
   <data name="btnManualEntry.TabIndex" type="System.Int32, mscorlib">
     <value>20</value>
@@ -4058,7 +4059,7 @@ If you have issues, run as Admin.</value>
     <value>btnManualEntry</value>
   </data>
   <data name="&gt;&gt;btnManualEntry.Type" xml:space="preserve">
-    <value>System.Windows.Forms.Button, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+    <value>System.Windows.Forms.Button, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
   <data name="&gt;&gt;btnManualEntry.Parent" xml:space="preserve">
     <value>$this</value>
@@ -4070,7 +4071,7 @@ If you have issues, run as Admin.</value>
     <value>Microsoft Sans Serif, 12pt, style=Bold</value>
   </data>
   <data name="ManAppBox.Location" type="System.Drawing.Point, System.Drawing">
-    <value>50, 58</value>
+    <value>50, 51</value>
   </data>
   <data name="ManAppBox.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
     <value>2, 2, 2, 2</value>
@@ -4085,7 +4086,7 @@ If you have issues, run as Admin.</value>
     <value>ManAppBox</value>
   </data>
   <data name="&gt;&gt;ManAppBox.Type" xml:space="preserve">
-    <value>System.Windows.Forms.TextBox, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+    <value>System.Windows.Forms.TextBox, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
   <data name="&gt;&gt;ManAppBox.Parent" xml:space="preserve">
     <value>ManAppPanel</value>
@@ -4103,13 +4104,13 @@ If you have issues, run as Admin.</value>
     <value>On</value>
   </data>
   <data name="ManAppBtn.Location" type="System.Drawing.Point, System.Drawing">
-    <value>156, 100</value>
+    <value>156, 88</value>
   </data>
   <data name="ManAppBtn.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
     <value>3, 4, 3, 4</value>
   </data>
   <data name="ManAppBtn.Size" type="System.Drawing.Size, System.Drawing">
-    <value>75, 34</value>
+    <value>75, 30</value>
   </data>
   <data name="ManAppBtn.TabIndex" type="System.Int32, mscorlib">
     <value>0</value>
@@ -4124,7 +4125,7 @@ If you have issues, run as Admin.</value>
     <value>ManAppBtn</value>
   </data>
   <data name="&gt;&gt;ManAppBtn.Type" xml:space="preserve">
-    <value>System.Windows.Forms.Button, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+    <value>System.Windows.Forms.Button, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
   <data name="&gt;&gt;ManAppBtn.Parent" xml:space="preserve">
     <value>ManAppPanel</value>
@@ -4142,7 +4143,7 @@ If you have issues, run as Admin.</value>
     <value>On</value>
   </data>
   <data name="ManAppLbl.Location" type="System.Drawing.Point, System.Drawing">
-    <value>7, 17</value>
+    <value>7, 15</value>
   </data>
   <data name="ManAppLbl.Size" type="System.Drawing.Size, System.Drawing">
     <value>144, 16</value>
@@ -4160,7 +4161,7 @@ If you have issues, run as Admin.</value>
     <value>ManAppLbl</value>
   </data>
   <data name="&gt;&gt;ManAppLbl.Type" xml:space="preserve">
-    <value>System.Windows.Forms.Label, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+    <value>System.Windows.Forms.Label, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
   <data name="&gt;&gt;ManAppLbl.Parent" xml:space="preserve">
     <value>ManAppPanel</value>
@@ -4169,13 +4170,13 @@ If you have issues, run as Admin.</value>
     <value>2</value>
   </data>
   <data name="ManAppPanel.Location" type="System.Drawing.Point, System.Drawing">
-    <value>250, 148</value>
+    <value>250, 131</value>
   </data>
   <data name="ManAppPanel.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
     <value>2, 2, 2, 2</value>
   </data>
   <data name="ManAppPanel.Size" type="System.Drawing.Size, System.Drawing">
-    <value>286, 166</value>
+    <value>286, 146</value>
   </data>
   <data name="ManAppPanel.TabIndex" type="System.Int32, mscorlib">
     <value>13</value>
@@ -4187,7 +4188,7 @@ If you have issues, run as Admin.</value>
     <value>ManAppPanel</value>
   </data>
   <data name="&gt;&gt;ManAppPanel.Type" xml:space="preserve">
-    <value>System.Windows.Forms.Panel, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+    <value>System.Windows.Forms.Panel, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
   <data name="&gt;&gt;ManAppPanel.Parent" xml:space="preserve">
     <value>$this</value>
@@ -4205,7 +4206,7 @@ If you have issues, run as Admin.</value>
     <value>On</value>
   </data>
   <data name="lblTitle.Location" type="System.Drawing.Point, System.Drawing">
-    <value>9, 10</value>
+    <value>9, 9</value>
   </data>
   <data name="lblTitle.Size" type="System.Drawing.Size, System.Drawing">
     <value>71, 15</value>
@@ -4214,13 +4215,13 @@ If you have issues, run as Admin.</value>
     <value>0</value>
   </data>
   <data name="lblTitle.Text" xml:space="preserve">
-    <value>SACGUI 2.1</value>
+    <value>SACGUI 2.2</value>
   </data>
   <data name="&gt;&gt;lblTitle.Name" xml:space="preserve">
     <value>lblTitle</value>
   </data>
   <data name="&gt;&gt;lblTitle.Type" xml:space="preserve">
-    <value>System.Windows.Forms.Label, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+    <value>System.Windows.Forms.Label, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
   <data name="&gt;&gt;lblTitle.Parent" xml:space="preserve">
     <value>titleBar</value>
@@ -4241,13 +4242,13 @@ If you have issues, run as Admin.</value>
     <value>On</value>
   </data>
   <data name="btnMinimize.Location" type="System.Drawing.Point, System.Drawing">
-    <value>716, 0</value>
+    <value>719, 0</value>
   </data>
   <data name="btnMinimize.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
     <value>3, 4, 3, 4</value>
   </data>
   <data name="btnMinimize.Size" type="System.Drawing.Size, System.Drawing">
-    <value>40, 34</value>
+    <value>40, 30</value>
   </data>
   <data name="btnMinimize.TabIndex" type="System.Int32, mscorlib">
     <value>2</value>
@@ -4259,7 +4260,7 @@ If you have issues, run as Admin.</value>
     <value>btnMinimize</value>
   </data>
   <data name="&gt;&gt;btnMinimize.Type" xml:space="preserve">
-    <value>System.Windows.Forms.Button, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+    <value>System.Windows.Forms.Button, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
   <data name="&gt;&gt;btnMinimize.Parent" xml:space="preserve">
     <value>titleBar</value>
@@ -4286,7 +4287,7 @@ If you have issues, run as Admin.</value>
     <value>3, 4, 3, 4</value>
   </data>
   <data name="btnClose.Size" type="System.Drawing.Size, System.Drawing">
-    <value>40, 34</value>
+    <value>40, 30</value>
   </data>
   <data name="btnClose.TabIndex" type="System.Int32, mscorlib">
     <value>1</value>
@@ -4298,7 +4299,7 @@ If you have issues, run as Admin.</value>
     <value>btnClose</value>
   </data>
   <data name="&gt;&gt;btnClose.Type" xml:space="preserve">
-    <value>System.Windows.Forms.Button, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+    <value>System.Windows.Forms.Button, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
   <data name="&gt;&gt;btnClose.Parent" xml:space="preserve">
     <value>titleBar</value>
@@ -4316,7 +4317,7 @@ If you have issues, run as Admin.</value>
     <value>3, 4, 3, 4</value>
   </data>
   <data name="titleBar.Size" type="System.Drawing.Size, System.Drawing">
-    <value>798, 34</value>
+    <value>798, 30</value>
   </data>
   <data name="titleBar.TabIndex" type="System.Int32, mscorlib">
     <value>100</value>
@@ -4325,7 +4326,7 @@ If you have issues, run as Admin.</value>
     <value>titleBar</value>
   </data>
   <data name="&gt;&gt;titleBar.Type" xml:space="preserve">
-    <value>System.Windows.Forms.Panel, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+    <value>System.Windows.Forms.Panel, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
   <data name="&gt;&gt;titleBar.Parent" xml:space="preserve">
     <value>$this</value>
@@ -4340,10 +4341,10 @@ If you have issues, run as Admin.</value>
     <value>25</value>
   </metadata>
   <data name="$this.AutoScaleDimensions" type="System.Drawing.SizeF, System.Drawing">
-    <value>7, 17</value>
+    <value>7, 15</value>
   </data>
   <data name="$this.ClientSize" type="System.Drawing.Size, System.Drawing">
-    <value>798, 503</value>
+    <value>798, 444</value>
   </data>
   <data name="$this.Icon" type="System.Drawing.Icon, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
     <value>
@@ -6838,10 +6839,10 @@ If you have issues, run as Admin.</value>
     <value>3, 4, 3, 4</value>
   </data>
   <data name="$this.MaximumSize" type="System.Drawing.Size, System.Drawing">
-    <value>798, 503</value>
+    <value>798, 444</value>
   </data>
   <data name="$this.MinimumSize" type="System.Drawing.Size, System.Drawing">
-    <value>798, 503</value>
+    <value>798, 444</value>
   </data>
   <data name="$this.Text" xml:space="preserve">
     <value>1</value>
@@ -6850,12 +6851,12 @@ If you have issues, run as Admin.</value>
     <value>lanMultiplayerToolTip</value>
   </data>
   <data name="&gt;&gt;lanMultiplayerToolTip.Type" xml:space="preserve">
-    <value>System.Windows.Forms.ToolTip, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+    <value>System.Windows.Forms.ToolTip, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
   <data name="&gt;&gt;$this.Name" xml:space="preserve">
     <value>SteamAppId</value>
   </data>
   <data name="&gt;&gt;$this.Type" xml:space="preserve">
-    <value>System.Windows.Forms.Form, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+    <value>System.Windows.Forms.Form, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
 </root>

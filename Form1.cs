@@ -28,6 +28,10 @@ namespace APPID
 {
     public partial class SteamAppId : Form
     {
+        // Exe directory - use this for all paths
+        public static readonly string ExeDir = Path.GetDirectoryName(Environment.ProcessPath) ?? Environment.CurrentDirectory;
+        public static readonly string BinPath = Path.Combine(ExeDir, "_bin");
+
         // Event for crack status updates
         public event EventHandler<string> CrackStatusChanged;
 
@@ -79,6 +83,17 @@ namespace APPID
             public bool Success { get; set; }
             public DateTime Timestamp { get; set; } = DateTime.Now;
 
+            // Zip/Upload tracking
+            public bool ZipAttempted { get; set; }
+            public bool ZipSuccess { get; set; }
+            public string ZipError { get; set; }
+            public string ZipPath { get; set; }
+            public bool UploadAttempted { get; set; }
+            public bool UploadSuccess { get; set; }
+            public string UploadError { get; set; }
+            public string UploadUrl { get; set; }
+            public int UploadRetryCount { get; set; }
+
             public bool HasAnyChanges => DllsReplaced.Count > 0 || ExesUnpacked.Count > 0;
 
             public string GetSummary()
@@ -128,6 +143,30 @@ namespace APPID
                     sb.AppendLine($"Errors ({Errors.Count}):");
                     foreach (var err in Errors)
                         sb.AppendLine($"  - {err}");
+                    sb.AppendLine();
+                }
+
+                // Zip status
+                if (ZipAttempted)
+                {
+                    sb.AppendLine($"Zip: {(ZipSuccess ? "Success" : "Failed")}");
+                    if (!string.IsNullOrEmpty(ZipPath))
+                        sb.AppendLine($"  Path: {ZipPath}");
+                    if (!string.IsNullOrEmpty(ZipError))
+                        sb.AppendLine($"  Error: {ZipError}");
+                    sb.AppendLine();
+                }
+
+                // Upload status
+                if (UploadAttempted)
+                {
+                    sb.AppendLine($"Upload: {(UploadSuccess ? "Success" : "Failed")}");
+                    if (UploadRetryCount > 0)
+                        sb.AppendLine($"  Retries: {UploadRetryCount}");
+                    if (!string.IsNullOrEmpty(UploadUrl))
+                        sb.AppendLine($"  URL: {UploadUrl}");
+                    if (!string.IsNullOrEmpty(UploadError))
+                        sb.AppendLine($"  Error: {UploadError}");
                 }
 
                 return sb.ToString();
@@ -602,9 +641,9 @@ namespace APPID
         {
             if (rowIndex >= 0 && rowIndex < dataGridView1.Rows.Count)
             {
-                APPID = dataGridView1[1, rowIndex].Value.ToString();
+                CurrentAppId = dataGridView1[1, rowIndex].Value.ToString();
                 APPNAME = dataGridView1[0, rowIndex].Value.ToString().Trim();
-                Tat($"{APPNAME} ({APPID})");
+                Tat($"{APPNAME} ({CurrentAppId})");
                 searchTextBox.Clear();
                 btnManualEntry.Visible = false;
                 mainPanel.Visible = true;
@@ -842,7 +881,7 @@ namespace APPID
 
 
         }
-        public static String APPID;
+        public static String CurrentAppId;
         private void dataGridView1_CellDoubleClick(object sender, DataGridViewCellEventArgs e)
         {
             if (dataGridView1[1, e.RowIndex].Value == null)
@@ -856,9 +895,9 @@ namespace APPID
                     string PropName = RemoveSpecialCharacters(dataGridView1[0, e.RowIndex].Value.ToString());
                     File.WriteAllText($"{APPDATA}\\VRL\\ProperName.txt", PropName);
                 }
-                APPID = dataGridView1[1, e.RowIndex].Value.ToString();
+                CurrentAppId = dataGridView1[1, e.RowIndex].Value.ToString();
                 APPNAME = dataGridView1[0, e.RowIndex].Value.ToString().Trim();
-                Tat($"{APPNAME} ({APPID})");
+                Tat($"{APPNAME} ({CurrentAppId})");
                 searchTextBox.Clear();
                 mainPanel.Visible = true;
                 btnManualEntry.Visible = false;
@@ -928,9 +967,9 @@ namespace APPID
                         string PropName = RemoveSpecialCharacters(dataGridView1[0, CurrentCell].Value.ToString());
                         File.WriteAllText($"{APPDATA}\\VRL\\ProperName.txt", PropName);
                     }
-                    APPID = dataGridView1[1, CurrentCell].Value.ToString();
+                    CurrentAppId = dataGridView1[1, CurrentCell].Value.ToString();
                     APPNAME = dataGridView1[0, CurrentCell].Value.ToString().Trim();
-                    Tat($"{APPNAME} ({APPID})");
+                    Tat($"{APPNAME} ({CurrentAppId})");
                     searchTextBox.Clear();
                     mainPanel.Visible = true;
                     btnManualEntry.Visible = false;
@@ -1388,7 +1427,7 @@ namespace APPID
                 isInitialFolderSearch = false;
 
                 // Fallback: If we still have no game selected but we do have search results, ensure buttons are visible
-                if (string.IsNullOrEmpty(APPID) && dataGridView1.Rows.Count > 1)
+                if (string.IsNullOrEmpty(CurrentAppId) && dataGridView1.Rows.Count > 1)
                 {
                     btnManualEntry.Visible = true;
                     resinstruccZip.Visible = true;
@@ -1409,9 +1448,9 @@ namespace APPID
                 File.WriteAllText($"{APPDATA}\\VRL\\ProperName.txt", PropName);
             }
             Tit("READY! Click skull folder above to perform crack!", Color.LightSkyBlue);
-            APPID = dataGridView1[1, CurrentCell].Value.ToString();
+            CurrentAppId = dataGridView1[1, CurrentCell].Value.ToString();
             APPNAME = dataGridView1[0, CurrentCell].Value.ToString().Trim();
-            Tat($"{APPNAME} ({APPID})");
+            Tat($"{APPNAME} ({CurrentAppId})");
             searchTextBox.Clear();
             mainPanel.Visible = true;
             btnManualEntry.Visible = false;
@@ -1620,12 +1659,12 @@ namespace APPID
             {
                 GameName = gameDirName ?? Path.GetFileName(gameDir),
                 GamePath = gameDir,
-                AppId = APPID
+                AppId = CurrentAppId
             };
 
             System.Diagnostics.Debug.WriteLine($"[CRACK] === Starting CrackCoreAsync ===");
             System.Diagnostics.Debug.WriteLine($"[CRACK] Game Directory: {gameDir}");
-            System.Diagnostics.Debug.WriteLine($"[CRACK] AppID: {APPID}");
+            System.Diagnostics.Debug.WriteLine($"[CRACK] AppID: {CurrentAppId}");
             System.Diagnostics.Debug.WriteLine($"[CRACK] Current Directory: {Environment.CurrentDirectory}");
 
             try
@@ -1667,8 +1706,8 @@ namespace APPID
                         try
                         {
                             string sourceEmulatorDll = goldy
-                                ? $"{Environment.CurrentDirectory}\\_bin\\Goldberg\\steam_api64.dll"
-                                : $"{Environment.CurrentDirectory}\\_bin\\ALI213\\steam_api64.dll";
+                                ? $"{BinPath}\\Goldberg\\steam_api64.dll"
+                                : $"{BinPath}\\ALI213\\steam_api64.dll";
 
                             // Check if current file is already the emulator DLL
                             if (AreFilesIdentical(file, sourceEmulatorDll))
@@ -1708,8 +1747,8 @@ namespace APPID
                             {
                                 File.Delete(parentdir + "\\SteamConfig.ini");
                             }
-                            IniFileEdit($"{Environment.CurrentDirectory}\\_bin\\ALI213\\SteamConfig.ini [Settings] \"AppID = {APPID}\"");
-                            File.Copy($"{Environment.CurrentDirectory}\\_bin\\ALI213\\SteamConfig.ini", $"{parentdir}\\SteamConfig.ini");
+                            IniFileEdit($"{BinPath}\\ALI213\\SteamConfig.ini [Settings] \"AppID = {CurrentAppId}\"");
+                            File.Copy($"{BinPath}\\ALI213\\SteamConfig.ini", $"{parentdir}\\SteamConfig.ini");
                         }
                     }
                     if (file.EndsWith("steam_api.dll"))
@@ -1742,8 +1781,8 @@ namespace APPID
                         try
                         {
                             string sourceEmulatorDll = goldy
-                                ? $"{Environment.CurrentDirectory}\\_bin\\Goldberg\\steam_api.dll"
-                                : $"{Environment.CurrentDirectory}\\_bin\\ALI213\\steam_api.dll";
+                                ? $"{BinPath}\\Goldberg\\steam_api.dll"
+                                : $"{BinPath}\\ALI213\\steam_api.dll";
 
                             // Check if current file is already the emulator DLL
                             string emulatorName = goldy ? "Goldberg" : "ALI213";
@@ -1786,7 +1825,7 @@ namespace APPID
                                 {
                                     File.Delete(parentdir + "\\SteamConfig.ini");
                                 }
-                                IniFileEdit($"\".\\_bin\\ALI213\\SteamConfig.ini\" [Settings] \"AppID = {APPID}\"");
+                                IniFileEdit($"\".\\_bin\\ALI213\\SteamConfig.ini\" [Settings] \"AppID = {CurrentAppId}\"");
                                 File.Copy("_bin\\ALI213\\SteamConfig.ini", $"{parentdir}\\SteamConfig.ini");
                             }
                             catch (UnauthorizedAccessException ex)
@@ -1803,6 +1842,13 @@ namespace APPID
 
                     if (Path.GetExtension(file) == ".exe")
                     {
+                        // Skip if file path is empty or file doesn't exist
+                        if (string.IsNullOrEmpty(file) || !File.Exists(file))
+                        {
+                            System.Diagnostics.Debug.WriteLine($"[CRACK] Invalid or missing file, skipping: {file}");
+                            continue;
+                        }
+
                         // Check if this EXE should be skipped (non-game utility executables)
                         if (ShouldSkipExe(file))
                         {
@@ -1811,15 +1857,15 @@ namespace APPID
                             continue;
                         }
 
-                        // Check if Steamless exists before trying to use it
-                        string steamlessPath = $"{Environment.CurrentDirectory}\\_bin\\Steamless\\Steamless.exe";
-                        System.Diagnostics.Debug.WriteLine($"[CRACK] Checking for Steamless at: {steamlessPath}");
-                        System.Diagnostics.Debug.WriteLine($"[CRACK] Steamless exists: {File.Exists(steamlessPath)}");
+                        // Check if Steamless CLI exists before trying to use it (CLI version runs without GUI)
+                        string steamlessPath = $"{BinPath}\\Steamless\\Steamless.CLI.exe";
+                        System.Diagnostics.Debug.WriteLine($"[CRACK] Checking for Steamless CLI at: {steamlessPath}");
+                        System.Diagnostics.Debug.WriteLine($"[CRACK] Steamless CLI exists: {File.Exists(steamlessPath)}");
 
                         if (!File.Exists(steamlessPath))
                         {
-                            System.Diagnostics.Debug.WriteLine($"[CRACK] Steamless not found, skipping EXE unpacking for: {file}");
-                            Tit($"Steamless not found at {steamlessPath}, skipping EXE unpacking", Color.Yellow);
+                            System.Diagnostics.Debug.WriteLine($"[CRACK] Steamless CLI not found, skipping EXE unpacking for: {file}");
+                            Tit($"Steamless.CLI.exe not found at {steamlessPath}, skipping EXE unpacking", Color.Yellow);
                             continue;
                         }
 
@@ -1843,8 +1889,8 @@ namespace APPID
                         pro.RedirectStandardError = true;
                         pro.RedirectStandardOutput = true;
                         pro.WorkingDirectory = parentdir;
-                        pro.FileName = @"C:\Windows\System32\cmd.exe";
-                        pro.Arguments = $"/c start /B \"\" \"{steamlessPath}\" \"{file}\"";
+                        pro.FileName = steamlessPath;
+                        pro.Arguments = $"\"{file}\"";
 
                         System.Diagnostics.Debug.WriteLine($"[CRACK] Starting Steamless process");
                         System.Diagnostics.Debug.WriteLine($"[CRACK] Working Directory: {parentdir}");
@@ -1916,8 +1962,8 @@ namespace APPID
                         }
                         Directory.CreateDirectory($"{parentdir}\\steam_settings");
 
-                        // Create steam_appid.txt with just the APPID - this is what gbe_fork expects
-                        File.WriteAllText($"{parentdir}\\steam_settings\\steam_appid.txt", APPID);
+                        // Create steam_appid.txt with just the AppId - this is what gbe_fork expects
+                        File.WriteAllText($"{parentdir}\\steam_settings\\steam_appid.txt", CurrentAppId);
 
                         // Check if user wants LAN multiplayer support (from checkbox)
                         if (enableLanMultiplayer)
@@ -1933,15 +1979,15 @@ namespace APPID
                             // Copy lobby_connect tool to game directory for easy access
                             string lobbyConnectSource = "";
                             // Check in _bin folder first (where updater puts them)
-                            if (File.Exists($"{Environment.CurrentDirectory}\\_bin\\lobby_connect_x64.exe"))
-                                lobbyConnectSource = $"{Environment.CurrentDirectory}\\_bin\\lobby_connect_x64.exe";
-                            else if (File.Exists($"{Environment.CurrentDirectory}\\_bin\\lobby_connect_x32.exe"))
-                                lobbyConnectSource = $"{Environment.CurrentDirectory}\\_bin\\lobby_connect_x32.exe";
+                            if (File.Exists($"{BinPath}\\lobby_connect_x64.exe"))
+                                lobbyConnectSource = $"{BinPath}\\lobby_connect_x64.exe";
+                            else if (File.Exists($"{BinPath}\\lobby_connect_x32.exe"))
+                                lobbyConnectSource = $"{BinPath}\\lobby_connect_x32.exe";
                             // Fallback to _bin\\Goldberg for backward compatibility
-                            else if (File.Exists($"{Environment.CurrentDirectory}\\_bin\\Goldberg\\lobby_connect_x64.exe"))
-                                lobbyConnectSource = $"{Environment.CurrentDirectory}\\_bin\\Goldberg\\lobby_connect_x64.exe";
-                            else if (File.Exists($"{Environment.CurrentDirectory}\\_bin\\Goldberg\\lobby_connect_x32.exe"))
-                                lobbyConnectSource = $"{Environment.CurrentDirectory}\\_bin\\Goldberg\\lobby_connect_x32.exe";
+                            else if (File.Exists($"{BinPath}\\Goldberg\\lobby_connect_x64.exe"))
+                                lobbyConnectSource = $"{BinPath}\\Goldberg\\lobby_connect_x64.exe";
+                            else if (File.Exists($"{BinPath}\\Goldberg\\lobby_connect_x32.exe"))
+                                lobbyConnectSource = $"{BinPath}\\Goldberg\\lobby_connect_x32.exe";
 
                             if (!string.IsNullOrEmpty(lobbyConnectSource))
                             {
@@ -2104,12 +2150,12 @@ oLink3.Save";
                         // Try different possible locations and names for the generate_interfaces tool
                         string generateInterfacesPath = "";
                         string[] possiblePaths = new string[] {
-                            $"{Environment.CurrentDirectory}\\_bin\\Goldberg\\generate_interfaces_x64.exe",
-                            $"{Environment.CurrentDirectory}\\_bin\\Goldberg\\generate_interfaces_x32.exe",
-                            $"{Environment.CurrentDirectory}\\_bin\\generate_interfaces_x64.exe",
-                            $"{Environment.CurrentDirectory}\\_bin\\generate_interfaces_x32.exe",
-                            $"{Environment.CurrentDirectory}\\_bin\\Goldberg\\generate_interfaces_file.exe",
-                            $"{Environment.CurrentDirectory}\\_bin\\generate_interfaces.exe"
+                            $"{BinPath}\\Goldberg\\generate_interfaces_x64.exe",
+                            $"{BinPath}\\Goldberg\\generate_interfaces_x32.exe",
+                            $"{BinPath}\\generate_interfaces_x64.exe",
+                            $"{BinPath}\\generate_interfaces_x32.exe",
+                            $"{BinPath}\\Goldberg\\generate_interfaces_file.exe",
+                            $"{BinPath}\\generate_interfaces.exe"
                         };
 
                         foreach (string path in possiblePaths)
@@ -2163,7 +2209,7 @@ oLink3.Save";
                         }
 
                         // Get achievements data using achievements_parser
-                        string achievementsParserPath = $"{Environment.CurrentDirectory}\\_bin\\achievements_parser.exe";
+                        string achievementsParserPath = $"{BinPath}\\achievements_parser.exe";
                         if (File.Exists(achievementsParserPath))
                         {
                             Tit("Getting achievements data...", Color.Cyan);
@@ -2171,7 +2217,7 @@ oLink3.Save";
                             {
                                 var achievementsResult = await Cli.Wrap(achievementsParserPath)
                                     .WithValidation(CommandResultValidation.None)
-                                    .WithArguments($"--appid {APPID}")
+                                    .WithArguments($"--appid {CurrentAppId}")
                                     .WithWorkingDirectory(Environment.CurrentDirectory)
                                     .ExecuteBufferedAsync();
 
@@ -2198,7 +2244,7 @@ oLink3.Save";
                         Tit("Getting DLC info from Steam...", Color.Cyan);
                         try
                         {
-                            await FetchDLCInfoAsync(APPID, $"{parentdir}\\steam_settings");
+                            await FetchDLCInfoAsync(CurrentAppId, $"{parentdir}\\steam_settings");
                         }
                         catch (Exception ex)
                         {
@@ -2250,7 +2296,7 @@ oLink3.Save";
             Process IniProcess = new Process();
             IniProcess.StartInfo.CreateNoWindow = true;
             IniProcess.StartInfo.UseShellExecute = false;
-            IniProcess.StartInfo.FileName = $"{Environment.CurrentDirectory}\\_bin\\ALI213\\inifile.exe";
+            IniProcess.StartInfo.FileName = $"{BinPath}\\ALI213\\inifile.exe";
 
             IniProcess.StartInfo.Arguments = args;
             IniProcess.Start();
@@ -2408,12 +2454,12 @@ oLink3.Save";
                 if (manifestInfo.HasValue)
                 {
                     // We found the AppID from manifest!
-                    APPID = manifestInfo.Value.appId;
+                    CurrentAppId = manifestInfo.Value.appId;
                     string manifestGameName = manifestInfo.Value.gameName;
                     long sizeOnDisk = manifestInfo.Value.sizeOnDisk;
 
                     System.Diagnostics.Debug.WriteLine($"[MANIFEST] Auto-detected from Steam manifest:");
-                    System.Diagnostics.Debug.WriteLine($"[MANIFEST] AppID: {APPID}");
+                    System.Diagnostics.Debug.WriteLine($"[MANIFEST] AppID: {CurrentAppId}");
                     System.Diagnostics.Debug.WriteLine($"[MANIFEST] Game: {manifestGameName}");
                     System.Diagnostics.Debug.WriteLine($"[MANIFEST] Size: {sizeOnDisk / (1024 * 1024)} MB");
 
@@ -2433,14 +2479,14 @@ oLink3.Save";
                     if (autoCrackEnabled && !string.IsNullOrEmpty(gameDir))
                     {
                         System.Diagnostics.Debug.WriteLine("[MANIFEST] Auto-crack enabled, starting crack...");
-                        Tit($"✅ Auto-detected: {manifestGameName} (AppID: {APPID}) - Auto-cracking...", Color.Yellow);
+                        Tit($"✅ Auto-detected: {manifestGameName} (AppID: {CurrentAppId}) - Auto-cracking...", Color.Yellow);
                         // Trigger crack just like clicking the button
                         startCrackPic_Click(null, null);
                     }
                     else
                     {
                         // Update the title with game info
-                        Tit($"✅ Auto-detected: {manifestGameName} (AppID: {APPID}) - Ready to crack!", Color.LightGreen);
+                        Tit($"✅ Auto-detected: {manifestGameName} (AppID: {CurrentAppId}) - Ready to crack!", Color.LightGreen);
                     }
                 }
                 else
@@ -2546,41 +2592,41 @@ oLink3.Save";
         }
         private void selectDir_MouseEnter(object sender, EventArgs e)
         {
-            selectDir.Image = Image.FromFile("_bin\\hoveradd.png");
+            selectDir.Image = Properties.Resources.hoveradd;
         }
         private void selectDir_MouseHover(object sender, EventArgs e)
         {
-            selectDir.Image = Image.FromFile("_bin\\hoveradd.png");
+            selectDir.Image = Properties.Resources.hoveradd;
         }
 
         private void selectDir_MouseDown(object sender, MouseEventArgs e)
         {
-            selectDir.Image = Image.FromFile("_bin\\clickadd.png");
+            selectDir.Image = Properties.Resources.clickadd;
         }
 
         private void startCrackPic_MouseDown(object sender, MouseEventArgs e)
         {
-            startCrackPic.Image = Image.FromFile("_bin\\clickr2c.png");
+            startCrackPic.Image = Properties.Resources.clickr2c;
         }
 
         private void startCrackPic_MouseEnter(object sender, EventArgs e)
         {
-            startCrackPic.Image = Image.FromFile("_bin\\hoverr2c.png");
+            startCrackPic.Image = Properties.Resources.hoverr2c;
         }
 
         private void startCrackPic_MouseHover(object sender, EventArgs e)
         {
-            startCrackPic.Image = Image.FromFile("_bin\\hoverr2c.png");
+            startCrackPic.Image = Properties.Resources.hoverr2c;
         }
 
         private void selectDir_MouseLeave(object sender, EventArgs e)
         {
-            selectDir.Image = Image.FromFile("_bin\\add.png");
+            selectDir.Image = Properties.Resources.add;
         }
 
         private void startCrackPic_MouseLeave(object sender, EventArgs e)
         {
-            startCrackPic.Image = Image.FromFile("_bin\\r2c.png");
+            startCrackPic.Image = Properties.Resources.r2c;
         }
 
         private void mainPanel_DragEnter(object sender, System.Windows.Forms.DragEventArgs e)
@@ -2620,12 +2666,12 @@ oLink3.Save";
                     if (manifestInfo.HasValue)
                     {
                         // We found the AppID from manifest!
-                        APPID = manifestInfo.Value.appId;
+                        CurrentAppId = manifestInfo.Value.appId;
                         string manifestGameName = manifestInfo.Value.gameName;
                         long sizeOnDisk = manifestInfo.Value.sizeOnDisk;
 
                         System.Diagnostics.Debug.WriteLine($"[MANIFEST] Auto-detected from Steam manifest:");
-                        System.Diagnostics.Debug.WriteLine($"[MANIFEST] AppID: {APPID}");
+                        System.Diagnostics.Debug.WriteLine($"[MANIFEST] AppID: {CurrentAppId}");
                         System.Diagnostics.Debug.WriteLine($"[MANIFEST] Game: {manifestGameName}");
                         System.Diagnostics.Debug.WriteLine($"[MANIFEST] Size: {sizeOnDisk / (1024 * 1024)} MB");
 
@@ -2645,14 +2691,14 @@ oLink3.Save";
                         if (autoCrackEnabled && !string.IsNullOrEmpty(gameDir))
                         {
                             System.Diagnostics.Debug.WriteLine("[MANIFEST] Auto-crack enabled, starting crack...");
-                            Tit($"✅ Auto-detected: {manifestGameName} (AppID: {APPID}) - Auto-cracking...", Color.Yellow);
+                            Tit($"✅ Auto-detected: {manifestGameName} (AppID: {CurrentAppId}) - Auto-cracking...", Color.Yellow);
                             // Trigger crack just like clicking the button
                             startCrackPic_Click(null, null);
                         }
                         else
                         {
                             // Update the title with game info
-                            Tit($"✅ Auto-detected: {manifestGameName} (AppID: {APPID}) - Ready to crack!", Color.LightGreen);
+                            Tit($"✅ Auto-detected: {manifestGameName} (AppID: {CurrentAppId}) - Ready to crack!", Color.LightGreen);
                         }
                     }
                     else
@@ -2744,7 +2790,7 @@ oLink3.Save";
 
         private void OpenDir_Click(object sender, EventArgs e)
         {
-            Process.Start(gameDir);
+            Process.Start("explorer.exe", gameDir);
         }
 
         // Override KeyProcessCmdKey to catch Ctrl+S
@@ -3077,7 +3123,7 @@ oLink3.Save";
 
                             // Add required form fields for SACGUI
                             content.Add(new StringContent("anonymous"), "hwid"); // Anonymous sharing
-                            content.Add(new StringContent("SACGUI-2.1"), "version");
+                            content.Add(new StringContent("SACGUI-2.2"), "version");
 
                             // Extract game name from filename (remove prefix and extension)
                             string fileName = Path.GetFileNameWithoutExtension(filePath);
@@ -3098,7 +3144,7 @@ oLink3.Save";
                             }
                             catch { }
                             content.Add(new StringContent(clientIp), "client_ip");
-                            System.Diagnostics.Debug.WriteLine($"[UPLOAD] Added Version: SACGUI-2.1");
+                            System.Diagnostics.Debug.WriteLine($"[UPLOAD] Added Version: SACGUI-2.2");
                             System.Diagnostics.Debug.WriteLine($"[UPLOAD] Added Game Name: {gameName}");
                             System.Diagnostics.Debug.WriteLine($"[UPLOAD] Added Client IP: {clientIp}");
 
@@ -3118,7 +3164,7 @@ oLink3.Save";
                             {
                                 // Set timeout and user agent
                                 progressClient.Timeout = TimeSpan.FromHours(2);
-                                progressClient.DefaultRequestHeaders.Add("User-Agent", "SACGUI-Uploader/2.1");
+                                progressClient.DefaultRequestHeaders.Add("User-Agent", "SACGUI-Uploader/2.2");
 
                                 // Use 1fichier upload
                                 System.Diagnostics.Debug.WriteLine("[UPLOAD] Using 1fichier for file upload");
@@ -3459,7 +3505,7 @@ oLink3.Save";
                         }));
 
                         // Use 7za.exe from _bin folder
-                        string sevenZipPath = $"{Environment.CurrentDirectory}\\_bin\\7z\\7za.exe";
+                        string sevenZipPath = $"{BinPath}\\7z\\7za.exe";
 
                         // Build 7z command with actual compression level and progress output to stdout
                         string formatType = is7zFormat ? "7z" : "zip";
@@ -3727,11 +3773,11 @@ oLink3.Save";
         {
             if (ManAppBox.Text.Length > 2 && isnumeric)
             {
-                APPID = ManAppBox.Text;
+                CurrentAppId = ManAppBox.Text;
                 APPNAME = "";
 
                 // Try to fetch game name from Steam API
-                FetchGameNameFromSteamAPI(APPID);
+                FetchGameNameFromSteamAPI(CurrentAppId);
 
                 searchTextBox.Clear();
                 ManAppBox.Clear();
@@ -3830,11 +3876,11 @@ oLink3.Save";
             if (e.KeyCode == Keys.Enter) {
                 if (ManAppBox.Text.Length > 2 && isnumeric)
                 {
-                    APPID = ManAppBox.Text;
+                    CurrentAppId = ManAppBox.Text;
                     APPNAME = "";
                     btnManualEntry.Visible = false;
                     // Try to fetch game name from Steam API
-                    FetchGameNameFromSteamAPI(APPID);
+                    FetchGameNameFromSteamAPI(CurrentAppId);
 
                     searchTextBox.Clear();
                     ManAppBox.Clear();
@@ -4052,7 +4098,7 @@ oLink3.Save";
                     gameDir = game.Path;
                     gameDirName = game.Name;
                     parentOfSelection = Directory.GetParent(game.Path).FullName;
-                    APPID = game.AppId;
+                    CurrentAppId = game.AppId;
 
                     suppressStatusUpdates = true;
                     bool crackSucceeded = await CrackAsync();
@@ -4161,25 +4207,29 @@ oLink3.Save";
                     var game = result.Item1;
                     var zipSuccess = result.Item2;
                     var zipError = result.Item3;
+                    string archivePath = archivePaths.ContainsKey(game.Path) ? archivePaths[game.Path] : null;
 
                     if (zipSuccess)
                     {
                         zipped++;
                         batchForm.UpdateStatus(game.Path, "Zipped ✓", Color.LightGreen);
+                        batchForm.UpdateZipStatus(game.Path, true, archivePath);
                     }
                     else
                     {
                         zipFailed++;
                         batchForm.UpdateStatus(game.Path, "Zip Failed", Color.Red);
+                        batchForm.UpdateZipStatus(game.Path, false, archivePath, zipError ?? "Unknown error");
                         failureReasons.Add((game.Name, $"Zip failed: {zipError ?? "Unknown"}"));
                     }
                 }
             }
 
-            // ========== PHASE 3: UPLOAD (Sequential uploads, parallel conversions) ==========
+            // ========== PHASE 3: UPLOAD (Sequential uploads with retry, parallel conversions) ==========
             var gamesToUpload = games.Where(g => g.Upload && crackResults.ContainsKey(g.Path) && crackResults[g.Path]).ToList();
             var conversionTasks = new List<Task>();
             var uploadedLinks = new System.Collections.Concurrent.ConcurrentBag<(string gameName, string path, string oneFichierUrl)>();
+            const int maxRetries = 3;
 
             foreach (var game in gamesToUpload)
             {
@@ -4187,84 +4237,147 @@ oLink3.Save";
                 if (string.IsNullOrEmpty(archivePath) || !File.Exists(archivePath))
                 {
                     batchForm.UpdateStatus(game.Path, "No Archive", Color.Orange);
+                    batchForm.UpdateUploadStatus(game.Path, false, null, "Archive not found");
                     failureReasons.Add((game.Name, "Archive not found"));
                     uploadFailed++;
                     continue;
                 }
 
-                batchForm.UpdateStatus(game.Path, "Uploading...", Color.Magenta);
+                bool uploadSuccess = false;
+                string lastError = null;
+                int attempt = 0;
+                long fileSize = new FileInfo(archivePath).Length;
 
-                try
+                // Show upload details panel
+                batchForm.ShowUploadDetails(game.Name, fileSize);
+
+                while (!uploadSuccess && attempt < maxRetries)
                 {
-                    using (var uploader = new SAC_GUI.OneFichierUploader())
+                    attempt++;
+                    string statusPrefix = attempt > 1 ? $"Retry {attempt}/{maxRetries}: " : "";
+
+                    batchForm.UpdateStatus(game.Path, $"{statusPrefix}Uploading...", Color.Magenta);
+
+                    try
                     {
-                        // Capture game path for closure
-                        var gamePath = game.Path;
-
-                        var progress = new Progress<double>(p =>
+                        using (var uploader = new SAC_GUI.OneFichierUploader())
                         {
-                            int pct = (int)(p * 100);
-                            batchForm.UpdateStatus(gamePath, $"Upload {pct}%", Color.Magenta);
-                        });
+                            // Capture game path for closure
+                            var gamePath = game.Path;
+                            var currentAttempt = attempt;
 
-                        // Wrap in Task.Run because OneFichierUploader uses synchronous blocking I/O
-                        var result = await Task.Run(() => uploader.UploadFileAsync(archivePath, progress));
+                            // Track speed
+                            var uploadStartTime = DateTime.Now;
+                            double lastProgress = 0;
+                            DateTime lastProgressTime = DateTime.Now;
+                            double smoothedSpeed = 0;
 
-                        if (result != null && !string.IsNullOrEmpty(result.DownloadUrl))
-                        {
-                            string oneFichierUrl = result.DownloadUrl;
-                            uploaded++;
-                            batchForm.UpdateStatus(game.Path, "Converting...", Color.Yellow);
-
-                            // Copy 1fichier link immediately
-                            try { Clipboard.SetText(oneFichierUrl); } catch { }
-
-                            // Start conversion in background - don't wait, continue to next upload
-                            var gameCopy = game;
-                            var urlCopy = oneFichierUrl;
-                            long fileSize = new FileInfo(archivePath).Length;
-
-                            // Store URL for click-to-copy
-                            batchForm.SetConvertingUrl(gameCopy.Path, urlCopy);
-
-                            var conversionTask = Task.Run(async () =>
+                            var progress = new Progress<double>(p =>
                             {
-                                string pydriveUrl = await ConvertOneFichierToPydrive(urlCopy, fileSize,
-                                    status => batchForm.UpdateStatus(gameCopy.Path, status, Color.Yellow));
+                                int pct = (int)(p * 100);
+                                string prefix = currentAttempt > 1 ? $"Retry {currentAttempt}: " : "";
+                                batchForm.UpdateStatus(gamePath, $"{prefix}Upload {pct}%", Color.Magenta);
 
-                                // Clear the converting URL (no longer needed for click-to-copy)
-                                batchForm.ClearConvertingUrl(gameCopy.Path);
+                                // Calculate speed
+                                var now = DateTime.Now;
+                                double progressDelta = p - lastProgress;
+                                double timeDelta = (now - lastProgressTime).TotalSeconds;
 
-                                if (!string.IsNullOrEmpty(pydriveUrl))
+                                if (timeDelta > 0.1 && progressDelta > 0)
                                 {
-                                    uploadResults.Add((gameCopy.Name, urlCopy, pydriveUrl));
-                                    batchForm.UpdateStatus(gameCopy.Path, "PyDrive ✓", Color.LightGreen);
-                                    batchForm.SetFinalUrl(gameCopy.Path, pydriveUrl);
-                                }
-                                else
-                                {
-                                    uploadResults.Add((gameCopy.Name, urlCopy, null));
-                                    batchForm.UpdateStatus(gameCopy.Path, "1fichier ✓", Color.LightGreen);
-                                    batchForm.SetFinalUrl(gameCopy.Path, urlCopy);
+                                    long uploadedBytes = (long)(p * fileSize);
+                                    double bytesDelta = progressDelta * fileSize;
+                                    double currentSpeed = bytesDelta / timeDelta;
+
+                                    // Smooth the speed calculation
+                                    smoothedSpeed = smoothedSpeed > 0 ? (smoothedSpeed * 0.7 + currentSpeed * 0.3) : currentSpeed;
+
+                                    batchForm.UpdateUploadProgress(pct, uploadedBytes, fileSize, smoothedSpeed);
+
+                                    lastProgress = p;
+                                    lastProgressTime = now;
                                 }
                             });
-                            conversionTasks.Add(conversionTask);
+
+                            // Wrap in Task.Run because OneFichierUploader uses synchronous blocking I/O
+                            var result = await Task.Run(() => uploader.UploadFileAsync(archivePath, progress));
+
+                            if (result != null && !string.IsNullOrEmpty(result.DownloadUrl))
+                            {
+                                string oneFichierUrl = result.DownloadUrl;
+                                uploaded++;
+                                uploadSuccess = true;
+                                batchForm.UpdateStatus(game.Path, "Converting...", Color.Yellow);
+
+                                // Store upload success in details
+                                batchForm.UpdateUploadStatus(game.Path, true, oneFichierUrl, null, attempt - 1);
+
+                                // Copy 1fichier link immediately
+                                try { Clipboard.SetText(oneFichierUrl); } catch { }
+
+                                // Start conversion in background - don't wait, continue to next upload
+                                var gameCopy = game;
+                                var urlCopy = oneFichierUrl;
+
+                                // Store URL for click-to-copy
+                                batchForm.SetConvertingUrl(gameCopy.Path, urlCopy);
+
+                                var conversionTask = Task.Run(async () =>
+                                {
+                                    string pydriveUrl = await ConvertOneFichierToPydrive(urlCopy, fileSize,
+                                        status => batchForm.UpdateStatus(gameCopy.Path, status, Color.Yellow));
+
+                                    // Clear the converting URL (no longer needed for click-to-copy)
+                                    batchForm.ClearConvertingUrl(gameCopy.Path);
+
+                                    if (!string.IsNullOrEmpty(pydriveUrl))
+                                    {
+                                        uploadResults.Add((gameCopy.Name, urlCopy, pydriveUrl));
+                                        batchForm.UpdateStatus(gameCopy.Path, "PyDrive ✓", Color.LightGreen);
+                                        batchForm.SetFinalUrl(gameCopy.Path, pydriveUrl);
+                                    }
+                                    else
+                                    {
+                                        uploadResults.Add((gameCopy.Name, urlCopy, null));
+                                        batchForm.UpdateStatus(gameCopy.Path, "1fichier ✓", Color.LightGreen);
+                                        batchForm.SetFinalUrl(gameCopy.Path, urlCopy);
+                                    }
+                                });
+                                conversionTasks.Add(conversionTask);
+                            }
+                            else
+                            {
+                                lastError = "No download URL returned";
+                                System.Diagnostics.Debug.WriteLine($"[BATCH] Upload attempt {attempt} failed for {game.Name}: No URL returned");
+                            }
                         }
-                        else
+                    }
+                    catch (Exception ex)
+                    {
+                        lastError = ex.Message;
+                        System.Diagnostics.Debug.WriteLine($"[BATCH] Upload attempt {attempt} error for {game.Name}: {ex.Message}");
+
+                        // Wait before retry (exponential backoff)
+                        if (attempt < maxRetries)
                         {
-                            uploadFailed++;
-                            batchForm.UpdateStatus(game.Path, "Upload Failed", Color.Red);
-                            failureReasons.Add((game.Name, "No download URL returned"));
+                            batchForm.UpdateStatus(game.Path, $"Retry in {attempt * 2}s...", Color.Yellow);
+                            await Task.Delay(attempt * 2000);
                         }
                     }
                 }
-                catch (Exception ex)
+
+                if (!uploadSuccess)
                 {
                     uploadFailed++;
-                    batchForm.UpdateStatus(game.Path, "Upload Error", Color.Red);
-                    failureReasons.Add((game.Name, $"Upload failed: {ex.Message}"));
+                    string shortError = lastError?.Length > 30 ? lastError.Substring(0, 30) + "..." : lastError;
+                    batchForm.UpdateStatus(game.Path, $"Failed: {shortError}", Color.Red);
+                    batchForm.UpdateUploadStatus(game.Path, false, null, lastError, attempt - 1);
+                    failureReasons.Add((game.Name, $"Upload failed after {attempt} attempts: {lastError}"));
                 }
             }
+
+            // Hide upload details panel when done
+            batchForm.HideUploadDetails();
 
             // Wait for all conversions to complete
             if (conversionTasks.Count > 0)

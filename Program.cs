@@ -2,7 +2,9 @@
 using System;
 using System.Diagnostics;
 using System.IO;
+using System.IO.Compression;
 using System.Net;
+using System.Net.Http;
 using System.Threading;
 using System.Windows.Forms;
 
@@ -25,6 +27,9 @@ namespace SteamAppIdIdentifier
             Application.SetUnhandledExceptionMode(UnhandledExceptionMode.CatchException);
 
             ServicePointManager.SecurityProtocol = (SecurityProtocolType)3072;
+
+            // Bootstrap _bin folder if missing
+            BootstrapBinFolder();
 
             // Extract embedded _bin files on first run
             ResourceExtractor.ExtractBinFiles();
@@ -58,6 +63,50 @@ namespace SteamAppIdIdentifier
             }
         }
 
+        private static void BootstrapBinFolder()
+        {
+            // Force use exe's actual directory
+            string basePath = Path.GetDirectoryName(Environment.ProcessPath) ?? AppContext.BaseDirectory;
+            string binPath = Path.Combine(basePath, "_bin");
+            string sevenZipPath = Path.Combine(binPath, "7z", "7za.exe");
+
+            // If 7za.exe exists, _bin folder is good
+            if (File.Exists(sevenZipPath))
+                return;
+
+            try
+            {
+                string zipUrl = "https://share.harryeffingpotter.com/u/tattered-aidi.zip";
+                string tempZip = Path.Combine(basePath, "_bin_download.zip");
+
+                // Download the zip
+                using (var client = new HttpClient())
+                {
+                    client.Timeout = TimeSpan.FromMinutes(5);
+                    var response = client.GetAsync(zipUrl).Result;
+                    response.EnsureSuccessStatusCode();
+                    var bytes = response.Content.ReadAsByteArrayAsync().Result;
+                    File.WriteAllBytes(tempZip, bytes);
+                }
+
+                // Extract using built-in .NET ZipFile
+                ZipFile.ExtractToDirectory(tempZip, basePath, true);
+
+                // Clean up
+                File.Delete(tempZip);
+            }
+            catch (Exception ex)
+            {
+                // Log to file so we can see what went wrong
+                try
+                {
+                    string logPath = Path.Combine(basePath, "bootstrap_error.log");
+                    File.WriteAllText(logPath, $"Bootstrap failed: {ex}");
+                }
+                catch { }
+            }
+        }
+
         private static void OnUnhandledException(object sender, UnhandledExceptionEventArgs e)
         {
             WriteCrashLog(e.ExceptionObject as Exception);
@@ -84,7 +133,7 @@ namespace SteamAppIdIdentifier
                                  $"{ex?.ToString() ?? "Unknown exception"}{Environment.NewLine}";
 
                 // Write crash.log next to exe for easy access
-                string crashFile = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "crash.log");
+                string crashFile = Path.Combine(AppContext.BaseDirectory, "crash.log");
                 File.WriteAllText(crashFile, crashInfo);
 
                 // Also log to debug.log if possible

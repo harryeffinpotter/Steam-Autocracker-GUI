@@ -139,4 +139,25 @@
   <data name="1111" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\1111.PNG;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
+  <data name="add" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\\_bin\add.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="clickadd" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\\_bin\clickadd.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="clickr2c" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\\_bin\clickr2c.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="hoveradd" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\\_bin\hoveradd.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="hoverr2c" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\\_bin\hoverr2c.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="r2c" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\\_bin\r2c.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="info_icon" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\info_icon.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
 </root>
