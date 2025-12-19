@@ -110,5 +110,41 @@ namespace APPID.Properties {
                 this["SharedGamesData"] = value;
             }
         }
+
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("5000000")]
+        public double LastUploadRate {
+            get {
+                return ((double)(this["LastUploadRate"]));
+            }
+            set {
+                this["LastUploadRate"] = value;
+            }
+        }
+
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("50000000")]
+        public double LastZipRateLevel0 {
+            get {
+                return ((double)(this["LastZipRateLevel0"]));
+            }
+            set {
+                this["LastZipRateLevel0"] = value;
+            }
+        }
+
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("30000000")]
+        public double LastZipRateCompressed {
+            get {
+                return ((double)(this["LastZipRateCompressed"]));
+            }
+            set {
+                this["LastZipRateCompressed"] = value;
+            }
+        }
     }
 }

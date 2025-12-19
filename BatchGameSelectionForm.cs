@@ -104,6 +104,7 @@ namespace SteamAutocrackGUI
         // Skip/Cancel tracking
         private bool skipCurrentGame = false;
         private bool cancelAllRemaining = false;
+        private System.Threading.CancellationTokenSource uploadCancellation;
 
         // Tooltip for batch form
         private ToolTip batchToolTip;
@@ -161,6 +162,7 @@ namespace SteamAutocrackGUI
             // Title label
             var titleLabel = new Label
             {
+                Name = "titleLabel",
                 Text = "Batch Process",
                 Font = new Font("Segoe UI", 14, FontStyle.Bold),
                 ForeColor = Color.FromArgb(100, 200, 255),
@@ -169,6 +171,24 @@ namespace SteamAutocrackGUI
                 BackColor = Color.Transparent
             };
             this.Controls.Add(titleLabel);
+
+            // Minimize button (custom, top right)
+            var minimizeBtn = new Label
+            {
+                Text = "─",
+                Font = new Font("Segoe UI", 14, FontStyle.Bold),
+                ForeColor = Color.FromArgb(150, 150, 155),
+                Location = new Point(this.ClientSize.Width - 35, 10),
+                Size = new Size(30, 30),
+                TextAlign = ContentAlignment.MiddleCenter,
+                Cursor = Cursors.Hand,
+                BackColor = Color.Transparent
+            };
+            minimizeBtn.Click += (s, e) => this.WindowState = FormWindowState.Minimized;
+            minimizeBtn.MouseEnter += (s, e) => minimizeBtn.ForeColor = Color.FromArgb(100, 200, 255);
+            minimizeBtn.MouseLeave += (s, e) => minimizeBtn.ForeColor = Color.FromArgb(150, 150, 155);
+            this.Controls.Add(minimizeBtn);
+            minimizeBtn.BringToFront();
 
             // Subtitle
             var subtitleLabel = new Label
@@ -294,21 +314,12 @@ namespace SteamAutocrackGUI
             };
             gameGrid.Columns.Add(statusCol);
 
-            var detailsCol = new DataGridViewButtonColumn
+            var detailsCol = new DataGridViewTextBoxColumn
             {
                 Name = "Details",
                 HeaderText = "",
-                Width = 50,
-                Text = "Info",
-                UseColumnTextForButtonValue = true,
-                FlatStyle = FlatStyle.Flat,
-                DefaultCellStyle = new DataGridViewCellStyle
-                {
-                    Alignment = DataGridViewContentAlignment.MiddleCenter,
-                    ForeColor = Color.FromArgb(150, 200, 255),
-                    BackColor = Color.FromArgb(35, 40, 55),
-                    Font = new Font("Segoe UI", 8)
-                }
+                Width = 40,
+                ReadOnly = true
             };
             gameGrid.Columns.Add(detailsCol);
 
@@ -320,9 +331,10 @@ namespace SteamAutocrackGUI
             {
                 if (e.ColumnIndex >= 0 && gameGrid.Columns[e.ColumnIndex].Name == "Details" && e.RowIndex >= 0)
                 {
-                    e.Paint(e.CellBounds, DataGridViewPaintParts.All & ~DataGridViewPaintParts.ContentForeground);
+                    // Let the cell paint its own background naturally, then draw icon on top
+                    e.PaintBackground(e.ClipBounds, true);
 
-                    // Just draw the icon centered, no background or border
+                    // Just draw the icon centered
                     if (infoIcon != null)
                     {
                         int iconSize = Math.Min(e.CellBounds.Width - 8, e.CellBounds.Height - 8);
@@ -659,6 +671,7 @@ namespace SteamAutocrackGUI
             btnSkip.Click += (s, e) =>
             {
                 skipCurrentGame = true;
+                uploadCancellation?.Cancel();  // Stop current upload
                 btnSkip.Text = "...";
                 btnSkip.Enabled = false;
             };
@@ -669,10 +682,11 @@ namespace SteamAutocrackGUI
             {
                 Name = "btnCancelAll",
                 Location = new Point(673, 5),
-                Size = new Size(50, 30),
+                Size = new Size(55, 30),
                 Text = "Cancel",
                 BackColor = Color.FromArgb(100, 30, 30),
                 ForeColor = Color.FromArgb(255, 150, 150),
+                TextAlign = ContentAlignment.MiddleCenter,
                 FlatStyle = FlatStyle.Flat,
                 Font = new Font("Segoe UI", 8)
             };
@@ -682,6 +696,7 @@ namespace SteamAutocrackGUI
             {
                 cancelAllRemaining = true;
                 skipCurrentGame = true;
+                uploadCancellation?.Cancel();  // Actually cancel the upload
                 btnCancelAll.Text = "...";
                 btnCancelAll.Enabled = false;
                 btnSkip.Enabled = false;
@@ -935,6 +950,16 @@ namespace SteamAutocrackGUI
         public bool ShouldCancelAll() => cancelAllRemaining;
 
         /// <summary>
+        /// Get a fresh CancellationToken for the current upload
+        /// </summary>
+        public System.Threading.CancellationToken GetUploadCancellationToken()
+        {
+            uploadCancellation?.Dispose();
+            uploadCancellation = new System.Threading.CancellationTokenSource();
+            return uploadCancellation.Token;
+        }
+
+        /// <summary>
         /// Updates the upload progress with speed and ETA
         /// </summary>
         public void UpdateUploadProgress(int percent, long uploadedBytes, long totalBytes, double bytesPerSecond)
@@ -1099,10 +1124,65 @@ namespace SteamAutocrackGUI
                 return;
             }
 
-            string title = $"Batch Processing - {percent}%";
+            string title = $"{percent}%";
             if (!string.IsNullOrEmpty(phase))
-                title += $" ({phase})";
-            this.Text = title;
+                title = phase;
+
+            var titleLabel = this.Controls["titleLabel"] as Label;
+            if (titleLabel != null)
+                titleLabel.Text = title;
+        }
+
+        /// <summary>
+        /// Update progress with ETA display - replaces title text
+        /// </summary>
+        public void UpdateProgressWithEta(int percent, double etaSeconds)
+        {
+            if (this.IsDisposed) return;
+
+            if (this.InvokeRequired)
+            {
+                try { this.BeginInvoke(new Action(() => UpdateProgressWithEta(percent, etaSeconds))); } catch { }
+                return;
+            }
+
+            string etaStr = FormatEtaLong(etaSeconds);
+            string text = $"{percent}% - ETA {etaStr}";
+
+            var titleLabel = this.Controls["titleLabel"] as Label;
+            if (titleLabel != null)
+                titleLabel.Text = text;
+        }
+
+        private string FormatEtaLong(double seconds)
+        {
+            if (seconds <= 0 || double.IsNaN(seconds) || double.IsInfinity(seconds))
+                return "...";
+            if (seconds < 60)
+                return $"{(int)seconds}s";
+            if (seconds < 3600)
+                return $"{(int)(seconds / 60)}m {(int)(seconds % 60)}s";
+            int hours = (int)(seconds / 3600);
+            int mins = (int)((seconds % 3600) / 60);
+            return $"{hours}h {mins}m";
+        }
+
+        /// <summary>
+        /// Reset title to default or show completion message
+        /// </summary>
+        public void ResetTitle(string text = "Batch Process")
+        {
+            if (this.IsDisposed) return;
+
+            if (this.InvokeRequired)
+            {
+                try { this.BeginInvoke(new Action(() => ResetTitle(text))); } catch { }
+                return;
+            }
+
+            var titleLabel = this.Controls["titleLabel"] as Label;
+            if (titleLabel != null)
+                titleLabel.Text = text;
         }
 
         /// <summary>

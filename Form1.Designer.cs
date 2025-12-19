@@ -46,6 +46,8 @@ namespace APPID
             resinstruccZip = new System.Windows.Forms.Label();
             tgDisc = new System.Windows.Forms.Label();
             mainPanel = new System.Windows.Forms.Panel();
+            batchProgressLabel = new System.Windows.Forms.Label();
+            batchProgressIcon = new System.Windows.Forms.PictureBox();
             UploadZipButton = new System.Windows.Forms.Button();
             pin = new System.Windows.Forms.PictureBox();
             unPin = new System.Windows.Forms.PictureBox();
@@ -79,6 +81,7 @@ namespace APPID
             btnClose = new System.Windows.Forms.Button();
             ((System.ComponentModel.ISupportInitialize)dataGridView1).BeginInit();
             mainPanel.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)batchProgressIcon).BeginInit();
             ((System.ComponentModel.ISupportInitialize)pin).BeginInit();
             ((System.ComponentModel.ISupportInitialize)unPin).BeginInit();
             ((System.ComponentModel.ISupportInitialize)gitHub).BeginInit();
@@ -191,6 +194,8 @@ namespace APPID
             // 
             // mainPanel
             // 
+            mainPanel.Controls.Add(batchProgressLabel);
+            mainPanel.Controls.Add(batchProgressIcon);
             mainPanel.Controls.Add(UploadZipButton);
             mainPanel.Controls.Add(pin);
             mainPanel.Controls.Add(unPin);
@@ -219,6 +224,21 @@ namespace APPID
             mainPanel.DragDrop += mainPanel_DragDrop;
             mainPanel.DragEnter += mainPanel_DragEnter;
             mainPanel.DragLeave += mainPanel_DragLeave;
+            // 
+            // batchProgressLabel
+            // 
+            resources.ApplyResources(batchProgressLabel, "batchProgressLabel");
+            batchProgressLabel.BackColor = System.Drawing.Color.Transparent;
+            batchProgressLabel.ForeColor = System.Drawing.Color.FromArgb(100, 200, 255);
+            batchProgressLabel.Name = "batchProgressLabel";
+            // 
+            // batchProgressIcon
+            // 
+            batchProgressIcon.BackColor = System.Drawing.Color.Transparent;
+            batchProgressIcon.Image = Properties.Resources.batchapp;
+            resources.ApplyResources(batchProgressIcon, "batchProgressIcon");
+            batchProgressIcon.Name = "batchProgressIcon";
+            batchProgressIcon.TabStop = false;
             // 
             // UploadZipButton
             // 
@@ -270,9 +290,9 @@ namespace APPID
             ShareButton.FlatAppearance.MouseOverBackColor = System.Drawing.Color.FromArgb(20, 255, 255, 255);
             ShareButton.ForeColor = System.Drawing.Color.FromArgb(192, 255, 255);
             ShareButton.Name = "ShareButton";
+            ShareButton.TabStop = false;
             lanMultiplayerToolTip.SetToolTip(ShareButton, resources.GetString("ShareButton.ToolTip"));
             ShareButton.UseVisualStyleBackColor = false;
-            ShareButton.TabStop = false;
             ShareButton.Click += ShareButton_Click;
             // 
             // RequestButton
@@ -290,7 +310,7 @@ namespace APPID
             // 
             autoCrackOff.BackColor = System.Drawing.Color.Transparent;
             autoCrackOff.Cursor = System.Windows.Forms.Cursors.Hand;
-            autoCrackOff.Image = APPID.Properties.Resources._1111;
+            autoCrackOff.Image = Properties.Resources._1111;
             resources.ApplyResources(autoCrackOff, "autoCrackOff");
             autoCrackOff.Name = "autoCrackOff";
             autoCrackOff.TabStop = false;
@@ -301,10 +321,10 @@ namespace APPID
             // 
             autoCrackOn.BackColor = System.Drawing.Color.Transparent;
             autoCrackOn.Cursor = System.Windows.Forms.Cursors.Hand;
-            autoCrackOn.Image = APPID.Properties.Resources._22222;
+            autoCrackOn.Image = Properties.Resources._22222;
             resources.ApplyResources(autoCrackOn, "autoCrackOn");
             autoCrackOn.Name = "autoCrackOn";
-            autoCrackOn.TabStop = false;  
+            autoCrackOn.TabStop = false;
             lanMultiplayerToolTip.SetToolTip(autoCrackOn, resources.GetString("autoCrackOn.ToolTip"));
             autoCrackOn.Click += autoCrackOn_Click;
             // 
@@ -423,14 +443,14 @@ namespace APPID
             label5.DragLeave += mainPanel_DragLeave;
             // 
             // label1
-            //
+            // 
             label1.AllowDrop = true;
             resources.ApplyResources(label1, "label1");
             label1.BackColor = System.Drawing.Color.Transparent;
             label1.Cursor = System.Windows.Forms.Cursors.Hand;
             label1.ForeColor = System.Drawing.Color.White;
             label1.Name = "label1";
-            lanMultiplayerToolTip.SetToolTip(label1, "Toggle Auto-Crack mode.\nWhen ON, games are automatically cracked when selected.");
+            lanMultiplayerToolTip.SetToolTip(label1, resources.GetString("label1.ToolTip"));
             label1.DragDrop += mainPanel_DragDrop;
             label1.DragEnter += mainPanel_DragEnter;
             label1.DragLeave += mainPanel_DragLeave;
@@ -585,6 +605,7 @@ namespace APPID
             ((System.ComponentModel.ISupportInitialize)dataGridView1).EndInit();
             mainPanel.ResumeLayout(false);
             mainPanel.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)batchProgressIcon).EndInit();
             ((System.ComponentModel.ISupportInitialize)pin).EndInit();
             ((System.ComponentModel.ISupportInitialize)unPin).EndInit();
             ((System.ComponentModel.ISupportInitialize)gitHub).EndInit();
@@ -636,6 +657,8 @@ namespace APPID
         private System.Windows.Forms.PictureBox autoCrackOff;
         private System.Windows.Forms.PictureBox autoCrackOn;
         private System.Windows.Forms.Label label1;
+        public System.Windows.Forms.PictureBox batchProgressIcon;
+        public System.Windows.Forms.Label batchProgressLabel;
     }
 }
 
