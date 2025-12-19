@@ -99,6 +99,9 @@ namespace SteamAutocrackGUI
         private Label lblUploadEta;
         private NeonProgressBar uploadProgressBar;
 
+        // Tooltip for batch form
+        private ToolTip batchToolTip;
+
         public List<BatchGameItem> SelectedGames { get; private set; } = new List<BatchGameItem>();
         public string CompressionFormat { get; private set; } = "ZIP";
         public string CompressionLevel { get; private set; } = "0";
@@ -501,6 +504,14 @@ namespace SteamAutocrackGUI
 
             this.Controls.Add(gameGrid);
 
+            // Initialize tooltip
+            batchToolTip = new ToolTip
+            {
+                AutoPopDelay = 5000,
+                InitialDelay = 300,
+                ReshowDelay = 200
+            };
+
             // Count label
             var countLabel = new Label
             {
@@ -518,6 +529,7 @@ namespace SteamAutocrackGUI
             var settingsBtn = CreateStyledButton("⚙", new Point(15, 410), new Size(35, 35));
             settingsBtn.Font = new Font("Segoe UI", 12);
             settingsBtn.Click += (s, e) => OpenCompressionSettings();
+            batchToolTip.SetToolTip(settingsBtn, "Open compression settings (format, level, password)");
             this.Controls.Add(settingsBtn);
 
             compressionLabel = new Label
@@ -535,11 +547,13 @@ namespace SteamAutocrackGUI
             var selectAllCrackBtn = CreateStyledButton("All Crack", new Point(313, 388), new Size(68, 28));
             selectAllCrackBtn.Font = new Font("Segoe UI", 8);
             selectAllCrackBtn.Click += (s, e) => SetAllCheckboxes("Crack", true);
+            batchToolTip.SetToolTip(selectAllCrackBtn, "Enable Crack for all games");
             this.Controls.Add(selectAllCrackBtn);
 
             var selectAllZipBtn = CreateStyledButton("All Zip", new Point(384, 388), new Size(55, 28));
             selectAllZipBtn.Font = new Font("Segoe UI", 8);
             selectAllZipBtn.Click += (s, e) => SetAllCheckboxes("Zip", true);
+            batchToolTip.SetToolTip(selectAllZipBtn, "Enable Zip for all games");
             this.Controls.Add(selectAllZipBtn);
 
             var clearAllBtn = CreateStyledButton("Clear All", new Point(442, 388), new Size(62, 28));
@@ -554,6 +568,7 @@ namespace SteamAutocrackGUI
                 }
                 UpdateCountLabel();
             };
+            batchToolTip.SetToolTip(clearAllBtn, "Clear all selections (uncheck all Crack/Zip/Upload)");
             this.Controls.Add(clearAllBtn);
 
             // Upload details panel (hidden by default, shown during uploads)
@@ -688,6 +703,7 @@ namespace SteamAutocrackGUI
                 // Fire the event - form stays open
                 ProcessRequested?.Invoke(SelectedGames, CompressionFormat, CompressionLevel, UseRinPassword);
             };
+            batchToolTip.SetToolTip(processBtn, "Start processing selected games (crack, zip, upload)");
             this.Controls.Add(processBtn);
 
             // Cancel button
@@ -696,6 +712,7 @@ namespace SteamAutocrackGUI
             {
                 this.Close();
             };
+            batchToolTip.SetToolTip(cancelBtn, "Close this window without processing");
             this.Controls.Add(cancelBtn);
         }
 
@@ -1503,23 +1520,24 @@ namespace SteamAutocrackGUI
                 textBox.AppendText("\n");
             }
 
-            if (details.ExesUnpacked.Count > 0)
+            if (details.ExesTried.Count > 0)
             {
                 textBox.SelectionColor = Color.Cyan;
-                textBox.AppendText($"EXEs Unpacked by Steamless ({details.ExesUnpacked.Count}):\n");
-                textBox.SelectionColor = Color.White;
-                foreach (var exe in details.ExesUnpacked)
-                    textBox.AppendText($"  • {exe}\n");
-                textBox.AppendText("\n");
-            }
-
-            if (details.ExesSkipped.Count > 0)
-            {
-                textBox.SelectionColor = Color.Gray;
-                textBox.AppendText($"EXEs Skipped (Utilities) ({details.ExesSkipped.Count}):\n");
-                textBox.SelectionColor = Color.DarkGray;
-                foreach (var exe in details.ExesSkipped)
-                    textBox.AppendText($"  • {exe}\n");
+                textBox.AppendText($"EXEs Scanned by Steamless ({details.ExesTried.Count}):\n");
+                foreach (var exe in details.ExesTried)
+                {
+                    bool wasUnpacked = details.ExesUnpacked.Any(u => u.EndsWith(exe));
+                    if (wasUnpacked)
+                    {
+                        textBox.SelectionColor = Color.LightGreen;
+                        textBox.AppendText($"  • {exe} [UNPACKED - Had Steam Stub]\n");
+                    }
+                    else
+                    {
+                        textBox.SelectionColor = Color.Gray;
+                        textBox.AppendText($"  • {exe} [No Steam Stub]\n");
+                    }
+                }
                 textBox.AppendText("\n");
             }
 

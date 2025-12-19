@@ -209,7 +209,7 @@ namespace SAC_GUI
             }
         }
 
-        public async Task<UploadResult> UploadFileAsync(string filePath, IProgress<double> progressCallback = null, IProgress<string> statusCallback = null)
+        public async Task<UploadResult> UploadFileAsync(string filePath, IProgress<double> progressCallback = null, IProgress<string> statusCallback = null, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -240,7 +240,7 @@ namespace SAC_GUI
                 {
                     // Send request using HttpClient (not HttpWebRequest)
                     // HttpClient with our custom content will NOT buffer because TryComputeLength returns true
-                    var response = await uploadClient.PostAsync(uploadUrl, content);
+                    var response = await uploadClient.PostAsync(uploadUrl, content, cancellationToken);
 
                     statusCallback?.Report("Upload complete, waiting for server response...");
 

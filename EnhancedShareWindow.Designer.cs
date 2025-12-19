@@ -53,7 +53,10 @@ namespace SteamAppIdIdentifier
             this.CrackOnly = new System.Windows.Forms.DataGridViewButtonColumn();
             this.ShareClean = new System.Windows.Forms.DataGridViewButtonColumn();
             this.ShareCracked = new System.Windows.Forms.DataGridViewButtonColumn();
+            this.Details = new System.Windows.Forms.DataGridViewButtonColumn();
+            this.lblSelectedPrefix = new System.Windows.Forms.Label();
             this.lblSelectedCount = new System.Windows.Forms.Label();
+            this.lblSelectedSuffix = new System.Windows.Forms.Label();
             this.btnToggleCrack = new System.Windows.Forms.Button();
             this.btnToggleZip = new System.Windows.Forms.Button();
             this.btnToggleShare = new System.Windows.Forms.Button();
@@ -117,7 +120,8 @@ namespace SteamAppIdIdentifier
             this.LastUpdated,
             this.CrackOnly,
             this.ShareClean,
-            this.ShareCracked});
+            this.ShareCracked,
+            this.Details});
             dataGridViewCellStyle2.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
             dataGridViewCellStyle2.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(8)))), ((int)(((byte)(8)))), ((int)(((byte)(12)))));
             dataGridViewCellStyle2.Font = new System.Drawing.Font("Segoe UI", 9F);
@@ -236,6 +240,15 @@ namespace SteamAppIdIdentifier
             this.ShareCracked.FillWeight = 50;
             this.ShareCracked.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             //
+            // Details
+            //
+            this.Details.HeaderText = "";
+            this.Details.MinimumWidth = 30;
+            this.Details.Name = "Details";
+            this.Details.Width = 35;
+            this.Details.FillWeight = 18;
+            this.Details.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            //
             // lblStatus
             // 
             this.lblStatus.BackColor = System.Drawing.Color.Transparent;
@@ -267,7 +280,9 @@ namespace SteamAppIdIdentifier
             this.titleBar.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(60)))), ((int)(((byte)(50)))), ((int)(((byte)(60)))), ((int)(((byte)(80)))));
             this.titleBar.Controls.Add(this.lblTitle);
             this.titleBar.Controls.Add(this.btnCustomPath);
+            this.titleBar.Controls.Add(this.lblSelectedPrefix);
             this.titleBar.Controls.Add(this.lblSelectedCount);
+            this.titleBar.Controls.Add(this.lblSelectedSuffix);
             this.titleBar.Controls.Add(this.btnToggleCrack);
             this.titleBar.Controls.Add(this.btnToggleZip);
             this.titleBar.Controls.Add(this.btnToggleShare);
@@ -317,16 +332,41 @@ namespace SteamAppIdIdentifier
             this.btnCustomPath.UseVisualStyleBackColor = false;
             this.btnCustomPath.Click += new System.EventHandler(this.BtnCustomPath_Click);
             //
+            // lblSelectedPrefix
+            //
+            this.lblSelectedPrefix.AutoSize = true;
+            this.lblSelectedPrefix.BackColor = System.Drawing.Color.Transparent;
+            this.lblSelectedPrefix.Font = new System.Drawing.Font("Segoe UI", 9F);
+            this.lblSelectedPrefix.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(150)))), ((int)(((byte)(150)))), ((int)(((byte)(160)))));
+            this.lblSelectedPrefix.Location = new System.Drawing.Point(369, 14);
+            this.lblSelectedPrefix.Name = "lblSelectedPrefix";
+            this.lblSelectedPrefix.Size = new System.Drawing.Size(52, 15);
+            this.lblSelectedPrefix.Text = "Selected ";
+            this.lblSelectedPrefix.Visible = false;
+            //
             // lblSelectedCount
             //
             this.lblSelectedCount.AutoSize = true;
             this.lblSelectedCount.BackColor = System.Drawing.Color.Transparent;
-            this.lblSelectedCount.Font = new System.Drawing.Font("Segoe UI", 9F);
-            this.lblSelectedCount.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(150)))), ((int)(((byte)(150)))), ((int)(((byte)(160)))));
-            this.lblSelectedCount.Location = new System.Drawing.Point(340, 14);
+            this.lblSelectedCount.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
+            this.lblSelectedCount.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(100)))), ((int)(((byte)(255)))), ((int)(((byte)(150)))));
+            this.lblSelectedCount.Location = new System.Drawing.Point(427, 14);
             this.lblSelectedCount.Name = "lblSelectedCount";
-            this.lblSelectedCount.Size = new System.Drawing.Size(70, 15);
-            this.lblSelectedCount.Text = "Selected 0";
+            this.lblSelectedCount.Size = new System.Drawing.Size(14, 15);
+            this.lblSelectedCount.Text = "0";
+            this.lblSelectedCount.Visible = false;
+            //
+            // lblSelectedSuffix
+            //
+            this.lblSelectedSuffix.AutoSize = true;
+            this.lblSelectedSuffix.BackColor = System.Drawing.Color.Transparent;
+            this.lblSelectedSuffix.Font = new System.Drawing.Font("Segoe UI", 9F);
+            this.lblSelectedSuffix.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(150)))), ((int)(((byte)(150)))), ((int)(((byte)(160)))));
+            this.lblSelectedSuffix.Location = new System.Drawing.Point(441, 14);
+            this.lblSelectedSuffix.Name = "lblSelectedSuffix";
+            this.lblSelectedSuffix.Size = new System.Drawing.Size(18, 15);
+            this.lblSelectedSuffix.Text = " to";
+            this.lblSelectedSuffix.Visible = false;
             //
             // btnToggleCrack
             //
@@ -335,7 +375,7 @@ namespace SteamAppIdIdentifier
             this.btnToggleCrack.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btnToggleCrack.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
             this.btnToggleCrack.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(140)))), ((int)(((byte)(140)))), ((int)(((byte)(150)))));
-            this.btnToggleCrack.Location = new System.Drawing.Point(430, 7);
+            this.btnToggleCrack.Location = new System.Drawing.Point(470, 7);
             this.btnToggleCrack.Name = "btnToggleCrack";
             this.btnToggleCrack.Size = new System.Drawing.Size(65, 33);
             this.btnToggleCrack.TabIndex = 10;
@@ -352,7 +392,7 @@ namespace SteamAppIdIdentifier
             this.btnToggleZip.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btnToggleZip.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
             this.btnToggleZip.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(140)))), ((int)(((byte)(140)))), ((int)(((byte)(150)))));
-            this.btnToggleZip.Location = new System.Drawing.Point(500, 7);
+            this.btnToggleZip.Location = new System.Drawing.Point(540, 7);
             this.btnToggleZip.Name = "btnToggleZip";
             this.btnToggleZip.Size = new System.Drawing.Size(50, 33);
             this.btnToggleZip.TabIndex = 11;
@@ -369,7 +409,7 @@ namespace SteamAppIdIdentifier
             this.btnToggleShare.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btnToggleShare.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
             this.btnToggleShare.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(140)))), ((int)(((byte)(140)))), ((int)(((byte)(150)))));
-            this.btnToggleShare.Location = new System.Drawing.Point(555, 7);
+            this.btnToggleShare.Location = new System.Drawing.Point(595, 7);
             this.btnToggleShare.Name = "btnToggleShare";
             this.btnToggleShare.Size = new System.Drawing.Size(60, 33);
             this.btnToggleShare.TabIndex = 12;
@@ -381,16 +421,20 @@ namespace SteamAppIdIdentifier
             //
             // btnSettings
             //
-            this.btnSettings.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(60)))), ((int)(((byte)(40)))), ((int)(((byte)(20)))));
-            this.btnSettings.FlatAppearance.BorderColor = System.Drawing.Color.FromArgb(((int)(((byte)(180)))), ((int)(((byte)(120)))), ((int)(((byte)(60)))));
+            this.btnSettings.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(20)))), ((int)(((byte)(22)))), ((int)(((byte)(28)))));
+            this.btnSettings.FlatAppearance.BorderColor = System.Drawing.Color.FromArgb(((int)(((byte)(60)))), ((int)(((byte)(65)))), ((int)(((byte)(75)))));
+            this.btnSettings.FlatAppearance.MouseOverBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(35)))), ((int)(((byte)(40)))), ((int)(((byte)(50)))));
+            this.btnSettings.FlatAppearance.MouseDownBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(15)))), ((int)(((byte)(18)))), ((int)(((byte)(22)))));
             this.btnSettings.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btnSettings.Font = new System.Drawing.Font("Segoe UI", 11F);
-            this.btnSettings.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(180)))), ((int)(((byte)(80)))));
-            this.btnSettings.Location = new System.Drawing.Point(625, 7);
+            this.btnSettings.ForeColor = System.Drawing.Color.White;
+            this.btnSettings.Location = new System.Drawing.Point(665, 7);
             this.btnSettings.Name = "btnSettings";
             this.btnSettings.Size = new System.Drawing.Size(40, 33);
             this.btnSettings.TabIndex = 14;
-            this.btnSettings.Text = "⚙";
+            this.btnSettings.Text = "";
+            this.btnSettings.Image = APPID.Properties.Resources.settings_icon;
+            this.btnSettings.ImageAlign = System.Drawing.ContentAlignment.MiddleCenter;
             this.toolTip.SetToolTip(this.btnSettings, "Compression settings");
             this.btnSettings.UseVisualStyleBackColor = false;
             this.btnSettings.Click += new System.EventHandler(this.BtnSettings_Click);
@@ -402,7 +446,7 @@ namespace SteamAppIdIdentifier
             this.btnProcessSelected.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btnProcessSelected.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
             this.btnProcessSelected.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(150)))), ((int)(((byte)(255)))), ((int)(((byte)(150)))));
-            this.btnProcessSelected.Location = new System.Drawing.Point(675, 7);
+            this.btnProcessSelected.Location = new System.Drawing.Point(715, 7);
             this.btnProcessSelected.Name = "btnProcessSelected";
             this.btnProcessSelected.Size = new System.Drawing.Size(90, 33);
             this.btnProcessSelected.TabIndex = 13;
@@ -460,7 +504,7 @@ namespace SteamAppIdIdentifier
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 17F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(5)))), ((int)(((byte)(8)))), ((int)(((byte)(15)))));
-            this.ClientSize = new System.Drawing.Size(1167, 915);
+            this.ClientSize = new System.Drawing.Size(1200, 915);
             this.Controls.Add(this.mainPanel);
             this.ForeColor = System.Drawing.Color.White;
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.None;
@@ -491,7 +535,10 @@ namespace SteamAppIdIdentifier
         private System.Windows.Forms.DataGridViewButtonColumn CrackOnly;
         private System.Windows.Forms.DataGridViewButtonColumn ShareClean;
         private System.Windows.Forms.DataGridViewButtonColumn ShareCracked;
+        private System.Windows.Forms.DataGridViewButtonColumn Details;
+        private System.Windows.Forms.Label lblSelectedPrefix;
         private System.Windows.Forms.Label lblSelectedCount;
+        private System.Windows.Forms.Label lblSelectedSuffix;
         private System.Windows.Forms.Button btnToggleCrack;
         private System.Windows.Forms.Button btnToggleZip;
         private System.Windows.Forms.Button btnToggleShare;

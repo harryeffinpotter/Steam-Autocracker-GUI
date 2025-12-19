@@ -3,6 +3,7 @@ using SAC_GUI;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.Drawing.Drawing2D;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
@@ -10,15 +11,85 @@ using System.Net.Http;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using Timer = System.Windows.Forms.Timer;
 
 namespace SteamAppIdIdentifier
 {
+    /// <summary>
+    /// Custom progress bar with neon blue gradient styling for EnhancedShareWindow
+    /// </summary>
+    public class ShareNeonProgressBar : ProgressBar
+    {
+        public ShareNeonProgressBar()
+        {
+            this.SetStyle(ControlStyles.UserPaint | ControlStyles.AllPaintingInWmPaint | ControlStyles.OptimizedDoubleBuffer, true);
+        }
+
+        protected override void OnPaint(PaintEventArgs e)
+        {
+            var rect = this.ClientRectangle;
+
+            // Dark background
+            using (var bgBrush = new SolidBrush(Color.FromArgb(10, 12, 20)))
+            {
+                e.Graphics.FillRectangle(bgBrush, rect);
+            }
+
+            // Border
+            using (var borderPen = new Pen(Color.FromArgb(40, 50, 70)))
+            {
+                e.Graphics.DrawRectangle(borderPen, 0, 0, rect.Width - 1, rect.Height - 1);
+            }
+
+            // Progress fill with neon blue gradient
+            if (this.Value > 0)
+            {
+                int fillWidth = (int)((rect.Width - 4) * ((double)this.Value / this.Maximum));
+                if (fillWidth > 0)
+                {
+                    using (var brush = new LinearGradientBrush(
+                        new Rectangle(2, 2, fillWidth, rect.Height - 4),
+                        Color.FromArgb(0, 150, 255),   // Bright neon blue
+                        Color.FromArgb(0, 100, 200),   // Darker blue
+                        LinearGradientMode.Vertical))
+                    {
+                        e.Graphics.FillRectangle(brush, 2, 2, fillWidth, rect.Height - 4);
+                    }
+
+                    // Add glow effect on top
+                    using (var glowBrush = new SolidBrush(Color.FromArgb(40, 150, 220, 255)))
+                    {
+                        e.Graphics.FillRectangle(glowBrush, 2, 2, fillWidth, (rect.Height - 4) / 3);
+                    }
+                }
+            }
+        }
+    }
+
     public partial class EnhancedShareWindow : Form
     {
 
         private Form parentForm;
         private bool gameSizeColumnSortedOnce = false;
         private Button btnCustomPath;
+
+        // Upload details panel controls
+        private Panel uploadDetailsPanel;
+        private Label lblUploadGame;
+        private Label lblUploadSize;
+        private Label lblUploadSpeed;
+        private Label lblUploadEta;
+        private ShareNeonProgressBar uploadProgressBar;
+        private Button btnCancelUpload;
+
+        // Cancellation support for batch processing
+        private System.Threading.CancellationTokenSource batchCancellationTokenSource;
+        private bool skipCurrentGame = false;
+        private bool cancelAllRemaining = false;
+        private string currentProcessingGame = null;
+
+        // Crack details tracking
+        private Dictionary<string, APPID.SteamAppId.CrackDetails> crackDetailsMap = new Dictionary<string, APPID.SteamAppId.CrackDetails>();
 
         public EnhancedShareWindow(Form parent)
         {
@@ -28,12 +99,20 @@ namespace SteamAppIdIdentifier
             // Setup modern progress bar style
             SetupModernProgressBar();
 
+            // Setup upload details panel
+            SetupUploadDetailsPanel();
+
             // Add custom sort for GameSize column
             gamesGrid.SortCompare += GamesGrid_SortCompare;
             gamesGrid.ColumnHeaderMouseClick += GamesGrid_ColumnHeaderMouseClick;
 
-            // Dark mode checkbox painting
+            // Dark mode checkbox painting + Details button painting
             gamesGrid.CellPainting += GamesGrid_CellPainting;
+
+            // Enable double buffering on grid to prevent flickering
+            typeof(DataGridView).InvokeMember("DoubleBuffered",
+                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.SetProperty,
+                null, gamesGrid, new object[] { true });
 
             // Make main panel draggable (empty space drags window)
             mainPanel.MouseDown += TitleBar_MouseDown;
@@ -49,6 +128,170 @@ namespace SteamAppIdIdentifier
                 CenterOverParent();
             };
         }
+
+        private void SetupUploadDetailsPanel()
+        {
+            // Create upload details panel (hidden by default, shown during uploads)
+            // Dock to bottom of mainPanel so it appears above everything
+            uploadDetailsPanel = new Panel
+            {
+                Dock = DockStyle.Bottom,
+                Height = 44,
+                BackColor = Color.FromArgb(15, 18, 28),
+                Visible = false
+            };
+
+            // Game name being uploaded (left side)
+            lblUploadGame = new Label
+            {
+                Location = new Point(10, 3),
+                Size = new Size(400, 16),
+                ForeColor = Color.FromArgb(100, 200, 255),
+                Font = new Font("Segoe UI", 8, FontStyle.Bold),
+                Text = "Uploading: "
+            };
+            uploadDetailsPanel.Controls.Add(lblUploadGame);
+
+            // Custom-painted progress bar (modern neon blue style)
+            uploadProgressBar = new ShareNeonProgressBar
+            {
+                Location = new Point(10, 21),
+                Size = new Size(650, 14),
+                Maximum = 100
+            };
+            uploadDetailsPanel.Controls.Add(uploadProgressBar);
+
+            // Header labels
+            var lblSizeHeader = new Label
+            {
+                Location = new Point(670, 5),
+                Size = new Size(130, 12),
+                ForeColor = Color.FromArgb(120, 120, 130),
+                Font = new Font("Segoe UI", 7),
+                Text = "Total Size",
+                TextAlign = ContentAlignment.MiddleLeft
+            };
+            uploadDetailsPanel.Controls.Add(lblSizeHeader);
+
+            var lblSpeedHeader = new Label
+            {
+                Location = new Point(805, 5),
+                Size = new Size(90, 12),
+                ForeColor = Color.FromArgb(120, 120, 130),
+                Font = new Font("Segoe UI", 7),
+                Text = "Speed",
+                TextAlign = ContentAlignment.MiddleLeft
+            };
+            uploadDetailsPanel.Controls.Add(lblSpeedHeader);
+
+            var lblEtaHeader = new Label
+            {
+                Location = new Point(900, 5),
+                Size = new Size(80, 12),
+                ForeColor = Color.FromArgb(120, 120, 130),
+                Font = new Font("Segoe UI", 7),
+                Text = "ETA",
+                TextAlign = ContentAlignment.MiddleLeft
+            };
+            uploadDetailsPanel.Controls.Add(lblEtaHeader);
+
+            // Size info (e.g., "1.2 GB / 7.6 GB")
+            lblUploadSize = new Label
+            {
+                Location = new Point(670, 21),
+                Size = new Size(130, 14),
+                ForeColor = Color.FromArgb(180, 180, 185),
+                Font = new Font("Segoe UI", 8),
+                Text = "",
+                TextAlign = ContentAlignment.MiddleLeft
+            };
+            uploadDetailsPanel.Controls.Add(lblUploadSize);
+
+            // Speed (e.g., "12.5 MB/s")
+            lblUploadSpeed = new Label
+            {
+                Location = new Point(805, 21),
+                Size = new Size(90, 14),
+                ForeColor = Color.FromArgb(100, 255, 150),
+                Font = new Font("Segoe UI", 8),
+                Text = "",
+                TextAlign = ContentAlignment.MiddleLeft
+            };
+            uploadDetailsPanel.Controls.Add(lblUploadSpeed);
+
+            // ETA (e.g., "ETA: 5:32")
+            lblUploadEta = new Label
+            {
+                Location = new Point(900, 21),
+                Size = new Size(80, 14),
+                ForeColor = Color.FromArgb(255, 200, 100),
+                Font = new Font("Segoe UI", 8),
+                Text = "",
+                TextAlign = ContentAlignment.MiddleLeft
+            };
+            uploadDetailsPanel.Controls.Add(lblUploadEta);
+
+            // Skip button - skips current game only
+            var btnSkip = new Button
+            {
+                Name = "btnSkip",
+                Location = new Point(1000, 7),
+                Size = new Size(70, 30),
+                Text = "Skip",
+                BackColor = Color.FromArgb(80, 60, 0),
+                ForeColor = Color.FromArgb(255, 200, 100),
+                FlatStyle = FlatStyle.Flat,
+                Font = new Font("Segoe UI", 8)
+            };
+            btnSkip.FlatAppearance.BorderColor = Color.FromArgb(150, 120, 40);
+            toolTip.SetToolTip(btnSkip, "Skip this game and continue with the next one");
+            btnSkip.Click += (s, e) =>
+            {
+                skipCurrentGame = true;
+                batchCancellationTokenSource?.Cancel();
+                btnSkip.Text = "Skipping...";
+                btnSkip.Enabled = false;
+            };
+
+            // Cancel All button - cancels entire batch
+            btnCancelUpload = new Button
+            {
+                Location = new Point(1080, 7),
+                Size = new Size(100, 30),
+                Text = "Cancel All",
+                BackColor = Color.FromArgb(100, 30, 30),
+                ForeColor = Color.FromArgb(255, 150, 150),
+                FlatStyle = FlatStyle.Flat,
+                Font = new Font("Segoe UI", 8)
+            };
+            btnCancelUpload.FlatAppearance.BorderColor = Color.FromArgb(150, 60, 60);
+            toolTip.SetToolTip(btnCancelUpload, "Cancel this and all remaining uploads");
+            btnCancelUpload.Click += (s, e) =>
+            {
+                cancelAllRemaining = true;
+                skipCurrentGame = true;
+                batchCancellationTokenSource?.Cancel();
+                btnCancelUpload.Text = "Cancelling...";
+                btnCancelUpload.Enabled = false;
+                var skipBtnRef = uploadDetailsPanel.Controls["btnSkip"] as Button;
+                if (skipBtnRef != null) skipBtnRef.Enabled = false;
+            };
+
+            // Add buttons to panel
+            uploadDetailsPanel.Controls.Add(btnSkip);
+            uploadDetailsPanel.Controls.Add(btnCancelUpload);
+
+            // Bring buttons to front to ensure visibility
+            btnSkip.BringToFront();
+            btnCancelUpload.BringToFront();
+
+            // Add panel to mainPanel - Dock=Bottom will push grid up when visible
+            mainPanel.Controls.Add(uploadDetailsPanel);
+        }
+
+        // Cache info icon for cell painting
+        private static Image _infoIcon = null;
+        private static bool _infoIconLoaded = false;
 
         private void GamesGrid_CellPainting(object sender, DataGridViewCellPaintingEventArgs e)
         {
@@ -85,6 +328,51 @@ namespace SteamAppIdIdentifier
                     }
                 }
 
+                e.Handled = true;
+            }
+
+            // Custom paint for Details/Info button column - only show icon if there's data
+            if (e.ColumnIndex >= 0 && gamesGrid.Columns[e.ColumnIndex].Name == "Details" && e.RowIndex >= 0)
+            {
+                // Check if we have details for this row
+                var row = gamesGrid.Rows[e.RowIndex];
+                string installPath = row.Cells["InstallPath"].Value?.ToString();
+                bool hasDetails = !string.IsNullOrEmpty(installPath) &&
+                                  crackDetailsMap.ContainsKey(installPath) &&
+                                  crackDetailsMap[installPath].HasDetails;
+
+                e.Paint(e.CellBounds, DataGridViewPaintParts.All & ~DataGridViewPaintParts.ContentForeground);
+
+                // Only draw icon if we have details
+                if (hasDetails)
+                {
+                    // Load info icon once
+                    if (!_infoIconLoaded)
+                    {
+                        try { _infoIcon = APPID.Properties.Resources.info_icon; } catch { }
+                        _infoIconLoaded = true;
+                    }
+
+                    // Draw icon centered in cell
+                    if (_infoIcon != null)
+                    {
+                        int iconSize = Math.Min(e.CellBounds.Width - 8, e.CellBounds.Height - 8);
+                        iconSize = Math.Min(iconSize, 20); // Cap at 20px
+                        int iconX = e.CellBounds.X + (e.CellBounds.Width - iconSize) / 2;
+                        int iconY = e.CellBounds.Y + (e.CellBounds.Height - iconSize) / 2;
+                        e.Graphics.DrawImage(_infoIcon, iconX, iconY, iconSize, iconSize);
+                    }
+                    else
+                    {
+                        // Fallback to text if icon not available
+                        using (var textBrush = new SolidBrush(Color.FromArgb(150, 200, 255)))
+                        using (var font = new Font("Segoe UI", 8))
+                        {
+                            var sf = new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center };
+                            e.Graphics.DrawString("ⓘ", font, textBrush, e.CellBounds, sf);
+                        }
+                    }
+                }
                 e.Handled = true;
             }
         }
@@ -226,6 +514,9 @@ namespace SteamAppIdIdentifier
 
             // Load shared games data
             var sharedGames = LoadSharedGamesData();
+            System.Diagnostics.Debug.WriteLine($"[SHARED GAMES] Loaded {sharedGames.Count} entries");
+            foreach (var kvp in sharedGames)
+                System.Diagnostics.Debug.WriteLine($"[SHARED GAMES]   {kvp.Key} = {kvp.Value}");
 
             // Add to grid with placeholders, calculate sizes async
             foreach (var game in games)
@@ -251,10 +542,14 @@ namespace SteamAppIdIdentifier
 
                 // Check if we've shared this game before and update button text
                 string key = $"{game.AppId}_{game.BuildId}";
+                System.Diagnostics.Debug.WriteLine($"[SHARED GAMES] Checking key: {key}");
                 if (sharedGames.ContainsKey(key))
                 {
                     var sharedData = sharedGames[key];
-                    if (sharedData.Contains("cracked_only"))
+                    var sharedTypes = sharedData.Split(',').ToList();
+                    System.Diagnostics.Debug.WriteLine($"[SHARED GAMES] Found types for {key}: {string.Join(", ", sharedTypes)}");
+
+                    if (sharedTypes.Contains("cracked_only"))
                     {
                         row.Cells["CrackOnly"].Value = "✅ Cracked!";
                         row.Cells["CrackOnly"].Style.BackColor = Color.FromArgb(60, 0, 60);
@@ -263,31 +558,31 @@ namespace SteamAppIdIdentifier
                     {
                         row.Cells["CrackOnly"].Value = "⚡ Crack";
                     }
-                    if (sharedData.Contains("clean"))
+                    if (sharedTypes.Contains("clean"))
                     {
-                        row.Cells["ShareClean"].Value = "✅ Shared!";
+                        row.Cells["ShareClean"].Value = "✅ Shared";
                         row.Cells["ShareClean"].Style.BackColor = Color.FromArgb(0, 60, 0);
                     }
                     else
                     {
-                        row.Cells["ShareClean"].Value = "📦 Clean";
+                        row.Cells["ShareClean"].Value = "📦 Share";
                     }
-                    if (sharedData.Contains("cracked"))
+                    if (sharedTypes.Contains("cracked"))
                     {
-                        row.Cells["ShareCracked"].Value = "✅ Shared!";
+                        row.Cells["ShareCracked"].Value = "✅ Shared";
                         row.Cells["ShareCracked"].Style.BackColor = Color.FromArgb(0, 60, 0);
                     }
                     else
                     {
-                        row.Cells["ShareCracked"].Value = "🎮 Cracked";
+                        row.Cells["ShareCracked"].Value = "🎮 Share";
                     }
                 }
                 else
                 {
                     // Default button texts
                     row.Cells["CrackOnly"].Value = "⚡ Crack";
-                    row.Cells["ShareClean"].Value = "📦 Clean";
-                    row.Cells["ShareCracked"].Value = "🎮 Cracked";
+                    row.Cells["ShareClean"].Value = "📦 Share";
+                    row.Cells["ShareCracked"].Value = "🎮 Share";
                 }
 
                 // Calculate size asynchronously for each game
@@ -434,6 +729,31 @@ namespace SteamAppIdIdentifier
                         UpdateToggleButtonAppearance(btnToggleShare, true);
                     }
                     _ = BlinkProcessButton();
+                }
+                return;
+            }
+
+            // Handle Details button click
+            if (colName == "Details")
+            {
+                if (!string.IsNullOrEmpty(installPath) && crackDetailsMap.ContainsKey(installPath))
+                {
+                    ShowCrackDetails(crackDetailsMap[installPath]);
+                }
+                else
+                {
+                    // Non-blocking status update instead of MessageBox
+                    lblStatus.Text = "No details yet - details populate after cracking/zipping/uploading";
+                    lblStatus.ForeColor = Color.FromArgb(255, 200, 100);
+                    // Reset status after 3 seconds
+                    var timer = new Timer { Interval = 3000 };
+                    timer.Tick += (ts, te) => {
+                        lblStatus.Text = "Ready";
+                        lblStatus.ForeColor = Color.FromArgb(150, 150, 150);
+                        timer.Stop();
+                        timer.Dispose();
+                    };
+                    timer.Start();
                 }
                 return;
             }
@@ -781,7 +1101,7 @@ namespace SteamAppIdIdentifier
                                 "Crack Failed",
                                 MessageBoxButtons.OK,
                                 MessageBoxIcon.Warning);
-                            row.Cells["ShareCracked"].Value = "🎮 Cracked";
+                            row.Cells["ShareCracked"].Value = "🎮 Share";
                             row.Cells["ShareCracked"].Style.BackColor = Color.FromArgb(8, 8, 12); // Reset to default
                             return;
                         }
@@ -816,7 +1136,7 @@ namespace SteamAppIdIdentifier
                             "Crack Error",
                             MessageBoxButtons.OK,
                             MessageBoxIcon.Error);
-                        row.Cells["ShareCracked"].Value = "🎮 Cracked";
+                        row.Cells["ShareCracked"].Value = "🎮 Share";
                         row.Cells["ShareCracked"].Style.BackColor = Color.FromArgb(8, 8, 12); // Reset to default
                         return;
                     }
@@ -841,12 +1161,12 @@ namespace SteamAppIdIdentifier
                         // User cancelled - reset the button status
                         if (cracked)
                         {
-                            row.Cells["ShareCracked"].Value = "🎮 Cracked";
+                            row.Cells["ShareCracked"].Value = "🎮 Share";
                             row.Cells["ShareCracked"].Style.BackColor = Color.FromArgb(5, 8, 20);
                         }
                         else
                         {
-                            row.Cells["ShareClean"].Value = "📦 Clean";
+                            row.Cells["ShareClean"].Value = "📦 Share";
                             row.Cells["ShareClean"].Style.BackColor = Color.FromArgb(5, 8, 20);
                         }
                         return;
@@ -925,7 +1245,7 @@ namespace SteamAppIdIdentifier
                     if (!compressionSuccess)
                     {
                         MessageBox.Show("Compression failed!", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                        row.Cells[btnColumn].Value = cracked ? "🎮 Cracked" : "📦 Clean";
+                        row.Cells[btnColumn].Value = cracked ? "🎮 Share" : "📦 Share";
                         return;
                     }
 
@@ -1007,7 +1327,7 @@ namespace SteamAppIdIdentifier
 
                             System.Diagnostics.Debug.WriteLine($"[SHARE] Final upload URL to show user: {uploadUrl} (isOneFichier: {isOneFichier})");
 
-                            row.Cells[btnColumn].Value = "✅ Shared!";
+                            row.Cells[btnColumn].Value = "✅ Shared";
                             row.Cells[btnColumn].Style.BackColor = Color.FromArgb(0, 60, 0);
 
                             // Save shared game data
@@ -1038,7 +1358,7 @@ namespace SteamAppIdIdentifier
             catch (Exception ex)
             {
                 MessageBox.Show($"Error: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                row.Cells[cracked ? "ShareCracked" : "ShareClean"].Value = cracked ? "🎮 Cracked" : "📦 Clean";
+                row.Cells[cracked ? "ShareCracked" : "ShareClean"].Value = cracked ? "🎮 Share" : "📦 Share";
             }
         }
 
@@ -1956,9 +2276,24 @@ namespace SteamAppIdIdentifier
             }
             // Show/hide batch controls based on selection
             bool hasSelection = count > 0;
-            lblSelectedCount.Text = $"Selected {count} to";
+
+            // Update the 3 labels: "Selected " (gray) + count (green bold) + " to" (gray)
+            lblSelectedPrefix.Text = "Selected ";
+            lblSelectedPrefix.Visible = hasSelection;
+
+            lblSelectedCount.Text = count.ToString();
             lblSelectedCount.Visible = hasSelection;
-            lblSelectedCount.ForeColor = Color.FromArgb(180, 180, 190);
+
+            lblSelectedSuffix.Text = " to";
+            lblSelectedSuffix.Visible = hasSelection;
+
+            // Position the count label right after prefix, and suffix after count
+            if (hasSelection)
+            {
+                lblSelectedCount.Location = new Point(lblSelectedPrefix.Right, lblSelectedPrefix.Top);
+                lblSelectedSuffix.Location = new Point(lblSelectedCount.Right, lblSelectedCount.Top);
+            }
+
             btnToggleCrack.Visible = hasSelection;
             btnToggleZip.Visible = hasSelection;
             btnToggleShare.Visible = hasSelection;
@@ -2037,6 +2372,11 @@ namespace SteamAppIdIdentifier
                 return;
             }
 
+            // Reset cancellation state
+            cancelAllRemaining = false;
+            skipCurrentGame = false;
+            currentProcessingGame = null;
+
             // Disable UI during processing
             btnProcessSelected.Enabled = false;
             btnToggleCrack.Enabled = false;
@@ -2062,6 +2402,15 @@ namespace SteamAppIdIdentifier
             {
                 foreach (var game in gamesToProcess)
                 {
+                    // Check for cancel all
+                    if (cancelAllRemaining)
+                    {
+                        UpdateActionColumn(game.row, "CrackOnly", "Cancelled", Color.Gray);
+                        crackResults[game.path] = false;
+                        continue;
+                    }
+
+                    currentProcessingGame = game.name;
                     UpdateActionColumn(game.row, "CrackOnly", "⚡ Cracking...", Color.Yellow);
 
                     if (string.IsNullOrEmpty(game.appId))
@@ -2085,6 +2434,12 @@ namespace SteamAppIdIdentifier
                         if (success)
                         {
                             UpdateActionColumn(game.row, "CrackOnly", "✅ Cracked!", Color.LightGreen, Color.FromArgb(60, 0, 60));
+
+                            // Save that we cracked this game (for crack-only mode)
+                            if (!toggleZipOn && !toggleShareOn)
+                            {
+                                SaveSharedGame(game.appId, game.buildId, "cracked_only");
+                            }
                         }
                         else
                         {
@@ -2137,6 +2492,7 @@ namespace SteamAppIdIdentifier
 
                         var gameRow = game.row;
                         var col = shareColumn;
+                        var zipStartTime = DateTime.Now;
 
                         bool zipSuccess = await Task.Run(() =>
                         {
@@ -2158,6 +2514,10 @@ namespace SteamAppIdIdentifier
 
                                 using (var proc = System.Diagnostics.Process.Start(psi))
                                 {
+                                    // Throttle UI updates to prevent lag
+                                    DateTime lastUpdate = DateTime.MinValue;
+                                    string lastPct = "";
+
                                     // Read stdout for progress updates
                                     while (!proc.StandardOutput.EndOfStream)
                                     {
@@ -2169,12 +2529,18 @@ namespace SteamAppIdIdentifier
                                             if (match.Success)
                                             {
                                                 string pct = match.Groups[1].Value;
-                                                if (!this.IsDisposed)
+                                                // Only update UI every 150ms or if percentage changed significantly
+                                                if ((DateTime.Now - lastUpdate).TotalMilliseconds > 150 || pct != lastPct)
                                                 {
-                                                    this.BeginInvoke(new Action(() =>
+                                                    lastUpdate = DateTime.Now;
+                                                    lastPct = pct;
+                                                    if (!this.IsDisposed)
                                                     {
-                                                        UpdateActionColumn(gameRow, col, $"📦 {pct}%", Color.Cyan);
-                                                    }));
+                                                        this.BeginInvoke(new Action(() =>
+                                                        {
+                                                            UpdateActionColumn(gameRow, col, $"📦 {pct}%", Color.Cyan);
+                                                        }));
+                                                    }
                                                 }
                                             }
                                         }
@@ -2189,13 +2555,32 @@ namespace SteamAppIdIdentifier
                             }
                         });
 
-                        return (game, zipSuccess);
+                        var zipDuration = DateTime.Now - zipStartTime;
+                        long zipFileSize = File.Exists(archivePath) ? new FileInfo(archivePath).Length : 0;
+
+                        return (game, zipSuccess, zipDuration, zipFileSize, archivePath);
                     }).ToList();
 
                     var zipResults = await Task.WhenAll(zipTasks);
 
                     foreach (var result in zipResults)
                     {
+                        // Store zip details
+                        if (!crackDetailsMap.ContainsKey(result.game.path))
+                        {
+                            crackDetailsMap[result.game.path] = new APPID.SteamAppId.CrackDetails
+                            {
+                                GameName = result.game.name,
+                                GamePath = result.game.path
+                            };
+                        }
+                        var details = crackDetailsMap[result.game.path];
+                        details.ZipAttempted = true;
+                        details.ZipSuccess = result.zipSuccess;
+                        details.ZipDuration = result.zipDuration;
+                        details.ZipFileSize = result.zipFileSize;
+                        details.ZipPath = result.archivePath;
+
                         if (result.zipSuccess)
                         {
                             UpdateActionColumn(result.game.row, shareColumn, "✅ Zipped", Color.LightGreen);
@@ -2206,17 +2591,47 @@ namespace SteamAppIdIdentifier
                             crackResults[result.game.path] = false; // Prevent upload
                         }
                     }
+
+                    // Refresh grid to show details icons
+                    gamesGrid.Invalidate();
                 }
             }
 
             // ========== PHASE 3: SHARE/UPLOAD ==========
-            if (toggleShareOn)
+            if (toggleShareOn && !cancelAllRemaining)
             {
                 var gamesToUpload = gamesToProcess.Where(g => crackResults.ContainsKey(g.path) && crackResults[g.path]).ToList();
                 const int maxRetries = 3;
 
+                // Show upload panel (docked to bottom, will push grid up)
+                if (gamesToUpload.Count > 0)
+                {
+                    uploadDetailsPanel.Visible = true;
+                    uploadDetailsPanel.BringToFront();
+
+                    // Reset Skip/Cancel buttons
+                    var skipBtn = uploadDetailsPanel.Controls["btnSkip"] as Button;
+                    if (skipBtn != null) { skipBtn.Enabled = true; skipBtn.Text = "Skip"; }
+                    btnCancelUpload.Enabled = true;
+                    btnCancelUpload.Text = "Cancel All";
+
+                    // Force layout update
+                    this.PerformLayout();
+                }
+
                 foreach (var game in gamesToUpload)
                 {
+                    // Check for cancel all at start of each game
+                    if (cancelAllRemaining)
+                    {
+                        UpdateActionColumn(game.row, shareColumn, "Cancelled", Color.Gray);
+                        continue;
+                    }
+
+                    // Reset skip flag for this game
+                    skipCurrentGame = false;
+                    currentProcessingGame = game.name;
+
                     string archivePath = archivePaths.ContainsKey(game.path) ? archivePaths[game.path] : null;
                     if (string.IsNullOrEmpty(archivePath) || !File.Exists(archivePath))
                     {
@@ -2224,16 +2639,25 @@ namespace SteamAppIdIdentifier
                         continue;
                     }
 
+                    // Show upload details
+                    long fileSize = new FileInfo(archivePath).Length;
+                    ShowUploadDetails(game.name, fileSize);
+
                     bool uploadSuccess = false;
                     string lastError = null;
                     int attempt = 0;
 
-                    while (!uploadSuccess && attempt < maxRetries)
+                    while (!uploadSuccess && attempt < maxRetries && !skipCurrentGame && !cancelAllRemaining)
                     {
                         attempt++;
                         string statusPrefix = attempt > 1 ? $"Retry {attempt}/{maxRetries}: " : "";
 
                         UpdateActionColumn(game.row, shareColumn, $"{statusPrefix}0%", Color.Magenta);
+
+                        // Create a new cancellation token for this upload
+                        batchCancellationTokenSource?.Dispose();
+                        batchCancellationTokenSource = new System.Threading.CancellationTokenSource();
+                        var token = batchCancellationTokenSource.Token;
 
                         try
                         {
@@ -2242,29 +2666,74 @@ namespace SteamAppIdIdentifier
                                 var gameRow = game.row;
                                 var col = shareColumn;
                                 var currentAttempt = attempt;
+                                var startTime = DateTime.Now;
+                                long lastBytes = 0;
+                                double smoothedSpeed = 0;
+                                DateTime lastUIUpdate = DateTime.MinValue;
+                                int lastPct = -1;
 
                                 var progress = new Progress<double>(p =>
                                 {
                                     int pct = (int)(p * 100);
-                                    if (!this.IsDisposed)
+                                    long uploadedBytes = (long)(p * fileSize);
+
+                                    // Calculate speed
+                                    var elapsed = (DateTime.Now - startTime).TotalSeconds;
+                                    double currentSpeed = elapsed > 0 ? uploadedBytes / elapsed : 0;
+
+                                    // Smooth speed calculation
+                                    if (smoothedSpeed == 0)
+                                        smoothedSpeed = currentSpeed;
+                                    else
+                                        smoothedSpeed = smoothedSpeed * 0.8 + currentSpeed * 0.2;
+
+                                    // Throttle UI updates to every 200ms or when percentage changes
+                                    if ((DateTime.Now - lastUIUpdate).TotalMilliseconds > 200 || pct != lastPct)
                                     {
-                                        this.BeginInvoke(new Action(() =>
+                                        lastUIUpdate = DateTime.Now;
+                                        lastPct = pct;
+
+                                        if (!this.IsDisposed)
                                         {
-                                            string prefix = currentAttempt > 1 ? $"Retry {currentAttempt}: " : "";
-                                            UpdateActionColumn(gameRow, col, $"{prefix}{pct}%", Color.Magenta);
-                                        }));
+                                            this.BeginInvoke(new Action(() =>
+                                            {
+                                                // Don't update column at 100% - let final status handle it
+                                                if (pct < 100)
+                                                {
+                                                    string prefix = currentAttempt > 1 ? $"Retry {currentAttempt}: " : "";
+                                                    UpdateActionColumn(gameRow, col, $"{prefix}{pct}%", Color.Magenta);
+                                                }
+                                                UpdateUploadProgress(pct, uploadedBytes, fileSize, smoothedSpeed);
+                                            }));
+                                        }
                                     }
+                                    lastBytes = uploadedBytes;
                                 });
 
-                                var result = await Task.Run(async () => await uploader.UploadFileAsync(archivePath, progress));
+                                var result = await Task.Run(async () =>
+                                {
+                                    token.ThrowIfCancellationRequested();
+                                    return await uploader.UploadFileAsync(archivePath, progress, null, token);
+                                }, token);
 
                                 if (result != null && !string.IsNullOrEmpty(result.DownloadUrl))
                                 {
+                                    var uploadDuration = DateTime.Now - startTime;
                                     long archiveSize = File.Exists(archivePath) ? new FileInfo(archivePath).Length : 0;
                                     uploadResults.Add((game.name, result.DownloadUrl, archiveSize));
                                     string retryNote = attempt > 1 ? $" (retry {attempt})" : "";
                                     UpdateActionColumn(game.row, shareColumn, $"Shared!{retryNote}", Color.LightGreen, Color.FromArgb(0, 60, 0));
+
+                                    // Store upload details including duration
+                                    UpdateUploadStatus(game.path, true, result.DownloadUrl, null, attempt - 1);
+                                    if (crackDetailsMap.ContainsKey(game.path))
+                                    {
+                                        crackDetailsMap[game.path].UploadDuration = uploadDuration;
+                                    }
                                     uploadSuccess = true;
+
+                                    // Save shared game data for persistence
+                                    SaveSharedGame(game.appId, game.buildId, toggleCrackOn ? "cracked" : "clean");
                                 }
                                 else
                                 {
@@ -2273,26 +2742,55 @@ namespace SteamAppIdIdentifier
                                 }
                             }
                         }
+                        catch (OperationCanceledException)
+                        {
+                            if (skipCurrentGame && !cancelAllRemaining)
+                            {
+                                UpdateActionColumn(game.row, shareColumn, "Skipped", Color.Yellow);
+                                System.Diagnostics.Debug.WriteLine($"[BATCH] Upload skipped for {game.name}");
+                            }
+                            else if (cancelAllRemaining)
+                            {
+                                UpdateActionColumn(game.row, shareColumn, "Cancelled", Color.Gray);
+                            }
+                            break; // Exit retry loop
+                        }
                         catch (Exception ex)
                         {
                             lastError = ex.Message;
                             System.Diagnostics.Debug.WriteLine($"[BATCH] Upload attempt {attempt} error for {game.name}: {ex.Message}");
 
-                            // Wait before retry (exponential backoff)
-                            if (attempt < maxRetries)
+                            // Wait before retry (exponential backoff) - but check for skip/cancel
+                            if (attempt < maxRetries && !skipCurrentGame && !cancelAllRemaining)
                             {
-                                UpdateActionColumn(game.row, shareColumn, $"Retry in {attempt * 2}s...", Color.Yellow);
-                                await Task.Delay(attempt * 2000);
+                                for (int i = attempt * 2; i > 0 && !skipCurrentGame && !cancelAllRemaining; i--)
+                                {
+                                    UpdateActionColumn(game.row, shareColumn, $"Retry in {i}s...", Color.Yellow);
+                                    await Task.Delay(1000);
+                                }
                             }
                         }
                     }
 
-                    if (!uploadSuccess)
+                    if (!uploadSuccess && !skipCurrentGame && !cancelAllRemaining)
                     {
                         // Show truncated error in status
                         string shortError = lastError?.Length > 30 ? lastError.Substring(0, 30) + "..." : lastError;
                         UpdateActionColumn(game.row, shareColumn, $"Failed: {shortError}", Color.Red);
+                        UpdateUploadStatus(game.path, false, null, lastError, attempt);
                     }
+                }
+
+                // Hide upload panel
+                HideUploadDetails();
+            }
+            else if (cancelAllRemaining && toggleShareOn)
+            {
+                // Mark remaining as cancelled
+                var gamesToUpload = gamesToProcess.Where(g => crackResults.ContainsKey(g.path) && crackResults[g.path]).ToList();
+                foreach (var game in gamesToUpload)
+                {
+                    UpdateActionColumn(game.row, shareColumn, "Cancelled", Color.Gray);
                 }
             }
             else if (toggleCrackOn && !toggleZipOn && !toggleShareOn)
@@ -2313,7 +2811,13 @@ namespace SteamAppIdIdentifier
             // Show summary with conversion option
             if (uploadResults.Count > 0)
             {
+                // Update status to show we're waiting for conversions
+                lblStatus.Text = "Waiting for Debrid conversions...";
+                lblStatus.ForeColor = Color.FromArgb(255, 200, 100);
+                lblUploadGame.Text = "Uploads complete - converting to PyDrive...";
                 await ShowBatchUploadSummary(uploadResults, toggleCrackOn);
+                lblStatus.Text = "Ready";
+                lblStatus.ForeColor = Color.FromArgb(150, 150, 150);
             }
             else if (gamesToProcess.Count > 0)
             {
@@ -2337,6 +2841,9 @@ namespace SteamAppIdIdentifier
             btnToggleZip.Enabled = true;
             btnToggleShare.Enabled = true;
             btnSettings.Enabled = true;
+
+            // Hide upload details panel
+            uploadDetailsPanel.Visible = false;
         }
 
         private async Task ShowBatchUploadSummary(List<(string name, string url, long fileSize)> uploadResults, bool wasCracked)
@@ -2372,6 +2879,16 @@ namespace SteamAppIdIdentifier
             };
 
             // Format copy buttons in top right
+            // Create tooltip for summary form buttons - must be added to form's components to stay alive
+            var summaryComponents = new System.ComponentModel.Container();
+            var summaryTooltip = new ToolTip(summaryComponents)
+            {
+                AutoPopDelay = 5000,
+                InitialDelay = 300,
+                ReshowDelay = 200
+            };
+            summaryForm.FormClosed += (s, e) => summaryComponents.Dispose();
+
             var btnForums = new Button
             {
                 Text = "Forums",
@@ -2383,6 +2900,7 @@ namespace SteamAppIdIdentifier
                 Font = new Font("Segoe UI", 8)
             };
             btnForums.FlatAppearance.BorderColor = Color.FromArgb(80, 60, 100);
+            summaryTooltip.SetToolTip(btnForums, "Copy links as BBCode for forums [url=link]Game Name[/url]");
 
             var btnMarkdown = new Button
             {
@@ -2395,6 +2913,7 @@ namespace SteamAppIdIdentifier
                 Font = new Font("Segoe UI", 8)
             };
             btnMarkdown.FlatAppearance.BorderColor = Color.FromArgb(60, 80, 100);
+            summaryTooltip.SetToolTip(btnMarkdown, "Copy links as Markdown [Game Name](link)");
 
             var btnPlain = new Button
             {
@@ -2407,6 +2926,7 @@ namespace SteamAppIdIdentifier
                 Font = new Font("Segoe UI", 8)
             };
             btnPlain.FlatAppearance.BorderColor = Color.FromArgb(70, 70, 80);
+            summaryTooltip.SetToolTip(btnPlain, "Copy links as plain text (Game Name: link)");
 
             var txtLinks = new TextBox
             {
@@ -2452,6 +2972,7 @@ namespace SteamAppIdIdentifier
                 Font = new Font("Segoe UI", 9)
             };
             btn1Fichier.FlatAppearance.BorderColor = Color.FromArgb(80, 80, 100);
+            summaryTooltip.SetToolTip(btn1Fichier, "Copy original 1fichier download links to clipboard");
 
             var btnConvert = new Button
             {
@@ -2464,6 +2985,7 @@ namespace SteamAppIdIdentifier
                 Font = new Font("Segoe UI", 9)
             };
             btnConvert.FlatAppearance.BorderColor = Color.FromArgb(100, 180, 100);
+            summaryTooltip.SetToolTip(btnConvert, "Convert 1fichier links to PyDrive high-speed download links");
 
             var btnClose = new Button
             {
@@ -2476,6 +2998,7 @@ namespace SteamAppIdIdentifier
                 Font = new Font("Segoe UI", 9)
             };
             btnClose.FlatAppearance.BorderColor = Color.FromArgb(100, 60, 60);
+            summaryTooltip.SetToolTip(btnClose, "Close this summary window");
 
             var lblStatus = new Label
             {
@@ -2525,12 +3048,8 @@ namespace SteamAppIdIdentifier
                 if (autoConvertStarted) return;
                 autoConvertStarted = true;
 
-                btn1Fichier.Enabled = false;
-                btnConvert.Enabled = false;
-                btnClose.Enabled = false;
-                btnForums.Enabled = false;
-                btnMarkdown.Enabled = false;
-                btnPlain.Enabled = false;
+                // Keep all buttons enabled - user can still click convert to retry or close anytime
+                btnConvert.Text = "Converting...";
 
                 var convertedResults = new List<(string name, string url)>();
                 int current = 0;
@@ -2584,20 +3103,22 @@ namespace SteamAppIdIdentifier
                 try { Clipboard.SetText(pydriveLinks); } catch { }
 
                 lblStatus.Text = $"✅ {convertedResults.Count} PyDrive links converted & copied!";
-                btn1Fichier.Enabled = true;
                 btnConvert.Enabled = true;
-                btnClose.Enabled = true;
-                btnForums.Enabled = true;
-                btnMarkdown.Enabled = true;
-                btnPlain.Enabled = true;
+                btnConvert.Text = "🔄 Convert PyDrive";
                 autoConvertStarted = false;
             };
 
-            btnConvert.Click += async (s, e) => await doConversion();
-
-            // Countdown timer for auto-conversion
+            // Countdown timer for auto-conversion (declared first so click handler can reference it)
             int secondsRemaining = 5; // Start with 5 second delay
-            var countdownTimer = new Timer { Interval = 1000 };
+            Timer countdownTimer = null;
+
+            btnConvert.Click += async (s, e) =>
+            {
+                countdownTimer?.Stop(); // Stop countdown if user clicks manually
+                await doConversion();
+            };
+
+            countdownTimer = new Timer { Interval = 1000 };
 
             countdownTimer.Tick += async (s, e) =>
             {
@@ -2728,6 +3249,16 @@ namespace SteamAppIdIdentifier
                 };
             }
 
+            // Create tooltip for this form's buttons
+            var successComponents = new System.ComponentModel.Container();
+            var successTooltip = new ToolTip(successComponents)
+            {
+                AutoPopDelay = 5000,
+                InitialDelay = 300,
+                ReshowDelay = 200
+            };
+            successForm.FormClosed += (s, e) => successComponents.Dispose();
+
             var btnCopy = new Button
             {
                 Text = "📋 Copy Link",
@@ -2739,6 +3270,7 @@ namespace SteamAppIdIdentifier
                 Font = new Font("Segoe UI", 10, FontStyle.Bold)
             };
             btnCopy.FlatAppearance.BorderColor = Color.FromArgb(100, 200, 255);
+            successTooltip.SetToolTip(btnCopy, "Copy the download link to clipboard");
             btnCopy.Click += (s, e) =>
             {
                 Clipboard.SetText(txtUrl.Text);
@@ -2826,6 +3358,7 @@ namespace SteamAppIdIdentifier
                     Font = new Font("Segoe UI", 10, FontStyle.Bold)
                 };
                 btnConvert.FlatAppearance.BorderColor = Color.FromArgb(255, 150, 50);
+                successTooltip.SetToolTip(btnConvert, "Convert 1fichier link to PyDrive high-speed download");
                 btnConvert.Click += async (s, e) => await attemptConversion();
 
                 // Create countdown timer
@@ -2860,6 +3393,7 @@ namespace SteamAppIdIdentifier
                 Font = new Font("Segoe UI", 10, FontStyle.Bold)
             };
             btnClose.FlatAppearance.BorderColor = Color.FromArgb(100, 255, 150);
+            successTooltip.SetToolTip(btnClose, "Close this window");
             btnClose.Click += (s, e) => {
                 countdownTimer?.Stop();
                 successForm.Close();
@@ -3197,8 +3731,8 @@ namespace SteamAppIdIdentifier
 
                                                     // Set button values
                                                     row.Cells["CrackOnly"].Value = "⚡ Crack";
-                                                    row.Cells["ShareClean"].Value = "📦 Clean";
-                                                    row.Cells["ShareCracked"].Value = "🎮 Cracked";
+                                                    row.Cells["ShareClean"].Value = "📦 Share";
+                                                    row.Cells["ShareCracked"].Value = "🎮 Share";
 
                                                     // Mark as custom path game with different color
                                                     row.DefaultCellStyle.ForeColor = Color.FromArgb(150, 200, 255);
@@ -3508,6 +4042,362 @@ namespace SteamAppIdIdentifier
                 System.Diagnostics.Debug.WriteLine($"[SHARED GAMES] Error saving: {ex.Message}");
             }
         }
+
+        #region Upload Details Panel Methods
+
+        /// <summary>
+        /// Shows the upload details panel with initial info
+        /// </summary>
+        public void ShowUploadDetails(string gameName, long totalBytes)
+        {
+            if (this.IsDisposed) return;
+
+            if (this.InvokeRequired)
+            {
+                try { this.BeginInvoke(new Action(() => ShowUploadDetails(gameName, totalBytes))); } catch { }
+                return;
+            }
+
+            uploadDetailsPanel.Visible = true;
+            lblUploadGame.Text = $"Uploading: {gameName}";
+            lblUploadSize.Text = $"0 / {FormatBytesForUpload(totalBytes)}";
+            lblUploadSpeed.Text = "";
+            lblUploadEta.Text = "";
+            uploadProgressBar.Value = 0;
+            uploadProgressBar.Invalidate();
+
+            // Reset buttons
+            btnCancelUpload.Text = "Cancel All";
+            btnCancelUpload.Enabled = true;
+            var skipBtn = uploadDetailsPanel.Controls["btnSkip"] as Button;
+            if (skipBtn != null)
+            {
+                skipBtn.Text = "Skip";
+                skipBtn.Enabled = true;
+            }
+        }
+
+        /// <summary>
+        /// Updates the upload progress with speed and ETA
+        /// </summary>
+        public void UpdateUploadProgress(int percent, long uploadedBytes, long totalBytes, double bytesPerSecond)
+        {
+            if (this.IsDisposed) return;
+
+            if (this.InvokeRequired)
+            {
+                try { this.BeginInvoke(new Action(() => UpdateUploadProgress(percent, uploadedBytes, totalBytes, bytesPerSecond))); } catch { }
+                return;
+            }
+
+            uploadProgressBar.Value = Math.Min(percent, 100);
+            uploadProgressBar.Invalidate();
+            lblUploadSize.Text = $"{FormatBytesForUpload(uploadedBytes)} / {FormatBytesForUpload(totalBytes)}";
+
+            if (bytesPerSecond > 0)
+            {
+                lblUploadSpeed.Text = $"{FormatBytesForUpload((long)bytesPerSecond)}/s";
+
+                long remainingBytes = totalBytes - uploadedBytes;
+                if (remainingBytes > 0)
+                {
+                    double secondsRemaining = remainingBytes / bytesPerSecond;
+                    lblUploadEta.Text = FormatUploadEta(secondsRemaining);
+                }
+                else
+                {
+                    lblUploadEta.Text = "";
+                }
+            }
+
+            // Force immediate UI refresh
+            uploadDetailsPanel.Refresh();
+        }
+
+        /// <summary>
+        /// Hides the upload details panel
+        /// </summary>
+        public void HideUploadDetails()
+        {
+            if (this.IsDisposed) return;
+
+            if (this.InvokeRequired)
+            {
+                try { this.BeginInvoke(new Action(() => HideUploadDetails())); } catch { }
+                return;
+            }
+
+            uploadDetailsPanel.Visible = false;
+        }
+
+        private string FormatBytesForUpload(long bytes)
+        {
+            if (bytes >= 1024L * 1024 * 1024)
+                return $"{bytes / (1024.0 * 1024 * 1024):F2} GB";
+            if (bytes >= 1024L * 1024)
+                return $"{bytes / (1024.0 * 1024):F1} MB";
+            if (bytes >= 1024)
+                return $"{bytes / 1024.0:F0} KB";
+            return $"{bytes} B";
+        }
+
+        private string FormatUploadEta(double seconds)
+        {
+            if (seconds < 60)
+                return $"{seconds:F0}s";
+            if (seconds < 3600)
+                return $"{(int)(seconds / 60)}:{(int)(seconds % 60):D2}";
+            return $"{(int)(seconds / 3600)}:{(int)((seconds % 3600) / 60):D2}:{(int)(seconds % 60):D2}";
+        }
+
+        #endregion
+
+        #region Crack Details Methods
+
+        /// <summary>
+        /// Stores crack details for a game by install path
+        /// </summary>
+        public void SetCrackDetails(string installPath, APPID.SteamAppId.CrackDetails details)
+        {
+            if (string.IsNullOrEmpty(installPath) || details == null) return;
+            crackDetailsMap[installPath] = details;
+        }
+
+        /// <summary>
+        /// Updates zip status for a game's crack details
+        /// </summary>
+        public void UpdateZipStatus(string installPath, bool success, string zipPath = null, string error = null)
+        {
+            if (string.IsNullOrEmpty(installPath)) return;
+
+            if (!crackDetailsMap.ContainsKey(installPath))
+            {
+                crackDetailsMap[installPath] = new APPID.SteamAppId.CrackDetails
+                {
+                    GameName = Path.GetFileName(installPath),
+                    GamePath = installPath
+                };
+            }
+
+            var details = crackDetailsMap[installPath];
+            details.ZipAttempted = true;
+            details.ZipSuccess = success;
+            details.ZipPath = zipPath;
+            details.ZipError = error;
+        }
+
+        /// <summary>
+        /// Updates upload status for a game's crack details
+        /// </summary>
+        public void UpdateUploadStatus(string installPath, bool success, string url = null, string error = null, int retryCount = 0)
+        {
+            if (string.IsNullOrEmpty(installPath)) return;
+
+            if (!crackDetailsMap.ContainsKey(installPath))
+            {
+                crackDetailsMap[installPath] = new APPID.SteamAppId.CrackDetails
+                {
+                    GameName = Path.GetFileName(installPath),
+                    GamePath = installPath
+                };
+            }
+
+            var details = crackDetailsMap[installPath];
+            details.UploadAttempted = true;
+            details.UploadSuccess = success;
+            details.UploadUrl = url;
+            details.UploadError = error;
+            details.UploadRetryCount = retryCount;
+        }
+
+        /// <summary>
+        /// Shows crack details in a popup dialog
+        /// </summary>
+        private void ShowCrackDetails(APPID.SteamAppId.CrackDetails details)
+        {
+            if (details == null) return;
+
+            var detailForm = new Form
+            {
+                Text = $"Details - {details.GameName}",
+                Size = new Size(600, 500),
+                StartPosition = FormStartPosition.CenterScreen,
+                BackColor = Color.FromArgb(25, 28, 40),
+                ForeColor = Color.White,
+                FormBorderStyle = FormBorderStyle.FixedDialog,
+                MaximizeBox = false,
+                MinimizeBox = false,
+                TopMost = true
+            };
+
+            var textBox = new RichTextBox
+            {
+                Dock = DockStyle.Fill,
+                BackColor = Color.FromArgb(30, 33, 45),
+                ForeColor = Color.White,
+                Font = new Font("Consolas", 9),
+                ReadOnly = true,
+                BorderStyle = BorderStyle.None,
+                Padding = new Padding(10)
+            };
+
+            // Build colored text
+            textBox.Text = "";
+            textBox.SelectionFont = new Font("Segoe UI", 12, FontStyle.Bold);
+            textBox.SelectionColor = Color.Cyan;
+            textBox.AppendText($"Details for {details.GameName}\n");
+            textBox.SelectionFont = new Font("Consolas", 9);
+            textBox.SelectionColor = Color.Gray;
+            textBox.AppendText($"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
+            textBox.AppendText($"Path: {details.GamePath}\n");
+            textBox.AppendText($"AppID: {details.AppId}\n");
+            textBox.AppendText($"Time: {details.Timestamp:yyyy-MM-dd HH:mm:ss}\n");
+
+            textBox.SelectionColor = details.Success ? Color.LightGreen : Color.Red;
+            textBox.AppendText($"Crack Success: {(details.Success ? "✓ Yes" : "✗ No")}\n\n");
+
+            if (details.DllsBackedUp.Count > 0)
+            {
+                textBox.SelectionColor = Color.Yellow;
+                textBox.AppendText($"DLLs Backed Up ({details.DllsBackedUp.Count}):\n");
+                textBox.SelectionColor = Color.White;
+                foreach (var dll in details.DllsBackedUp)
+                    textBox.AppendText($"  • {dll}\n");
+                textBox.AppendText("\n");
+            }
+
+            if (details.DllsReplaced.Count > 0)
+            {
+                textBox.SelectionColor = Color.LightGreen;
+                textBox.AppendText($"DLLs Replaced ({details.DllsReplaced.Count}):\n");
+                textBox.SelectionColor = Color.White;
+                foreach (var dll in details.DllsReplaced)
+                    textBox.AppendText($"  • {dll}\n");
+                textBox.AppendText("\n");
+            }
+
+            if (details.ExesTried.Count > 0)
+            {
+                textBox.SelectionColor = Color.Cyan;
+                textBox.AppendText($"EXEs Scanned by Steamless ({details.ExesTried.Count}):\n");
+                foreach (var exe in details.ExesTried)
+                {
+                    bool wasUnpacked = details.ExesUnpacked.Any(u => u.EndsWith(exe));
+                    if (wasUnpacked)
+                    {
+                        textBox.SelectionColor = Color.LightGreen;
+                        textBox.AppendText($"  • {exe} [UNPACKED - Had Steam Stub]\n");
+                    }
+                    else
+                    {
+                        textBox.SelectionColor = Color.Gray;
+                        textBox.AppendText($"  • {exe} [No Steam Stub]\n");
+                    }
+                }
+                textBox.AppendText("\n");
+            }
+
+            if (details.Errors.Count > 0)
+            {
+                textBox.SelectionColor = Color.Red;
+                textBox.AppendText($"Errors ({details.Errors.Count}):\n");
+                textBox.SelectionColor = Color.Orange;
+                foreach (var err in details.Errors)
+                    textBox.AppendText($"  ! {err}\n");
+                textBox.AppendText("\n");
+            }
+
+            // Zip status
+            if (details.ZipAttempted)
+            {
+                textBox.SelectionColor = Color.Gray;
+                textBox.AppendText("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
+                textBox.SelectionColor = details.ZipSuccess ? Color.LightGreen : Color.Red;
+                textBox.AppendText($"Zip: {(details.ZipSuccess ? "✓ Success" : "✗ Failed")}\n");
+                if (!string.IsNullOrEmpty(details.ZipPath))
+                {
+                    textBox.SelectionColor = Color.Gray;
+                    textBox.AppendText($"  Path: {details.ZipPath}\n");
+                }
+                if (details.ZipDuration.HasValue)
+                {
+                    textBox.SelectionColor = Color.White;
+                    textBox.AppendText($"  Duration: {details.ZipDuration.Value:mm\\:ss}\n");
+                }
+                if (details.ZipFileSize > 0)
+                {
+                    textBox.SelectionColor = Color.White;
+                    string sizeStr = details.ZipFileSize > 1024 * 1024 * 1024
+                        ? $"{details.ZipFileSize / (1024.0 * 1024 * 1024):F2} GB"
+                        : details.ZipFileSize > 1024 * 1024
+                            ? $"{details.ZipFileSize / (1024.0 * 1024):F1} MB"
+                            : $"{details.ZipFileSize / 1024.0:F0} KB";
+                    textBox.AppendText($"  Size: {sizeStr}\n");
+                }
+                if (!string.IsNullOrEmpty(details.ZipError))
+                {
+                    textBox.SelectionColor = Color.Orange;
+                    textBox.AppendText($"  Error: {details.ZipError}\n");
+                }
+                textBox.AppendText("\n");
+            }
+
+            // Upload status
+            if (details.UploadAttempted)
+            {
+                if (!details.ZipAttempted)
+                {
+                    textBox.SelectionColor = Color.Gray;
+                    textBox.AppendText("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
+                }
+                textBox.SelectionColor = details.UploadSuccess ? Color.LightGreen : Color.Red;
+                textBox.AppendText($"Upload: {(details.UploadSuccess ? "✓ Success" : "✗ Failed")}\n");
+                if (details.UploadRetryCount > 0)
+                {
+                    textBox.SelectionColor = Color.Yellow;
+                    textBox.AppendText($"  Retries: {details.UploadRetryCount}\n");
+                }
+                if (details.UploadDuration.HasValue)
+                {
+                    textBox.SelectionColor = Color.White;
+                    textBox.AppendText($"  Duration: {details.UploadDuration.Value:mm\\:ss}\n");
+                }
+                if (!string.IsNullOrEmpty(details.UploadUrl))
+                {
+                    textBox.SelectionColor = Color.Cyan;
+                    textBox.AppendText($"  1fichier: {details.UploadUrl}\n");
+                }
+                if (!string.IsNullOrEmpty(details.PyDriveUrl))
+                {
+                    textBox.SelectionColor = Color.LightGreen;
+                    textBox.AppendText($"  PyDrive: {details.PyDriveUrl}\n");
+                }
+                if (!string.IsNullOrEmpty(details.UploadError))
+                {
+                    textBox.SelectionColor = Color.Orange;
+                    textBox.AppendText($"  Error: {details.UploadError}\n");
+                }
+            }
+
+            if (!details.HasAnyChanges && details.Errors.Count == 0 && !details.ZipAttempted && !details.UploadAttempted)
+            {
+                textBox.SelectionColor = Color.Orange;
+                textBox.AppendText("\nNo modifications were made to this game.\n");
+                textBox.AppendText("This could mean:\n");
+                textBox.AppendText("  - No steam_api.dll or steam_api64.dll was found\n");
+                textBox.AppendText("  - No Steam-protected EXEs were found\n");
+                textBox.AppendText("  - The game was already cracked\n");
+            }
+
+            detailForm.Controls.Add(textBox);
+
+            // Use Show() instead of ShowDialog() to not block during uploads
+            detailForm.Show(this);
+            detailForm.BringToFront();
+            detailForm.Activate();
+        }
+
+        #endregion
     }
 
     // Modern Progress Bar with cool blue gradient
