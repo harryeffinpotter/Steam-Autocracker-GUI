@@ -185,6 +185,13 @@ namespace APPID
         public List<CrackDetails> CrackHistory { get; } = new List<CrackDetails>();
         #endregion
 
+        #region Batch Progress Indicator
+        private PictureBox batchIndicator;
+        private BatchGameSelectionForm activeBatchForm;
+        private Image batchIconBase;
+        private ToolTip batchIndicatorTooltip;
+        #endregion
+
         protected DataTableGeneration dataTableGeneration;
         public static int CurrentCell = 0;
         public static string APPNAME = "";
@@ -242,6 +249,9 @@ namespace APPID
             ApplyRoundedCornersToButton(OpenDir);
             ApplyRoundedCornersToButton(ZipToShare);
             ApplyRoundedCornersToButton(btnManualEntry);
+
+            // Initialize batch progress indicator (hidden by default)
+            InitializeBatchIndicator();
         }
 
         private void ApplyRoundedCornersToButton(Button btn)
@@ -4184,12 +4194,135 @@ oLink3.Save";
             return games.Distinct().ToList();
         }
 
+        #region Batch Progress Indicator Methods
+        /// <summary>
+        /// Initialize the batch progress indicator (hidden by default)
+        /// </summary>
+        private void InitializeBatchIndicator()
+        {
+            try { batchIconBase = Properties.Resources.batch_icon; } catch { }
+
+            batchIndicator = new PictureBox
+            {
+                Size = new Size(32, 32),
+                Location = new Point(this.ClientSize.Width - 42, 8),
+                Cursor = Cursors.Hand,
+                Visible = false,
+                BackColor = Color.Transparent,
+                SizeMode = PictureBoxSizeMode.Zoom
+            };
+
+            batchIndicatorTooltip = new ToolTip();
+            batchIndicatorTooltip.SetToolTip(batchIndicator, "Click to restore batch window");
+
+            batchIndicator.Click += (s, e) =>
+            {
+                if (activeBatchForm != null && !activeBatchForm.IsDisposed)
+                {
+                    activeBatchForm.Show();
+                    activeBatchForm.WindowState = FormWindowState.Normal;
+                    activeBatchForm.BringToFront();
+                    activeBatchForm.Activate();
+                    batchIndicator.Visible = false;
+                }
+            };
+
+            this.Controls.Add(batchIndicator);
+            batchIndicator.BringToFront();
+        }
+
+        /// <summary>
+        /// Update the batch indicator with current progress percentage
+        /// </summary>
+        public void UpdateBatchIndicator(int percent)
+        {
+            if (this.InvokeRequired)
+            {
+                try { this.BeginInvoke(new Action(() => UpdateBatchIndicator(percent))); } catch { }
+                return;
+            }
+
+            if (batchIconBase == null) return;
+
+            // Create a new image with the percentage drawn on it
+            var bmp = new Bitmap(batchIconBase.Width, batchIconBase.Height);
+            using (var g = Graphics.FromImage(bmp))
+            {
+                g.DrawImage(batchIconBase, 0, 0);
+
+                // Draw percentage in the top window's title bar area
+                string text = percent.ToString();
+                using (var font = new Font("Segoe UI", batchIconBase.Width / 4, FontStyle.Bold))
+                using (var brush = new SolidBrush(Color.White))
+                using (var outline = new SolidBrush(Color.FromArgb(150, 0, 0, 0)))
+                {
+                    var sf = new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center };
+                    // Position in the front window's title bar (roughly top-right area)
+                    var textRect = new RectangleF(batchIconBase.Width * 0.45f, batchIconBase.Height * 0.52f,
+                                                   batchIconBase.Width * 0.5f, batchIconBase.Height * 0.15f);
+                    // Draw shadow/outline first
+                    g.DrawString(text, font, outline, new RectangleF(textRect.X + 1, textRect.Y + 1, textRect.Width, textRect.Height), sf);
+                    g.DrawString(text, font, brush, textRect, sf);
+                }
+            }
+
+            batchIndicator.Image?.Dispose();
+            batchIndicator.Image = bmp;
+            batchIndicatorTooltip.SetToolTip(batchIndicator, $"Batch: {percent}% - Click to restore");
+        }
+
+        /// <summary>
+        /// Show the batch indicator when batch window is minimized
+        /// </summary>
+        public void ShowBatchIndicator()
+        {
+            if (this.InvokeRequired)
+            {
+                try { this.BeginInvoke(new Action(() => ShowBatchIndicator())); } catch { }
+                return;
+            }
+            batchIndicator.Visible = true;
+        }
+
+        /// <summary>
+        /// Hide the batch indicator
+        /// </summary>
+        public void HideBatchIndicator()
+        {
+            if (this.InvokeRequired)
+            {
+                try { this.BeginInvoke(new Action(() => HideBatchIndicator())); } catch { }
+                return;
+            }
+            batchIndicator.Visible = false;
+        }
+        #endregion
+
         /// <summary>
         /// Shows batch game selection form (non-modal)
         /// </summary>
         private void ShowBatchGameSelection(List<string> gamePaths)
         {
             var form = new BatchGameSelectionForm(gamePaths);
+            activeBatchForm = form;  // Track the active batch form
+
+            // Set up minimize-to-indicator behavior
+            form.Resize += (s, e) =>
+            {
+                if (form.WindowState == FormWindowState.Minimized && form.IsProcessing)
+                {
+                    form.Hide();
+                    ShowBatchIndicator();
+                }
+            };
+
+            // When form closes, clear the reference and hide indicator
+            form.FormClosed += (s, e) =>
+            {
+                activeBatchForm = null;
+                HideBatchIndicator();
+            };
+
             form.ProcessRequested += async (games, format, level, usePassword) =>
             {
                 await ProcessBatchGames(games, format, level, usePassword, form);
@@ -4217,7 +4350,27 @@ oLink3.Save";
             var crackResults = new Dictionary<string, bool>(); // Track which games cracked successfully
             var archivePaths = new Dictionary<string, string>(); // Track archive paths for upload
 
+            // Progress tracking
+            int totalGames = games.Count;
+            int completedGames = 0;
+            int crackCount = games.Count(g => g.Crack);
+            int zipCount = games.Count(g => g.Zip);
+            int uploadCount = games.Count(g => g.Upload);
+            int totalSteps = crackCount + zipCount + uploadCount;
+            int completedSteps = 0;
+
+            Action updateProgress = () =>
+            {
+                int percent = totalSteps > 0 ? (completedSteps * 100) / totalSteps : 0;
+                batchForm.UpdateTitleProgress(percent);
+                UpdateBatchIndicator(percent);
+            };
+
+            // Initial progress update
+            updateProgress();
+
             // ========== PHASE 1: CRACK (Sequential due to shared state) ==========
+            int crackIndex = 0;
             foreach (var game in games.Where(g => g.Crack))
             {
                 batchForm.UpdateStatus(game.Path, "Cracking...", Color.Yellow);
@@ -4269,6 +4422,9 @@ oLink3.Save";
                     batchForm.UpdateStatus(game.Path, "Crack Error", Color.Red);
                     failureReasons.Add((game.Name, $"Crack exception: {ex.Message}"));
                 }
+
+                completedSteps++;
+                updateProgress();
             }
 
             // Games that didn't need cracking
@@ -4360,6 +4516,9 @@ oLink3.Save";
                         batchForm.UpdateZipStatus(game.Path, false, archivePath, zipError ?? "Unknown error");
                         failureReasons.Add((game.Name, $"Zip failed: {zipError ?? "Unknown"}"));
                     }
+
+                    completedSteps++;
+                    updateProgress();
                 }
             }
 
@@ -4536,6 +4695,9 @@ oLink3.Save";
                         failureReasons.Add((game.Name, $"Upload failed after {attempt} attempts: {lastError}"));
                     }
                 }
+
+                completedSteps++;
+                updateProgress();
             }
 
             // Hide upload details panel when done
@@ -4549,6 +4711,8 @@ oLink3.Save";
 
             // ========== DONE ==========
             batchForm.SetProcessingMode(false);
+            batchForm.UpdateTitleProgress(100, "Complete");
+            HideBatchIndicator();
 
             // Build summary
             var summaryParts = new List<string>();
