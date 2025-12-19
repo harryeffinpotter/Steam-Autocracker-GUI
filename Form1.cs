@@ -4626,32 +4626,27 @@ oLink3.Save";
                 }
             }
 
-            // STEP 2: Pipeline zip+upload for games that need both
-            // Zip first game, then for each: upload current while zipping next
+            // STEP 2: Pipeline - zip sequentially, fire off uploads immediately (parallel uploads)
             var conversionTasks = new List<Task>();
-            var uploadedLinks = new System.Collections.Concurrent.ConcurrentBag<(string gameName, string path, string oneFichierUrl)>();
+            var uploadTasks = new List<Task<bool>>(); // Track success/failure
             const int maxRetries = 3;
-
-            // Reset skip/cancel state before starting uploads
             batchForm.ResetSkipCancelState();
 
-            foreach (var game in gamesToUpload)
+            // Helper to upload a single game (runs in background, returns true if success)
+            Func<BatchGameItem, string, Task<bool>> uploadOneGame = async (game, archivePath) =>
             {
-                // Check if user cancelled all remaining
                 if (batchForm.ShouldCancelAll())
                 {
                     batchForm.UpdateStatus(game.Path, "Cancelled", Color.Orange);
-                    continue;
+                    return false;
                 }
 
-                string archivePath = archivePaths.ContainsKey(game.Path) ? archivePaths[game.Path] : null;
                 if (string.IsNullOrEmpty(archivePath) || !File.Exists(archivePath))
                 {
                     batchForm.UpdateStatus(game.Path, "No Archive", Color.Orange);
                     batchForm.UpdateUploadStatus(game.Path, false, null, "Archive not found");
-                    failureReasons.Add((game.Name, "Archive not found"));
-                    uploadFailed++;
-                    continue;
+                    lock (failureReasons) failureReasons.Add((game.Name, "Archive not found"));
+                    return false;
                 }
 
                 bool uploadSuccess = false;
@@ -4659,26 +4654,17 @@ oLink3.Save";
                 int attempt = 0;
                 long fileSize = new FileInfo(archivePath).Length;
 
-                // Show upload details panel (this resets skip flag for new game)
-                batchForm.ShowUploadDetails(game.Name, fileSize);
-
-                while (!uploadSuccess && attempt < maxRetries && !batchForm.ShouldSkipCurrentGame() && !batchForm.ShouldCancelAll())
+                while (!uploadSuccess && attempt < maxRetries && !batchForm.ShouldCancelAll())
                 {
                     attempt++;
-                    string statusPrefix = attempt > 1 ? $"Retry {attempt}/{maxRetries}: " : "";
-
+                    string statusPrefix = attempt > 1 ? $"Retry {attempt}: " : "";
                     batchForm.UpdateStatus(game.Path, $"{statusPrefix}Uploading...", Color.Magenta);
 
                     try
                     {
                         using (var uploader = new SAC_GUI.OneFichierUploader())
                         {
-                            // Capture game path for closure
                             var gamePath = game.Path;
-                            var currentAttempt = attempt;
-
-                            // Track speed
-                            var uploadStartTime = DateTime.Now;
                             double lastProgress = 0;
                             DateTime lastProgressTime = DateTime.Now;
                             double smoothedSpeed = 0;
@@ -4686,99 +4672,64 @@ oLink3.Save";
                             var progress = new Progress<double>(p =>
                             {
                                 int pct = (int)(p * 100);
-                                string prefix = currentAttempt > 1 ? $"Retry {currentAttempt}: " : "";
-                                batchForm.UpdateStatus(gamePath, $"{prefix}Upload {pct}%", Color.Magenta);
+                                batchForm.UpdateStatus(gamePath, $"Upload {pct}%", Color.Magenta);
 
-                                // Calculate speed
                                 var now = DateTime.Now;
                                 double progressDelta = p - lastProgress;
                                 double timeDelta = (now - lastProgressTime).TotalSeconds;
 
                                 if (timeDelta > 0.1 && progressDelta > 0)
                                 {
-                                    long uploadedBytes = (long)(p * fileSize);
                                     double bytesDelta = progressDelta * fileSize;
                                     double currentSpeed = bytesDelta / timeDelta;
-
-                                    // Smooth the speed calculation
                                     smoothedSpeed = smoothedSpeed > 0 ? (smoothedSpeed * 0.7 + currentSpeed * 0.3) : currentSpeed;
-
-                                    // Update actual upload rate for ETA calculation
-                                    if (smoothedSpeed > 0)
-                                        actualUploadRate = smoothedSpeed;
-
-                                    batchForm.UpdateUploadProgress(pct, uploadedBytes, fileSize, smoothedSpeed);
-
-                                    // Update overall progress with new rate info
-                                    updateProgress("upload", 0);
-
+                                    if (smoothedSpeed > 0) actualUploadRate = smoothedSpeed;
                                     lastProgress = p;
                                     lastProgressTime = now;
                                 }
                             });
 
-                            // Get cancellation token for this upload
-                            var cancelToken = batchForm.GetUploadCancellationToken();
-
-                            // Wrap in Task.Run because OneFichierUploader uses synchronous blocking I/O
-                            var result = await Task.Run(() => uploader.UploadFileAsync(archivePath, progress, null, cancelToken));
+                            var result = await Task.Run(() => uploader.UploadFileAsync(archivePath, progress, null, System.Threading.CancellationToken.None));
 
                             if (result != null && !string.IsNullOrEmpty(result.DownloadUrl))
                             {
                                 string oneFichierUrl = result.DownloadUrl;
-                                uploaded++;
                                 uploadSuccess = true;
                                 batchForm.UpdateStatus(game.Path, "Converting...", Color.Yellow);
-
-                                // Store upload success in details
                                 batchForm.UpdateUploadStatus(game.Path, true, oneFichierUrl, null, attempt - 1);
+                                try { this.BeginInvoke(new Action(() => { try { Clipboard.SetText(oneFichierUrl); } catch { } })); } catch { }
 
-                                // Copy 1fichier link immediately
-                                try { Clipboard.SetText(oneFichierUrl); } catch { }
-
-                                // Start conversion in background - don't wait, continue to next upload
-                                var gameCopy = game;
-                                var urlCopy = oneFichierUrl;
-
-                                // Store URL for click-to-copy
-                                batchForm.SetConvertingUrl(gameCopy.Path, urlCopy);
-
+                                batchForm.SetConvertingUrl(game.Path, oneFichierUrl);
                                 var conversionTask = Task.Run(async () =>
                                 {
-                                    string pydriveUrl = await ConvertOneFichierToPydrive(urlCopy, fileSize,
-                                        status => batchForm.UpdateStatus(gameCopy.Path, status, Color.Yellow));
-
-                                    // Clear the converting URL (no longer needed for click-to-copy)
-                                    batchForm.ClearConvertingUrl(gameCopy.Path);
+                                    string pydriveUrl = await ConvertOneFichierToPydrive(oneFichierUrl, fileSize,
+                                        status => batchForm.UpdateStatus(game.Path, status, Color.Yellow));
+                                    batchForm.ClearConvertingUrl(game.Path);
 
                                     if (!string.IsNullOrEmpty(pydriveUrl))
                                     {
-                                        uploadResults.Add((gameCopy.Name, urlCopy, pydriveUrl));
-                                        batchForm.UpdateStatus(gameCopy.Path, "PyDrive ✓", Color.LightGreen);
-                                        batchForm.SetFinalUrl(gameCopy.Path, pydriveUrl);
+                                        lock (uploadResults) uploadResults.Add((game.Name, oneFichierUrl, pydriveUrl));
+                                        batchForm.UpdateStatus(game.Path, "PyDrive ✓", Color.LightGreen);
+                                        batchForm.SetFinalUrl(game.Path, pydriveUrl);
                                     }
                                     else
                                     {
-                                        uploadResults.Add((gameCopy.Name, urlCopy, null));
-                                        batchForm.UpdateStatus(gameCopy.Path, "1fichier ✓", Color.LightGreen);
-                                        batchForm.SetFinalUrl(gameCopy.Path, urlCopy);
+                                        lock (uploadResults) uploadResults.Add((game.Name, oneFichierUrl, null));
+                                        batchForm.UpdateStatus(game.Path, "1fichier ✓", Color.LightGreen);
+                                        batchForm.SetFinalUrl(game.Path, oneFichierUrl);
                                     }
                                 });
-                                conversionTasks.Add(conversionTask);
+                                lock (conversionTasks) conversionTasks.Add(conversionTask);
                             }
                             else
                             {
-                                lastError = "No download URL returned";
-                                System.Diagnostics.Debug.WriteLine($"[BATCH] Upload attempt {attempt} failed for {game.Name}: No URL returned");
+                                lastError = "No URL returned";
                             }
                         }
                     }
                     catch (Exception ex)
                     {
                         lastError = ex.Message;
-                        System.Diagnostics.Debug.WriteLine($"[BATCH] Upload attempt {attempt} error for {game.Name}: {ex.Message}");
-
-                        // Wait before retry (exponential backoff)
                         if (attempt < maxRetries)
                         {
                             batchForm.UpdateStatus(game.Path, $"Retry in {attempt * 2}s...", Color.Yellow);
@@ -4789,36 +4740,72 @@ oLink3.Save";
 
                 if (!uploadSuccess)
                 {
-                    // Check if it was skipped or cancelled
-                    if (batchForm.ShouldSkipCurrentGame() && !batchForm.ShouldCancelAll())
-                    {
-                        batchForm.UpdateStatus(game.Path, "Skipped", Color.Yellow);
-                        batchForm.UpdateUploadStatus(game.Path, false, null, "Skipped by user");
-                    }
-                    else if (batchForm.ShouldCancelAll())
-                    {
-                        batchForm.UpdateStatus(game.Path, "Cancelled", Color.Orange);
-                        batchForm.UpdateUploadStatus(game.Path, false, null, "Cancelled by user");
-                    }
-                    else
-                    {
-                        uploadFailed++;
-                        string shortError = lastError?.Length > 30 ? lastError.Substring(0, 30) + "..." : lastError;
-                        batchForm.UpdateStatus(game.Path, $"Failed: {shortError}", Color.Red);
-                        batchForm.UpdateUploadStatus(game.Path, false, null, lastError, attempt - 1);
-                        failureReasons.Add((game.Name, $"Upload failed after {attempt} attempts: {lastError}"));
-                    }
+                    string shortError = lastError?.Length > 30 ? lastError.Substring(0, 30) + "..." : lastError;
+                    batchForm.UpdateStatus(game.Path, $"Failed: {shortError}", Color.Red);
+                    batchForm.UpdateUploadStatus(game.Path, false, null, lastError, attempt - 1);
+                    lock (failureReasons) failureReasons.Add((game.Name, $"Upload failed: {lastError}"));
                 }
 
-                // Track bytes uploaded for progress
-                bytesUploadedSoFar += folderSizes.ContainsKey(game.Path) ? folderSizes[game.Path] : 0;
+                lock (this) { bytesUploadedSoFar += folderSizes.ContainsKey(game.Path) ? folderSizes[game.Path] : 0; }
                 updateProgress("upload", 0);
+                return uploadSuccess;
+            };
+
+            // Zip each game sequentially, fire off upload immediately after each zip
+            foreach (var game in gamesToZipAndUpload)
+            {
+                if (batchForm.ShouldCancelAll()) break;
+
+                batchForm.UpdateStatus(game.Path, "Zipping...", Color.Cyan);
+                var zipResult = await zipOneGame(game);
+
+                if (zipResult.success)
+                {
+                    zipped++;
+                    batchForm.UpdateStatus(game.Path, "Queued for upload", Color.Yellow);
+                    batchForm.UpdateZipStatus(game.Path, true, zipResult.archivePath);
+                    totalBytesActuallyZipped += folderSizes.ContainsKey(game.Path) ? folderSizes[game.Path] : 0;
+
+                    // Fire off upload immediately - don't wait
+                    var uploadTask = uploadOneGame(game, zipResult.archivePath);
+                    uploadTasks.Add(uploadTask);
+                }
+                else
+                {
+                    zipFailed++;
+                    batchForm.UpdateStatus(game.Path, "Zip Failed", Color.Red);
+                    batchForm.UpdateZipStatus(game.Path, false, zipResult.archivePath, zipResult.error ?? "Unknown");
+                    failureReasons.Add((game.Name, $"Zip failed: {zipResult.error ?? "Unknown"}"));
+                }
+
+                bytesZippedSoFar += folderSizes.ContainsKey(game.Path) ? folderSizes[game.Path] : 0;
+                updateProgress("zip", 0);
             }
 
-            // Hide upload details panel when done
+            // Save zip rate
+            double zipElapsed = (DateTime.Now - zipStartTime).TotalSeconds;
+            if (zipElapsed > 1 && totalBytesActuallyZipped > 0)
+            {
+                double measuredZipRate = totalBytesActuallyZipped / zipElapsed;
+                actualZipRate = measuredZipRate;
+                try {
+                    if (compressionLevel == "0") APPID.Properties.Settings.Default.LastZipRateLevel0 = measuredZipRate;
+                    else APPID.Properties.Settings.Default.LastZipRateCompressed = measuredZipRate;
+                    APPID.Properties.Settings.Default.Save();
+                } catch { }
+            }
+
+            // Wait for all uploads to complete and count results
+            if (uploadTasks.Count > 0)
+            {
+                var uploadResults2 = await Task.WhenAll(uploadTasks);
+                uploaded = uploadResults2.Count(r => r);
+                uploadFailed = uploadResults2.Count(r => !r);
+            }
+
             batchForm.HideUploadDetails();
 
-            // Save actual upload rate for future estimates
+            // Save upload rate
             if (actualUploadRate > 0 && actualUploadRate != uploadRate)
             {
                 try {
@@ -4829,9 +4816,7 @@ oLink3.Save";
 
             // Wait for all conversions to complete
             if (conversionTasks.Count > 0)
-            {
                 await Task.WhenAll(conversionTasks);
-            }
 
             } // end try
             finally
