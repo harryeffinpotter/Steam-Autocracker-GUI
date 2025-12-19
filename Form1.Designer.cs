@@ -272,6 +272,7 @@ namespace APPID
             ShareButton.Name = "ShareButton";
             lanMultiplayerToolTip.SetToolTip(ShareButton, resources.GetString("ShareButton.ToolTip"));
             ShareButton.UseVisualStyleBackColor = false;
+            ShareButton.TabStop = false;
             ShareButton.Click += ShareButton_Click;
             // 
             // RequestButton
@@ -303,7 +304,7 @@ namespace APPID
             autoCrackOn.Image = APPID.Properties.Resources._22222;
             resources.ApplyResources(autoCrackOn, "autoCrackOn");
             autoCrackOn.Name = "autoCrackOn";
-            autoCrackOn.TabStop = false;
+            autoCrackOn.TabStop = false;  
             lanMultiplayerToolTip.SetToolTip(autoCrackOn, resources.GetString("autoCrackOn.ToolTip"));
             autoCrackOn.Click += autoCrackOn_Click;
             // 
@@ -422,13 +423,14 @@ namespace APPID
             label5.DragLeave += mainPanel_DragLeave;
             // 
             // label1
-            // 
+            //
             label1.AllowDrop = true;
             resources.ApplyResources(label1, "label1");
             label1.BackColor = System.Drawing.Color.Transparent;
             label1.Cursor = System.Windows.Forms.Cursors.Hand;
             label1.ForeColor = System.Drawing.Color.White;
             label1.Name = "label1";
+            lanMultiplayerToolTip.SetToolTip(label1, "Toggle Auto-Crack mode.\nWhen ON, games are automatically cracked when selected.");
             label1.DragDrop += mainPanel_DragDrop;
             label1.DragEnter += mainPanel_DragEnter;
             label1.DragLeave += mainPanel_DragLeave;

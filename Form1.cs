@@ -77,8 +77,9 @@ namespace APPID
             public string AppId { get; set; }
             public List<string> DllsBackedUp { get; } = new List<string>();
             public List<string> DllsReplaced { get; } = new List<string>();
-            public List<string> ExesUnpacked { get; } = new List<string>();
-            public List<string> ExesSkipped { get; } = new List<string>();
+            public List<string> ExesTried { get; } = new List<string>();      // All EXEs Steamless attempted
+            public List<string> ExesUnpacked { get; } = new List<string>();   // EXEs with Steam Stub that were unpacked
+            public List<string> ExesSkipped { get; } = new List<string>();    // Legacy - no longer used
             public List<string> Errors { get; } = new List<string>();
             public bool Success { get; set; }
             public DateTime Timestamp { get; set; } = DateTime.Now;
@@ -88,13 +89,18 @@ namespace APPID
             public bool ZipSuccess { get; set; }
             public string ZipError { get; set; }
             public string ZipPath { get; set; }
+            public TimeSpan? ZipDuration { get; set; }
+            public long ZipFileSize { get; set; }
             public bool UploadAttempted { get; set; }
             public bool UploadSuccess { get; set; }
             public string UploadError { get; set; }
-            public string UploadUrl { get; set; }
+            public string UploadUrl { get; set; }  // 1fichier URL
+            public string PyDriveUrl { get; set; } // Converted PyDrive URL
             public int UploadRetryCount { get; set; }
+            public TimeSpan? UploadDuration { get; set; }
 
             public bool HasAnyChanges => DllsReplaced.Count > 0 || ExesUnpacked.Count > 0;
+            public bool HasDetails => HasAnyChanges || ZipAttempted || UploadAttempted;
 
             public string GetSummary()
             {
@@ -122,19 +128,14 @@ namespace APPID
                     sb.AppendLine();
                 }
 
-                if (ExesUnpacked.Count > 0)
+                if (ExesTried.Count > 0)
                 {
-                    sb.AppendLine($"EXEs Unpacked by Steamless ({ExesUnpacked.Count}):");
-                    foreach (var exe in ExesUnpacked)
-                        sb.AppendLine($"  - {exe}");
-                    sb.AppendLine();
-                }
-
-                if (ExesSkipped.Count > 0)
-                {
-                    sb.AppendLine($"EXEs Skipped (Non-game utilities) ({ExesSkipped.Count}):");
-                    foreach (var exe in ExesSkipped)
-                        sb.AppendLine($"  - {exe}");
+                    sb.AppendLine($"EXEs Scanned by Steamless ({ExesTried.Count}):");
+                    foreach (var exe in ExesTried)
+                    {
+                        bool wasUnpacked = ExesUnpacked.Any(u => u.EndsWith(exe));
+                        sb.AppendLine($"  - {exe} {(wasUnpacked ? "[UNPACKED - Had Steam Stub]" : "[No Steam Stub]")}");
+                    }
                     sb.AppendLine();
                 }
 
@@ -182,120 +183,6 @@ namespace APPID
         /// History of crack operations for the current session
         /// </summary>
         public List<CrackDetails> CrackHistory { get; } = new List<CrackDetails>();
-
-        /// <summary>
-        /// Patterns for EXE files that should be skipped during Steamless unpacking.
-        /// These are utility/installer EXEs, not actual game executables.
-        /// </summary>
-        private static readonly string[] SkipExePatterns = new string[]
-        {
-            // Crash handlers
-            @"(?i)crash.*report",
-            @"(?i)crash.*handler",
-            @"(?i)crash.*pad",
-            @"(?i)unity.*crash",
-            @"(?i)CrashReportClient",
-            @"(?i)UnityCrashHandler",
-
-            // Redistributables and installers
-            @"(?i)vc_?redist",
-            @"(?i)vcredist",
-            @"(?i)dxsetup",
-            @"(?i)dxwebsetup",
-            @"(?i)directx",
-            @"(?i)dotnet",
-            @"(?i)\.net.*install",
-            @"(?i)physx",
-            @"(?i)openal",
-            @"(?i)oalinst",
-            @"(?i)UE.*Prereq",
-            @"(?i)UEPrereq",
-
-            // Uninstallers
-            @"(?i)unins\d*",
-            @"(?i)uninstall",
-            @"(?i)uninst",
-
-            // Development/Editor tools
-            @"(?i)sdk",
-            @"(?i)editor",
-            @"(?i)modkit",
-
-            // Launchers and helpers
-            @"(?i)_?lobby_connect",
-            @"(?i)webhelper",
-            @"(?i)cefsubprocess",
-            @"(?i)browsersubprocess",
-            @"(?i)steamwebhelper",
-
-            // Easy Anti-Cheat and anti-cheat
-            @"(?i)easyanticheat",
-            @"(?i)eac_",
-            @"(?i)battleye",
-            @"(?i)beclient",
-            @"(?i)beservice",
-
-            // Updaters and launchers
-            @"(?i)updater",
-            @"(?i)patcher",
-            @"(?i)launcher.*helper",
-
-            // Specific known utilities
-            @"(?i)cleanup",
-            @"(?i)^7z",
-            @"(?i)^rar",
-            @"(?i)^setup",
-            @"(?i)install",
-        };
-
-        /// <summary>
-        /// Folder names that typically contain non-game executables
-        /// </summary>
-        private static readonly string[] SkipFolderNames = new string[]
-        {
-            "_CommonRedist",
-            "CommonRedist",
-            "Redist",
-            "Redistributables",
-            "__Installer",
-            "_Installer",
-            "DirectX",
-            "VCRedist",
-            "DotNetFX",
-            ".NET",
-            "Support",
-            "Prerequisites",
-            "Prereqs",
-        };
-
-        /// <summary>
-        /// Checks if an EXE file should be skipped during Steamless unpacking
-        /// </summary>
-        private static bool ShouldSkipExe(string exePath)
-        {
-            string fileName = Path.GetFileName(exePath);
-            string directory = Path.GetDirectoryName(exePath) ?? "";
-
-            // Check if the file is in a skip folder
-            foreach (var skipFolder in SkipFolderNames)
-            {
-                if (directory.IndexOf(skipFolder, StringComparison.OrdinalIgnoreCase) >= 0)
-                    return true;
-            }
-
-            // Check against skip patterns
-            foreach (var pattern in SkipExePatterns)
-            {
-                try
-                {
-                    if (Regex.IsMatch(fileName, pattern, RegexOptions.IgnoreCase))
-                        return true;
-                }
-                catch { }
-            }
-
-            return false;
-        }
         #endregion
 
         protected DataTableGeneration dataTableGeneration;
@@ -1666,11 +1553,14 @@ namespace APPID
             System.Diagnostics.Debug.WriteLine($"[CRACK] Game Directory: {gameDir}");
             System.Diagnostics.Debug.WriteLine($"[CRACK] AppID: {CurrentAppId}");
             System.Diagnostics.Debug.WriteLine($"[CRACK] Current Directory: {Environment.CurrentDirectory}");
+            LogHelper.Log($"[CRACK] === Starting crack for: {gameDirName ?? Path.GetFileName(gameDir)} (AppID: {CurrentAppId}) ===");
+            LogHelper.Log($"[CRACK] Path: {gameDir}");
 
             try
             {
                 var files = Directory.GetFiles(gameDir, "*.*", SearchOption.AllDirectories);
                 System.Diagnostics.Debug.WriteLine($"[CRACK] Found {files.Length} files total");
+                LogHelper.Log($"[CRACK] Found {files.Length} files, scanning for DLLs and EXEs...");
 
 
                 foreach (string file in files)
@@ -1849,14 +1739,6 @@ namespace APPID
                             continue;
                         }
 
-                        // Check if this EXE should be skipped (non-game utility executables)
-                        if (ShouldSkipExe(file))
-                        {
-                            System.Diagnostics.Debug.WriteLine($"[CRACK] Skipping non-game EXE: {file}");
-                            CurrentCrackDetails.ExesSkipped.Add(Path.GetFileName(file));
-                            continue;
-                        }
-
                         // Check if Steamless CLI exists before trying to use it (CLI version runs without GUI)
                         string steamlessPath = $"{BinPath}\\Steamless\\Steamless.CLI.exe";
                         System.Diagnostics.Debug.WriteLine($"[CRACK] Checking for Steamless CLI at: {steamlessPath}");
@@ -1865,12 +1747,17 @@ namespace APPID
                         if (!File.Exists(steamlessPath))
                         {
                             System.Diagnostics.Debug.WriteLine($"[CRACK] Steamless CLI not found, skipping EXE unpacking for: {file}");
+                            LogHelper.Log($"[STEAMLESS] ERROR: Steamless.CLI.exe not found at {steamlessPath}");
                             Tit($"Steamless.CLI.exe not found at {steamlessPath}, skipping EXE unpacking", Color.Yellow);
                             continue;
                         }
 
+                        LogHelper.Log($"[STEAMLESS] Processing: {file}");
                         System.Diagnostics.Debug.WriteLine($"[CRACK] Processing EXE: {file}");
                         CrackStatusChanged?.Invoke(this, $"Attempting to apply Steamless to {Path.GetFileName(file)}...");
+
+                        // Track all EXEs we attempt to process
+                        CurrentCrackDetails.ExesTried.Add(Path.GetFileName(file));
 
                         // Restore .bak if it exists (apply Steamless to clean exe)
                         if (File.Exists($"{file}.bak"))
@@ -1909,10 +1796,12 @@ namespace APPID
 
                         System.Diagnostics.Debug.WriteLine($"[CRACK] Steamless output: {Output}");
                         System.Diagnostics.Debug.WriteLine($"[CRACK] Steamless exit code: {x2.ExitCode}");
+                        LogHelper.Log($"[STEAMLESS] Exit code: {x2.ExitCode}, Output: {Output.Trim()}");
 
                         if (File.Exists($"{file}.unpacked.exe"))
                         {
                             System.Diagnostics.Debug.WriteLine($"[CRACK] Successfully unpacked: {file}");
+                            LogHelper.Log($"[STEAMLESS] SUCCESS - Unpacked: {Path.GetFileName(file)}");
                             Tit($"Unpacked {file} successfully!", Color.LightSkyBlue);
                             File.Move(file, file + ".bak");
                             File.Move($"{file}.unpacked.exe", file);
@@ -1922,6 +1811,7 @@ namespace APPID
                         else
                         {
                             System.Diagnostics.Debug.WriteLine($"[CRACK] No unpacked file created for: {file}");
+                            LogHelper.Log($"[STEAMLESS] No stub detected: {Path.GetFileName(file)}");
                         }
 
                     }
@@ -2422,6 +2312,44 @@ oLink3.Save";
                     {
                         AppSettings.Default.lastDir = parent.FullName;
                         AppSettings.Default.Save();
+                    }
+                }
+                catch { }
+
+                // Check for suspicious folder structure (multiple steam_api DLLs = likely not a single game)
+                try
+                {
+                    var steamApi32Files = Directory.GetFiles(gameDir, "steam_api.dll", SearchOption.AllDirectories)
+                        .Where(f => !f.EndsWith(".bak", StringComparison.OrdinalIgnoreCase)).ToList();
+                    var steamApi64Files = Directory.GetFiles(gameDir, "steam_api64.dll", SearchOption.AllDirectories)
+                        .Where(f => !f.EndsWith(".bak", StringComparison.OrdinalIgnoreCase)).ToList();
+
+                    int totalSteamApis = steamApi32Files.Count + steamApi64Files.Count;
+
+                    // If we find multiple steam_api DLLs, this might be a folder with multiple games
+                    if (steamApi32Files.Count > 1 || steamApi64Files.Count > 1 || totalSteamApis > 2)
+                    {
+                        bool isSingleGame = ShowStyledConfirmation(
+                            "Multiple Steam APIs Detected",
+                            $"Found {totalSteamApis} steam_api DLL(s) in this folder.\n" +
+                            $"This usually means the folder contains multiple games.",
+                            gameDir,
+                            "Yes, it's a single game",
+                            "No, show me the games");
+
+                        if (!isSingleGame)
+                        {
+                            // User says it's NOT a single game - try batch detection
+                            var gamesInFolder = DetectGamesInFolder(gameDir);
+                            if (gamesInFolder.Count > 0)
+                            {
+                                AppSettings.Default.lastDir = gameDir;
+                                AppSettings.Default.Save();
+                                ShowBatchGameSelection(gamesInFolder);
+                                return;
+                            }
+                        }
+                        // If user says Yes, or no games detected, continue with single-game flow
                     }
                 }
                 catch { }
@@ -3939,6 +3867,9 @@ oLink3.Save";
 
         private void ShareButton_Click(object sender, EventArgs e)
         {
+            // Remove focus from button to prevent highlight border
+            this.ActiveControl = null;
+
             // Prevent multiple share windows - reuse existing one
             if (shareWindow != null && !shareWindow.IsDisposed)
             {
@@ -3987,10 +3918,171 @@ oLink3.Save";
 
         }
 
+        /// <summary>
+        /// Shows a styled confirmation dialog matching the app's dark theme
+        /// </summary>
+        private bool ShowStyledConfirmation(string title, string message, string path, string yesText, string noText)
+        {
+            bool result = false;
+
+            using (var dialog = new Form())
+            {
+                dialog.Text = title;
+                dialog.Size = new Size(500, 280);
+                dialog.StartPosition = FormStartPosition.CenterParent;
+                dialog.FormBorderStyle = FormBorderStyle.None;
+                dialog.BackColor = Color.FromArgb(25, 28, 40);
+                dialog.ForeColor = Color.White;
+                dialog.ShowInTaskbar = false;
+
+                // Add a subtle border
+                dialog.Paint += (s, e) =>
+                {
+                    using (var pen = new Pen(Color.FromArgb(60, 65, 80), 2))
+                        e.Graphics.DrawRectangle(pen, 0, 0, dialog.Width - 1, dialog.Height - 1);
+                };
+
+                // Title bar with icon
+                var titleLabel = new Label
+                {
+                    Text = "⚠️ " + title,
+                    Font = new Font("Segoe UI", 14, FontStyle.Bold),
+                    ForeColor = Color.FromArgb(255, 200, 100),
+                    AutoSize = false,
+                    Size = new Size(480, 35),
+                    Location = new Point(15, 15),
+                    TextAlign = ContentAlignment.MiddleLeft
+                };
+
+                // Message
+                var messageLabel = new Label
+                {
+                    Text = message,
+                    Font = new Font("Segoe UI", 10),
+                    ForeColor = Color.White,
+                    AutoSize = false,
+                    Size = new Size(470, 50),
+                    Location = new Point(15, 55)
+                };
+
+                // Path display with dark background
+                var pathPanel = new Panel
+                {
+                    BackColor = Color.FromArgb(15, 18, 25),
+                    Size = new Size(470, 45),
+                    Location = new Point(15, 110)
+                };
+
+                var pathLabel = new Label
+                {
+                    Text = path,
+                    Font = new Font("Consolas", 9),
+                    ForeColor = Color.FromArgb(150, 180, 255),
+                    AutoSize = false,
+                    Size = new Size(460, 35),
+                    Location = new Point(5, 5),
+                    TextAlign = ContentAlignment.MiddleLeft
+                };
+                pathPanel.Controls.Add(pathLabel);
+
+                // Question
+                var questionLabel = new Label
+                {
+                    Text = "Is this actually a single game's directory?",
+                    Font = new Font("Segoe UI", 11, FontStyle.Bold),
+                    ForeColor = Color.White,
+                    AutoSize = false,
+                    Size = new Size(470, 25),
+                    Location = new Point(15, 165),
+                    TextAlign = ContentAlignment.MiddleCenter
+                };
+
+                // Yes button (primary - green tint)
+                var yesBtn = new Button
+                {
+                    Text = yesText,
+                    Size = new Size(200, 40),
+                    Location = new Point(35, 200),
+                    FlatStyle = FlatStyle.Flat,
+                    BackColor = Color.FromArgb(40, 80, 60),
+                    ForeColor = Color.White,
+                    Font = new Font("Segoe UI", 10, FontStyle.Bold),
+                    Cursor = Cursors.Hand
+                };
+                yesBtn.FlatAppearance.BorderColor = Color.FromArgb(60, 120, 80);
+                yesBtn.FlatAppearance.MouseOverBackColor = Color.FromArgb(50, 100, 70);
+                yesBtn.Click += (s, e) => { result = true; dialog.Close(); };
+
+                // No button (secondary - purple tint)
+                var noBtn = new Button
+                {
+                    Text = noText,
+                    Size = new Size(200, 40),
+                    Location = new Point(265, 200),
+                    FlatStyle = FlatStyle.Flat,
+                    BackColor = Color.FromArgb(60, 40, 80),
+                    ForeColor = Color.White,
+                    Font = new Font("Segoe UI", 10, FontStyle.Bold),
+                    Cursor = Cursors.Hand
+                };
+                noBtn.FlatAppearance.BorderColor = Color.FromArgb(100, 60, 140);
+                noBtn.FlatAppearance.MouseOverBackColor = Color.FromArgb(80, 50, 110);
+                noBtn.Click += (s, e) => { result = false; dialog.Close(); };
+
+                // Allow dragging the dialog
+                bool dragging = false;
+                Point dragStart = Point.Empty;
+                dialog.MouseDown += (s, e) => { dragging = true; dragStart = e.Location; };
+                dialog.MouseMove += (s, e) => { if (dragging) dialog.Location = new Point(dialog.Location.X + e.X - dragStart.X, dialog.Location.Y + e.Y - dragStart.Y); };
+                dialog.MouseUp += (s, e) => { dragging = false; };
+
+                dialog.Controls.AddRange(new Control[] { titleLabel, messageLabel, pathPanel, questionLabel, yesBtn, noBtn });
+                dialog.ShowDialog(this);
+            }
+
+            return result;
+        }
+
         #region Batch Game Detection
 
         /// <summary>
-        /// Detects if a folder is a game folder
+        /// Finds steam_api.dll or steam_api64.dll within a folder (with depth limit)
+        /// Returns the folder containing the DLL, or null if not found
+        /// </summary>
+        private string FindSteamApiFolder(string path, int maxDepth = 3)
+        {
+            if (!Directory.Exists(path) || maxDepth < 0) return null;
+
+            try
+            {
+                // Check current folder for steam_api DLLs
+                if (File.Exists(Path.Combine(path, "steam_api.dll")) ||
+                    File.Exists(Path.Combine(path, "steam_api64.dll")))
+                {
+                    return path;
+                }
+
+                // Check subfolders
+                foreach (var subfolder in Directory.GetDirectories(path))
+                {
+                    // Skip common non-game folders
+                    string folderName = Path.GetFileName(subfolder);
+                    if (folderName.StartsWith("_CommonRedist", StringComparison.OrdinalIgnoreCase) ||
+                        folderName.Equals("Redistributables", StringComparison.OrdinalIgnoreCase) ||
+                        folderName.Equals("Redist", StringComparison.OrdinalIgnoreCase))
+                        continue;
+
+                    var result = FindSteamApiFolder(subfolder, maxDepth - 1);
+                    if (result != null) return result;
+                }
+            }
+            catch { }
+
+            return null;
+        }
+
+        /// <summary>
+        /// Detects if a folder is a game folder (has steam_api DLL or other game indicators)
         /// </summary>
         private bool IsGameFolder(string path)
         {
@@ -3998,7 +4090,12 @@ oLink3.Save";
 
             try
             {
-                // Has exe in folder = game
+                // Primary check: steam_api.dll or steam_api64.dll (the most reliable indicator for crackable games)
+                var steamApiFolder = FindSteamApiFolder(path, 2);
+                if (steamApiFolder != null) return true;
+
+                // Secondary checks for games that might have DLLs in subdirectories
+                // Has exe in folder = likely game
                 var exeFiles = Directory.GetFiles(path, "*.exe", SearchOption.TopDirectoryOnly);
                 if (exeFiles.Length > 0) return true;
 
@@ -4031,19 +4128,53 @@ oLink3.Save";
 
             try
             {
-                // Only check direct children - don't recurse into subfolders
+                // First, search for all steam_api DLLs to find actual game folders
+                // Ignore .bak files (those are backups from previous cracks)
+                var steamApiFiles = new List<string>();
+                try
+                {
+                    steamApiFiles.AddRange(Directory.GetFiles(path, "steam_api.dll", SearchOption.AllDirectories)
+                        .Where(f => !f.EndsWith(".bak", StringComparison.OrdinalIgnoreCase)));
+                    steamApiFiles.AddRange(Directory.GetFiles(path, "steam_api64.dll", SearchOption.AllDirectories)
+                        .Where(f => !f.EndsWith(".bak", StringComparison.OrdinalIgnoreCase)));
+                }
+                catch { }
+
+                // Get unique game folders from steam_api locations
+                var gameFoldersFromDlls = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                foreach (var dllPath in steamApiFiles)
+                {
+                    // The game folder is typically the parent or grandparent of the DLL
+                    var dllFolder = Path.GetDirectoryName(dllPath);
+
+                    // Check if this DLL folder is a direct child of the search path
+                    var relativePath = dllFolder.Substring(path.Length).TrimStart(Path.DirectorySeparatorChar);
+                    var topLevelFolder = relativePath.Split(Path.DirectorySeparatorChar)[0];
+                    var gameFolder = Path.Combine(path, topLevelFolder);
+
+                    if (Directory.Exists(gameFolder) && !gameFoldersFromDlls.Contains(gameFolder))
+                    {
+                        gameFoldersFromDlls.Add(gameFolder);
+                    }
+                }
+
+                // Add all folders that have steam_api DLLs
+                games.AddRange(gameFoldersFromDlls);
+
+                // Also check direct children that might be games without steam_api DLLs (fallback)
                 var subfolders = Directory.GetDirectories(path);
                 foreach (var subfolder in subfolders)
                 {
-                    if (IsGameFolder(subfolder))
+                    if (!gameFoldersFromDlls.Contains(subfolder) && IsGameFolder(subfolder))
                     {
+                        // Only add if it looks like a game but wasn't found via steam_api
                         games.Add(subfolder);
                     }
                 }
             }
             catch { }
 
-            return games;
+            return games.Distinct().ToList();
         }
 
         /// <summary>
