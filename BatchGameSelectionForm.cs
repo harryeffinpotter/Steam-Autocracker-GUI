@@ -98,6 +98,12 @@ namespace SteamAutocrackGUI
         private Label lblUploadSpeed;
         private Label lblUploadEta;
         private NeonProgressBar uploadProgressBar;
+        private Button btnSkip;
+        private Button btnCancelAll;
+
+        // Skip/Cancel tracking
+        private bool skipCurrentGame = false;
+        private bool cancelAllRemaining = false;
 
         // Tooltip for batch form
         private ToolTip batchToolTip;
@@ -316,34 +322,23 @@ namespace SteamAutocrackGUI
                 {
                     e.Paint(e.CellBounds, DataGridViewPaintParts.All & ~DataGridViewPaintParts.ContentForeground);
 
-                    using (var brush = new SolidBrush(Color.FromArgb(35, 40, 55)))
+                    // Just draw the icon centered, no background or border
+                    if (infoIcon != null)
                     {
-                        var buttonRect = new Rectangle(e.CellBounds.X + 3, e.CellBounds.Y + 3,
-                            e.CellBounds.Width - 6, e.CellBounds.Height - 6);
-                        e.Graphics.FillRectangle(brush, buttonRect);
-
-                        using (var pen = new Pen(Color.FromArgb(70, 90, 120)))
+                        int iconSize = Math.Min(e.CellBounds.Width - 8, e.CellBounds.Height - 8);
+                        iconSize = Math.Min(iconSize, 20); // Cap at 20px
+                        int iconX = e.CellBounds.X + (e.CellBounds.Width - iconSize) / 2;
+                        int iconY = e.CellBounds.Y + (e.CellBounds.Height - iconSize) / 2;
+                        e.Graphics.DrawImage(infoIcon, iconX, iconY, iconSize, iconSize);
+                    }
+                    else
+                    {
+                        // Fallback to simple "i" text if no icon
+                        using (var textBrush = new SolidBrush(Color.FromArgb(150, 200, 255)))
+                        using (var font = new Font("Segoe UI", 10, FontStyle.Bold))
                         {
-                            e.Graphics.DrawRectangle(pen, buttonRect);
-                        }
-
-                        // Draw icon if available, otherwise fall back to text
-                        if (infoIcon != null)
-                        {
-                            int iconSize = Math.Min(buttonRect.Width - 4, buttonRect.Height - 4);
-                            iconSize = Math.Min(iconSize, 20); // Cap at 20px
-                            int iconX = buttonRect.X + (buttonRect.Width - iconSize) / 2;
-                            int iconY = buttonRect.Y + (buttonRect.Height - iconSize) / 2;
-                            e.Graphics.DrawImage(infoIcon, iconX, iconY, iconSize, iconSize);
-                        }
-                        else
-                        {
-                            using (var textBrush = new SolidBrush(Color.FromArgb(150, 200, 255)))
-                            using (var font = new Font("Segoe UI", 8))
-                            {
-                                var sf = new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center };
-                                e.Graphics.DrawString("Info", font, textBrush, buttonRect, sf);
-                            }
+                            var sf = new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center };
+                            e.Graphics.DrawString("ⓘ", font, textBrush, e.CellBounds, sf);
                         }
                     }
                     e.Handled = true;
@@ -355,7 +350,17 @@ namespace SteamAutocrackGUI
             {
                 string path = gamePaths[i];
                 int rowIndex = gameGrid.Rows.Add();
-                gameGrid.Rows[rowIndex].Cells["GameName"].Value = Path.GetFileName(path);
+
+                // Check for suspicious structure (multiple steam_api DLLs)
+                int steamApiCount = APPID.SteamAppId.CountSteamApiDlls(path);
+                string gameName = Path.GetFileName(path);
+                if (steamApiCount > 2)
+                {
+                    gameName = "⚠️ " + gameName;
+                    gameGrid.Rows[rowIndex].Cells["GameName"].ToolTipText =
+                        $"Warning: Found {steamApiCount} steam_api DLLs in this folder.\nThis might contain multiple games or have an unusual structure.";
+                }
+                gameGrid.Rows[rowIndex].Cells["GameName"].Value = gameName;
 
                 // Auto-detect AppID
                 string appId = DetectAppId(path);
@@ -373,7 +378,7 @@ namespace SteamAutocrackGUI
                 gameGrid.Rows[rowIndex].Cells["Crack"].Value = true;
                 gameGrid.Rows[rowIndex].Cells["Zip"].Value = false;
                 gameGrid.Rows[rowIndex].Cells["Upload"].Value = false;
-                gameGrid.Rows[rowIndex].Cells["Status"].Value = "Pending";
+                gameGrid.Rows[rowIndex].Cells["Status"].Value = steamApiCount > 2 ? "⚠️ Check structure" : "Pending";
                 gameGrid.Rows[rowIndex].Tag = path;
             }
 
@@ -592,11 +597,11 @@ namespace SteamAutocrackGUI
             };
             uploadDetailsPanel.Controls.Add(lblUploadGame);
 
-            // Custom-painted progress bar (modern neon blue style)
+            // Custom-painted progress bar (modern neon blue style) - shrunk to fit buttons
             uploadProgressBar = new NeonProgressBar
             {
                 Location = new Point(5, 21),
-                Size = new Size(450, 14),
+                Size = new Size(350, 14),
                 Maximum = 100
             };
             uploadDetailsPanel.Controls.Add(uploadProgressBar);
@@ -604,8 +609,8 @@ namespace SteamAutocrackGUI
             // Size info (e.g., "1.2 GB / 7.6 GB")
             lblUploadSize = new Label
             {
-                Location = new Point(460, 21),
-                Size = new Size(95, 14),
+                Location = new Point(360, 21),
+                Size = new Size(85, 14),
                 ForeColor = Color.FromArgb(180, 180, 185),
                 Font = new Font("Segoe UI", 8),
                 Text = "",
@@ -616,8 +621,8 @@ namespace SteamAutocrackGUI
             // Speed (e.g., "12.5 MB/s")
             lblUploadSpeed = new Label
             {
-                Location = new Point(555, 21),
-                Size = new Size(80, 14),
+                Location = new Point(450, 21),
+                Size = new Size(70, 14),
                 ForeColor = Color.FromArgb(100, 255, 150),
                 Font = new Font("Segoe UI", 8),
                 Text = "",
@@ -628,14 +633,60 @@ namespace SteamAutocrackGUI
             // ETA (e.g., "ETA: 5:32")
             lblUploadEta = new Label
             {
-                Location = new Point(640, 21),
-                Size = new Size(80, 14),
+                Location = new Point(525, 21),
+                Size = new Size(70, 14),
                 ForeColor = Color.FromArgb(255, 200, 100),
                 Font = new Font("Segoe UI", 8),
                 Text = "",
                 TextAlign = ContentAlignment.MiddleLeft
             };
             uploadDetailsPanel.Controls.Add(lblUploadEta);
+
+            // Skip button
+            btnSkip = new Button
+            {
+                Name = "btnSkip",
+                Location = new Point(625, 5),
+                Size = new Size(45, 30),
+                Text = "Skip",
+                BackColor = Color.FromArgb(80, 70, 20),
+                ForeColor = Color.FromArgb(255, 220, 120),
+                FlatStyle = FlatStyle.Flat,
+                Font = new Font("Segoe UI", 8)
+            };
+            btnSkip.FlatAppearance.BorderColor = Color.FromArgb(150, 120, 40);
+            batchToolTip.SetToolTip(btnSkip, "Skip this game and continue with the next one");
+            btnSkip.Click += (s, e) =>
+            {
+                skipCurrentGame = true;
+                btnSkip.Text = "...";
+                btnSkip.Enabled = false;
+            };
+            uploadDetailsPanel.Controls.Add(btnSkip);
+
+            // Cancel All button
+            btnCancelAll = new Button
+            {
+                Name = "btnCancelAll",
+                Location = new Point(673, 5),
+                Size = new Size(50, 30),
+                Text = "Cancel",
+                BackColor = Color.FromArgb(100, 30, 30),
+                ForeColor = Color.FromArgb(255, 150, 150),
+                FlatStyle = FlatStyle.Flat,
+                Font = new Font("Segoe UI", 8)
+            };
+            btnCancelAll.FlatAppearance.BorderColor = Color.FromArgb(150, 60, 60);
+            batchToolTip.SetToolTip(btnCancelAll, "Cancel this and all remaining uploads");
+            btnCancelAll.Click += (s, e) =>
+            {
+                cancelAllRemaining = true;
+                skipCurrentGame = true;
+                btnCancelAll.Text = "...";
+                btnCancelAll.Enabled = false;
+                btnSkip.Enabled = false;
+            };
+            uploadDetailsPanel.Controls.Add(btnCancelAll);
 
             this.Controls.Add(uploadDetailsPanel);
 
@@ -836,6 +887,13 @@ namespace SteamAutocrackGUI
                 return;
             }
 
+            // Reset skip flag for new game (but not cancel - that stays)
+            skipCurrentGame = false;
+            btnSkip.Text = "Skip";
+            btnSkip.Enabled = !cancelAllRemaining;
+            btnCancelAll.Text = "Cancel";
+            btnCancelAll.Enabled = !cancelAllRemaining;
+
             uploadDetailsPanel.Visible = true;
             lblUploadGame.Text = $"Uploading: {gameName}";
             lblUploadSize.Text = $"0 / {FormatBytes(totalBytes)}";
@@ -844,6 +902,37 @@ namespace SteamAutocrackGUI
             uploadProgressBar.Value = 0;
             uploadProgressBar.Invalidate(); // Force repaint for custom drawing
         }
+
+        /// <summary>
+        /// Reset all skip/cancel state - call before starting a batch
+        /// </summary>
+        public void ResetSkipCancelState()
+        {
+            if (this.IsDisposed) return;
+
+            if (this.InvokeRequired)
+            {
+                try { this.BeginInvoke(new Action(() => ResetSkipCancelState())); } catch { }
+                return;
+            }
+
+            skipCurrentGame = false;
+            cancelAllRemaining = false;
+            btnSkip.Text = "Skip";
+            btnSkip.Enabled = true;
+            btnCancelAll.Text = "Cancel";
+            btnCancelAll.Enabled = true;
+        }
+
+        /// <summary>
+        /// Check if user clicked Skip for current game
+        /// </summary>
+        public bool ShouldSkipCurrentGame() => skipCurrentGame;
+
+        /// <summary>
+        /// Check if user clicked Cancel All
+        /// </summary>
+        public bool ShouldCancelAll() => cancelAllRemaining;
 
         /// <summary>
         /// Updates the upload progress with speed and ETA
@@ -1589,7 +1678,12 @@ namespace SteamAutocrackGUI
                 if (!string.IsNullOrEmpty(details.UploadUrl))
                 {
                     textBox.SelectionColor = Color.Cyan;
-                    textBox.AppendText($"  URL: {details.UploadUrl}\n");
+                    textBox.AppendText($"  1fichier: {details.UploadUrl}\n");
+                }
+                if (!string.IsNullOrEmpty(details.PyDriveUrl))
+                {
+                    textBox.SelectionColor = Color.LightGreen;
+                    textBox.AppendText($"  PyDrive: {details.PyDriveUrl}\n");
                 }
                 if (!string.IsNullOrEmpty(details.UploadError))
                 {
