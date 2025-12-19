@@ -4204,8 +4204,8 @@ oLink3.Save";
 
             batchIndicator = new PictureBox
             {
-                Size = new Size(32, 32),
-                Location = new Point(this.ClientSize.Width - 42, 8),
+                Size = new Size(48, 48),
+                Location = new Point(10, this.ClientSize.Height - 58),
                 Cursor = Cursors.Hand,
                 Visible = false,
                 BackColor = Color.Transparent,
@@ -4249,19 +4249,31 @@ oLink3.Save";
             using (var g = Graphics.FromImage(bmp))
             {
                 g.DrawImage(batchIconBase, 0, 0);
+                g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.AntiAlias;
 
-                // Draw percentage in the top window's title bar area
+                // Draw percentage centered in the front window's main area
                 string text = percent.ToString();
-                using (var font = new Font("Segoe UI", batchIconBase.Width / 4, FontStyle.Bold))
+                using (var font = new Font("Segoe UI", batchIconBase.Width / 5, FontStyle.Bold))
                 using (var brush = new SolidBrush(Color.White))
-                using (var outline = new SolidBrush(Color.FromArgb(150, 0, 0, 0)))
+                using (var outline = new Pen(Color.FromArgb(200, 20, 25, 45), 3))
                 {
+                    // Front window area is roughly: X 35-98%, Y 58-95%
+                    var textRect = new RectangleF(
+                        batchIconBase.Width * 0.35f,
+                        batchIconBase.Height * 0.58f,
+                        batchIconBase.Width * 0.63f,
+                        batchIconBase.Height * 0.37f);
+
                     var sf = new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center };
-                    // Position in the front window's title bar (roughly top-right area)
-                    var textRect = new RectangleF(batchIconBase.Width * 0.45f, batchIconBase.Height * 0.52f,
-                                                   batchIconBase.Width * 0.5f, batchIconBase.Height * 0.15f);
-                    // Draw shadow/outline first
-                    g.DrawString(text, font, outline, new RectangleF(textRect.X + 1, textRect.Y + 1, textRect.Width, textRect.Height), sf);
+
+                    // Draw outline by drawing text multiple times offset
+                    using (var outlineBrush = new SolidBrush(Color.FromArgb(200, 20, 25, 45)))
+                    {
+                        for (int dx = -2; dx <= 2; dx++)
+                            for (int dy = -2; dy <= 2; dy++)
+                                if (dx != 0 || dy != 0)
+                                    g.DrawString(text, font, outlineBrush, new RectangleF(textRect.X + dx, textRect.Y + dy, textRect.Width, textRect.Height), sf);
+                    }
                     g.DrawString(text, font, brush, textRect, sf);
                 }
             }
@@ -4269,6 +4281,17 @@ oLink3.Save";
             batchIndicator.Image?.Dispose();
             batchIndicator.Image = bmp;
             batchIndicatorTooltip.SetToolTip(batchIndicator, $"Batch: {percent}% - Click to restore");
+
+            // Also update the main form's batch progress label
+            if (batchProgressLabel != null)
+            {
+                batchProgressLabel.Text = percent.ToString();
+                batchProgressLabel.Visible = true;
+            }
+            if (batchProgressIcon != null)
+            {
+                batchProgressIcon.Visible = true;
+            }
         }
 
         /// <summary>
@@ -4350,25 +4373,103 @@ oLink3.Save";
             var crackResults = new Dictionary<string, bool>(); // Track which games cracked successfully
             var archivePaths = new Dictionary<string, string>(); // Track archive paths for upload
 
-            // Progress tracking
-            int totalGames = games.Count;
-            int completedGames = 0;
-            int crackCount = games.Count(g => g.Crack);
-            int zipCount = games.Count(g => g.Zip);
-            int uploadCount = games.Count(g => g.Upload);
-            int totalSteps = crackCount + zipCount + uploadCount;
-            int completedSteps = 0;
+            // Time-based progress tracking with live adjustment (never decreases)
+            // Load persisted rates from last session, fall back to defaults
+            double zipRate;
+            try {
+                zipRate = compressionLevel == "0"
+                    ? APPID.Properties.Settings.Default.LastZipRateLevel0
+                    : APPID.Properties.Settings.Default.LastZipRateCompressed;
+                if (zipRate <= 0) zipRate = compressionLevel == "0" ? 50_000_000.0 : 30_000_000.0;
+            } catch { zipRate = compressionLevel == "0" ? 50_000_000.0 : 30_000_000.0; }
 
-            Action updateProgress = () =>
+            double uploadRate;
+            try {
+                uploadRate = APPID.Properties.Settings.Default.LastUploadRate;
+                if (uploadRate <= 0) uploadRate = 5_000_000.0;
+            } catch { uploadRate = 5_000_000.0; }
+
+            double conversionTimePerFile = 45.0;
+            double retryBuffer = 1.3;
+
+            // Calculate folder sizes for time estimation
+            var folderSizes = new Dictionary<string, long>();
+            long totalBytesToZip = 0;
+            long totalBytesToUpload = 0;
+            foreach (var game in games)
             {
-                int percent = totalSteps > 0 ? (completedSteps * 100) / totalSteps : 0;
+                try
+                {
+                    long size = Directory.GetFiles(game.Path, "*", SearchOption.AllDirectories)
+                        .Sum(f => new FileInfo(f).Length);
+                    folderSizes[game.Path] = size;
+                    if (game.Zip) totalBytesToZip += size;
+                    if (game.Upload) totalBytesToUpload += size;
+                }
+                catch { folderSizes[game.Path] = 1_000_000_000; }
+            }
+
+            // Initial time estimates
+            double estCrackTime = games.Count(g => g.Crack) * 3.0;
+            double estZipTime = totalBytesToZip / zipRate;
+            double estUploadTime = totalBytesToUpload / uploadRate;
+            double estConversionTime = games.Count(g => g.Upload) * conversionTimePerFile;
+            double totalEstimatedSeconds = (estCrackTime + estZipTime + estUploadTime + estConversionTime) * retryBuffer;
+            totalEstimatedSeconds = Math.Max(totalEstimatedSeconds, 1.0);
+
+            // Track completed work and actual speeds
+            var batchStartTime = DateTime.Now;
+            double completedWork = 0; // 0-1 representing portion of work done
+            int lastPercent = 0; // Never go below this
+            long bytesZippedSoFar = 0;
+            long bytesUploadedSoFar = 0;
+            double actualZipRate = zipRate; // Will be updated with measured rate
+            double actualUploadRate = uploadRate; // Will be updated during uploads
+
+            // Work weights (what portion of total work each phase represents)
+            double crackWeight = estCrackTime / totalEstimatedSeconds;
+            double zipWeight = estZipTime / totalEstimatedSeconds;
+            double uploadWeight = estUploadTime / totalEstimatedSeconds;
+            double conversionWeight = estConversionTime / totalEstimatedSeconds;
+
+            Action<string, double> updateProgress = (phase, phaseProgress) =>
+            {
+                // Recalculate based on actual speeds if we have data
+                double remainingZipTime = (totalBytesToZip - bytesZippedSoFar) / actualZipRate;
+                double remainingUploadTime = (totalBytesToUpload - bytesUploadedSoFar) / actualUploadRate;
+                double remainingConvTime = Math.Max(0, estConversionTime * (1.0 - (bytesUploadedSoFar / (double)Math.Max(1, totalBytesToUpload))));
+                double remainingCrackTime = estCrackTime; // Already decremented per crack
+                double totalRemaining = remainingCrackTime + remainingZipTime + remainingUploadTime + remainingConvTime;
+
+                double elapsed = (DateTime.Now - batchStartTime).TotalSeconds;
+                double estTotalTime = elapsed + totalRemaining;
+
+                int percent = estTotalTime > 0 ? (int)((elapsed / estTotalTime) * 100) : 0;
+                percent = Math.Max(lastPercent, Math.Min(99, percent)); // Never decrease, cap at 99
+                lastPercent = percent;
+
                 batchForm.UpdateTitleProgress(percent);
+                batchForm.UpdateProgressWithEta(percent, totalRemaining);
                 UpdateBatchIndicator(percent);
             };
 
             // Initial progress update
-            updateProgress();
+            updateProgress("init", 0);
 
+            // Periodic timer to update progress every 20 seconds during long operations
+            System.Windows.Forms.Timer progressTimer = null;
+            progressTimer = new System.Windows.Forms.Timer { Interval = 20000 };
+            progressTimer.Tick += (s, e) =>
+            {
+                if (this.InvokeRequired)
+                    this.BeginInvoke(new Action(() => updateProgress("timer", 0)));
+                else
+                    updateProgress("timer", 0);
+            };
+            progressTimer.Start();
+
+            try
+            {
             // ========== PHASE 1: CRACK (Sequential due to shared state) ==========
             int crackIndex = 0;
             foreach (var game in games.Where(g => g.Crack))
@@ -4423,8 +4524,9 @@ oLink3.Save";
                     failureReasons.Add((game.Name, $"Crack exception: {ex.Message}"));
                 }
 
-                completedSteps++;
-                updateProgress();
+                // Reduce remaining crack estimate
+                estCrackTime = Math.Max(0, estCrackTime - 3.0);
+                updateProgress("crack", 0);
             }
 
             // Games that didn't need cracking
@@ -4435,95 +4537,97 @@ oLink3.Save";
 
             suppressStatusUpdates = false;
 
-            // ========== PHASE 2: ZIP (Parallel) ==========
-            var gamesToZip = games.Where(g => g.Zip && crackResults.ContainsKey(g.Path) && crackResults[g.Path]).ToList();
+            // ========== PHASE 2 & 3: ZIP + UPLOAD PIPELINE ==========
+            // Pipeline: zip one game, then upload it while zipping the next
+            // Games that only need zip (no upload) are done first
 
-            if (gamesToZip.Count > 0)
+            var gamesToZipOnly = games.Where(g => g.Zip && !g.Upload && crackResults.ContainsKey(g.Path) && crackResults[g.Path]).ToList();
+            var gamesToZipAndUpload = games.Where(g => g.Zip && g.Upload && crackResults.ContainsKey(g.Path) && crackResults[g.Path]).ToList();
+            var gamesToUpload = gamesToZipAndUpload.ToList(); // Will upload after zipping
+
+            var zipStartTime = DateTime.Now;
+            long totalBytesActuallyZipped = 0;
+            string sevenZipPath = ResourceExtractor.GetBinFilePath(Path.Combine("7z", "7za.exe"));
+            string password = usePassword ? "rin" : null;
+
+            // Helper function to zip a single game
+            Func<BatchGameItem, Task<(BatchGameItem game, bool success, string error, string archivePath)>> zipOneGame = async (game) =>
             {
-                // Update all to "Zipping..."
-                foreach (var game in gamesToZip)
+                string ext = compressionFormat == "7Z" ? ".7z" : ".zip";
+                string parent = Directory.GetParent(game.Path).FullName;
+                string archivePath = Path.Combine(parent, game.Name + ext);
+                archivePaths[game.Path] = archivePath;
+
+                string zipError = null;
+                bool zipSuccess = await Task.Run(() =>
                 {
-                    batchForm.UpdateStatus(game.Path, "Zipping...", Color.Cyan);
-                }
-
-                string sevenZipPath = ResourceExtractor.GetBinFilePath(Path.Combine("7z", "7za.exe"));
-                string password = usePassword ? "rin" : null;
-
-                var zipTasks = gamesToZip.Select(async game =>
-                {
-                    string ext = compressionFormat == "7Z" ? ".7z" : ".zip";
-                    string parent = Directory.GetParent(game.Path).FullName;
-                    string archivePath = Path.Combine(parent, game.Name + ext);
-                    archivePaths[game.Path] = archivePath;
-
-                    string zipError = null;
-                    bool zipSuccess = await Task.Run(() =>
+                    try
                     {
-                        try
+                        string formatArg = compressionFormat == "7Z" ? "-t7z" : "-tzip";
+                        string args = $"a {formatArg} -mx={compressionLevel} \"{archivePath}\" \"{game.Path}\\*\"";
+                        if (!string.IsNullOrEmpty(password)) args += $" -p{password}";
+
+                        var psi = new System.Diagnostics.ProcessStartInfo
                         {
-                            string formatArg = compressionFormat == "7Z" ? "-t7z" : "-tzip";
-                            string args = $"a {formatArg} -mx={compressionLevel} \"{archivePath}\" \"{game.Path}\\*\"";
-                            if (!string.IsNullOrEmpty(password)) args += $" -p{password}";
+                            FileName = sevenZipPath,
+                            Arguments = args,
+                            UseShellExecute = false,
+                            CreateNoWindow = true,
+                            RedirectStandardOutput = true,
+                            RedirectStandardError = true
+                        };
 
-                            var psi = new System.Diagnostics.ProcessStartInfo
-                            {
-                                FileName = sevenZipPath,
-                                Arguments = args,
-                                UseShellExecute = false,
-                                CreateNoWindow = true,
-                                RedirectStandardOutput = true,
-                                RedirectStandardError = true
-                            };
-
-                            using (var proc = System.Diagnostics.Process.Start(psi))
-                            {
-                                string stderr = proc.StandardError.ReadToEnd();
-                                proc.WaitForExit();
-                                if (proc.ExitCode != 0 && !string.IsNullOrEmpty(stderr))
-                                    zipError = stderr.Length > 100 ? stderr.Substring(0, 100) + "..." : stderr;
-                                return proc.ExitCode == 0;
-                            }
-                        }
-                        catch (Exception ex)
+                        using (var proc = System.Diagnostics.Process.Start(psi))
                         {
-                            zipError = ex.Message;
-                            return false;
+                            string stderr = proc.StandardError.ReadToEnd();
+                            proc.WaitForExit();
+                            if (proc.ExitCode != 0 && !string.IsNullOrEmpty(stderr))
+                                zipError = stderr.Length > 100 ? stderr.Substring(0, 100) + "..." : stderr;
+                            return proc.ExitCode == 0;
                         }
-                    });
+                    }
+                    catch (Exception ex)
+                    {
+                        zipError = ex.Message;
+                        return false;
+                    }
+                });
 
-                    return (game, zipSuccess, zipError);
-                }).ToList();
+                return (game, zipSuccess, zipError, archivePath);
+            };
 
-                var zipResults = await Task.WhenAll(zipTasks);
+            // STEP 1: Zip games that only need zipping (no upload) - can be parallel
+            if (gamesToZipOnly.Count > 0)
+            {
+                foreach (var game in gamesToZipOnly)
+                    batchForm.UpdateStatus(game.Path, "Zipping...", Color.Cyan);
 
-                foreach (var result in zipResults)
+                var zipOnlyTasks = gamesToZipOnly.Select(g => zipOneGame(g)).ToList();
+                var zipOnlyResults = await Task.WhenAll(zipOnlyTasks);
+
+                foreach (var result in zipOnlyResults)
                 {
-                    var game = result.Item1;
-                    var zipSuccess = result.Item2;
-                    var zipError = result.Item3;
-                    string archivePath = archivePaths.ContainsKey(game.Path) ? archivePaths[game.Path] : null;
-
-                    if (zipSuccess)
+                    if (result.success)
                     {
                         zipped++;
-                        batchForm.UpdateStatus(game.Path, "Zipped ✓", Color.LightGreen);
-                        batchForm.UpdateZipStatus(game.Path, true, archivePath);
+                        batchForm.UpdateStatus(result.game.Path, "Zipped ✓", Color.LightGreen);
+                        batchForm.UpdateZipStatus(result.game.Path, true, result.archivePath);
+                        totalBytesActuallyZipped += folderSizes.ContainsKey(result.game.Path) ? folderSizes[result.game.Path] : 0;
                     }
                     else
                     {
                         zipFailed++;
-                        batchForm.UpdateStatus(game.Path, "Zip Failed", Color.Red);
-                        batchForm.UpdateZipStatus(game.Path, false, archivePath, zipError ?? "Unknown error");
-                        failureReasons.Add((game.Name, $"Zip failed: {zipError ?? "Unknown"}"));
+                        batchForm.UpdateStatus(result.game.Path, "Zip Failed", Color.Red);
+                        batchForm.UpdateZipStatus(result.game.Path, false, result.archivePath, result.error ?? "Unknown");
+                        failureReasons.Add((result.game.Name, $"Zip failed: {result.error ?? "Unknown"}"));
                     }
-
-                    completedSteps++;
-                    updateProgress();
+                    bytesZippedSoFar += folderSizes.ContainsKey(result.game.Path) ? folderSizes[result.game.Path] : 0;
+                    updateProgress("zip", 0);
                 }
             }
 
-            // ========== PHASE 3: UPLOAD (Sequential uploads with retry, parallel conversions) ==========
-            var gamesToUpload = games.Where(g => g.Upload && crackResults.ContainsKey(g.Path) && crackResults[g.Path]).ToList();
+            // STEP 2: Pipeline zip+upload for games that need both
+            // Zip first game, then for each: upload current while zipping next
             var conversionTasks = new List<Task>();
             var uploadedLinks = new System.Collections.Concurrent.ConcurrentBag<(string gameName, string path, string oneFichierUrl)>();
             const int maxRetries = 3;
@@ -4599,15 +4703,25 @@ oLink3.Save";
                                     // Smooth the speed calculation
                                     smoothedSpeed = smoothedSpeed > 0 ? (smoothedSpeed * 0.7 + currentSpeed * 0.3) : currentSpeed;
 
+                                    // Update actual upload rate for ETA calculation
+                                    if (smoothedSpeed > 0)
+                                        actualUploadRate = smoothedSpeed;
+
                                     batchForm.UpdateUploadProgress(pct, uploadedBytes, fileSize, smoothedSpeed);
+
+                                    // Update overall progress with new rate info
+                                    updateProgress("upload", 0);
 
                                     lastProgress = p;
                                     lastProgressTime = now;
                                 }
                             });
 
+                            // Get cancellation token for this upload
+                            var cancelToken = batchForm.GetUploadCancellationToken();
+
                             // Wrap in Task.Run because OneFichierUploader uses synchronous blocking I/O
-                            var result = await Task.Run(() => uploader.UploadFileAsync(archivePath, progress));
+                            var result = await Task.Run(() => uploader.UploadFileAsync(archivePath, progress, null, cancelToken));
 
                             if (result != null && !string.IsNullOrEmpty(result.DownloadUrl))
                             {
@@ -4696,12 +4810,22 @@ oLink3.Save";
                     }
                 }
 
-                completedSteps++;
-                updateProgress();
+                // Track bytes uploaded for progress
+                bytesUploadedSoFar += folderSizes.ContainsKey(game.Path) ? folderSizes[game.Path] : 0;
+                updateProgress("upload", 0);
             }
 
             // Hide upload details panel when done
             batchForm.HideUploadDetails();
+
+            // Save actual upload rate for future estimates
+            if (actualUploadRate > 0 && actualUploadRate != uploadRate)
+            {
+                try {
+                    APPID.Properties.Settings.Default.LastUploadRate = actualUploadRate;
+                    APPID.Properties.Settings.Default.Save();
+                } catch { }
+            }
 
             // Wait for all conversions to complete
             if (conversionTasks.Count > 0)
@@ -4709,9 +4833,18 @@ oLink3.Save";
                 await Task.WhenAll(conversionTasks);
             }
 
+            } // end try
+            finally
+            {
+                // Stop the progress timer
+                progressTimer?.Stop();
+                progressTimer?.Dispose();
+            }
+
             // ========== DONE ==========
             batchForm.SetProcessingMode(false);
-            batchForm.UpdateTitleProgress(100, "Complete");
+            batchForm.ResetTitle("Complete ✓");
+            UpdateBatchIndicator(100);
             HideBatchIndicator();
 
             // Build summary

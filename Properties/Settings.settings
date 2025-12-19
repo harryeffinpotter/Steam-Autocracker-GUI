@@ -11,5 +11,14 @@
     <Setting Name="Pinned" Type="System.Boolean" Scope="User">
       <Value Profile="(Default)">True</Value>
     </Setting>
+    <Setting Name="LastUploadRate" Type="System.Double" Scope="User">
+      <Value Profile="(Default)">5000000</Value>
+    </Setting>
+    <Setting Name="LastZipRateLevel0" Type="System.Double" Scope="User">
+      <Value Profile="(Default)">50000000</Value>
+    </Setting>
+    <Setting Name="LastZipRateCompressed" Type="System.Double" Scope="User">
+      <Value Profile="(Default)">30000000</Value>
+    </Setting>
   </Settings>
 </SettingsFile>

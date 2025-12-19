@@ -293,7 +293,67 @@ Enter to select top result.
     <value>mainPanel</value>
   </data>
   <data name="&gt;&gt;tgDisc.ZOrder" xml:space="preserve">
-    <value>9</value>
+    <value>11</value>
+  </data>
+  <data name="batchProgressLabel.AutoSize" type="System.Boolean, mscorlib">
+    <value>True</value>
+  </data>
+  <data name="batchProgressLabel.Font" type="System.Drawing.Font, System.Drawing">
+    <value>Segoe UI, 9pt, style=Bold</value>
+  </data>
+  <data name="batchProgressLabel.Location" type="System.Drawing.Point, System.Drawing">
+    <value>24, 409</value>
+  </data>
+  <data name="batchProgressLabel.Size" type="System.Drawing.Size, System.Drawing">
+    <value>32, 15</value>
+  </data>
+  <data name="batchProgressLabel.TabIndex" type="System.Int32, mscorlib">
+    <value>0</value>
+  </data>
+  <data name="batchProgressLabel.Text" xml:space="preserve">
+    <value>0</value>
+  </data>
+  <data name="batchProgressLabel.Visible" type="System.Boolean, mscorlib">
+    <value>False</value>
+  </data>
+  <data name="&gt;&gt;batchProgressLabel.Name" xml:space="preserve">
+    <value>batchProgressLabel</value>
+  </data>
+  <data name="&gt;&gt;batchProgressLabel.Type" xml:space="preserve">
+    <value>System.Windows.Forms.Label, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;batchProgressLabel.Parent" xml:space="preserve">
+    <value>mainPanel</value>
+  </data>
+  <data name="&gt;&gt;batchProgressLabel.ZOrder" xml:space="preserve">
+    <value>0</value>
+  </data>
+  <data name="batchProgressIcon.Location" type="System.Drawing.Point, System.Drawing">
+    <value>9, 386</value>
+  </data>
+  <data name="batchProgressIcon.Size" type="System.Drawing.Size, System.Drawing">
+    <value>56, 43</value>
+  </data>
+  <data name="batchProgressIcon.SizeMode" type="System.Windows.Forms.PictureBoxSizeMode, System.Windows.Forms">
+    <value>Zoom</value>
+  </data>
+  <data name="batchProgressIcon.TabIndex" type="System.Int32, mscorlib">
+    <value>1</value>
+  </data>
+  <data name="batchProgressIcon.Visible" type="System.Boolean, mscorlib">
+    <value>False</value>
+  </data>
+  <data name="&gt;&gt;batchProgressIcon.Name" xml:space="preserve">
+    <value>batchProgressIcon</value>
+  </data>
+  <data name="&gt;&gt;batchProgressIcon.Type" xml:space="preserve">
+    <value>System.Windows.Forms.PictureBox, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;batchProgressIcon.Parent" xml:space="preserve">
+    <value>mainPanel</value>
+  </data>
+  <data name="&gt;&gt;batchProgressIcon.ZOrder" xml:space="preserve">
+    <value>1</value>
   </data>
   <data name="UploadZipButton.FlatStyle" type="System.Windows.Forms.FlatStyle, System.Windows.Forms">
     <value>Flat</value>
@@ -326,7 +386,7 @@ Enter to select top result.
     <value>mainPanel</value>
   </data>
   <data name="&gt;&gt;UploadZipButton.ZOrder" xml:space="preserve">
-    <value>0</value>
+    <value>2</value>
   </data>
   <data name="pin.Image" type="System.Drawing.Bitmap, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
     <value>
@@ -483,7 +543,7 @@ easier to drag files while browsing.</value>
     <value>mainPanel</value>
   </data>
   <data name="&gt;&gt;pin.ZOrder" xml:space="preserve">
-    <value>1</value>
+    <value>3</value>
   </data>
   <data name="unPin.Image" type="System.Drawing.Bitmap, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
     <value>
@@ -611,7 +671,7 @@ covered by other windows normally.</value>
     <value>mainPanel</value>
   </data>
   <data name="&gt;&gt;unPin.ZOrder" xml:space="preserve">
-    <value>2</value>
+    <value>4</value>
   </data>
   <data name="gitHub.Image" type="System.Drawing.Bitmap, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
     <value>
@@ -869,7 +929,7 @@ covered by other windows normally.</value>
     <value>mainPanel</value>
   </data>
   <data name="&gt;&gt;gitHub.ZOrder" xml:space="preserve">
-    <value>3</value>
+    <value>5</value>
   </data>
   <data name="ShareButton.AutoSizeMode" type="System.Windows.Forms.AutoSizeMode, System.Windows.Forms">
     <value>GrowAndShrink</value>
@@ -911,7 +971,7 @@ covered by other windows normally.</value>
     <value>mainPanel</value>
   </data>
   <data name="&gt;&gt;ShareButton.ZOrder" xml:space="preserve">
-    <value>4</value>
+    <value>6</value>
   </data>
   <data name="RequestButton.FlatStyle" type="System.Windows.Forms.FlatStyle, System.Windows.Forms">
     <value>Flat</value>
@@ -947,7 +1007,7 @@ covered by other windows normally.</value>
     <value>mainPanel</value>
   </data>
   <data name="&gt;&gt;RequestButton.ZOrder" xml:space="preserve">
-    <value>5</value>
+    <value>7</value>
   </data>
   <data name="autoCrackOff.ImeMode" type="System.Windows.Forms.ImeMode, System.Windows.Forms">
     <value>On</value>
@@ -985,7 +1045,7 @@ from the search results.</value>
     <value>mainPanel</value>
   </data>
   <data name="&gt;&gt;autoCrackOff.ZOrder" xml:space="preserve">
-    <value>6</value>
+    <value>8</value>
   </data>
   <data name="autoCrackOn.ImeMode" type="System.Windows.Forms.ImeMode, System.Windows.Forms">
     <value>On</value>
@@ -1023,7 +1083,7 @@ from the search results.</value>
     <value>mainPanel</value>
   </data>
   <data name="&gt;&gt;autoCrackOn.ZOrder" xml:space="preserve">
-    <value>7</value>
+    <value>9</value>
   </data>
   <data name="StatusLabel.Font" type="System.Drawing.Font, System.Drawing">
     <value>Consolas, 12pt</value>
@@ -1053,7 +1113,7 @@ from the search results.</value>
     <value>mainPanel</value>
   </data>
   <data name="&gt;&gt;StatusLabel.ZOrder" xml:space="preserve">
-    <value>8</value>
+    <value>10</value>
   </data>
   <data name="OpenDir.FlatStyle" type="System.Windows.Forms.FlatStyle, System.Windows.Forms">
     <value>Flat</value>
@@ -1092,7 +1152,7 @@ from the search results.</value>
     <value>mainPanel</value>
   </data>
   <data name="&gt;&gt;OpenDir.ZOrder" xml:space="preserve">
-    <value>10</value>
+    <value>12</value>
   </data>
   <data name="ZipToShare.FlatStyle" type="System.Windows.Forms.FlatStyle, System.Windows.Forms">
     <value>Flat</value>
@@ -1134,7 +1194,7 @@ from the search results.</value>
     <value>mainPanel</value>
   </data>
   <data name="&gt;&gt;ZipToShare.ZOrder" xml:space="preserve">
-    <value>11</value>
+    <value>13</value>
   </data>
   <data name="currDIrText.Font" type="System.Drawing.Font, System.Drawing">
     <value>Microsoft Sans Serif, 8.25pt</value>
@@ -1164,7 +1224,7 @@ from the search results.</value>
     <value>mainPanel</value>
   </data>
   <data name="&gt;&gt;currDIrText.ZOrder" xml:space="preserve">
-    <value>12</value>
+    <value>14</value>
   </data>
   <data name="dllSelect.AutoCompleteCustomSource" xml:space="preserve">
     <value>Goldberg (Default)</value>
@@ -1203,7 +1263,7 @@ from the search results.</value>
     <value>mainPanel</value>
   </data>
   <data name="&gt;&gt;dllSelect.ZOrder" xml:space="preserve">
-    <value>13</value>
+    <value>15</value>
   </data>
   <data name="lanMultiplayerCheckBox.AutoSize" type="System.Boolean, mscorlib">
     <value>True</value>
@@ -1243,7 +1303,7 @@ Perfect for playing with friends on the same network!</value>
     <value>mainPanel</value>
   </data>
   <data name="&gt;&gt;lanMultiplayerCheckBox.ZOrder" xml:space="preserve">
-    <value>14</value>
+    <value>16</value>
   </data>
   <data name="donePic.Image" type="System.Drawing.Bitmap, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
     <value>
@@ -1476,7 +1536,7 @@ Perfect for playing with friends on the same network!</value>
     <value>mainPanel</value>
   </data>
   <data name="&gt;&gt;donePic.ZOrder" xml:space="preserve">
-    <value>15</value>
+    <value>17</value>
   </data>
   <data name="startCrackPic.Image" type="System.Drawing.Bitmap, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
     <value>
@@ -3669,7 +3729,7 @@ Perfect for playing with friends on the same network!</value>
     <value>mainPanel</value>
   </data>
   <data name="&gt;&gt;startCrackPic.ZOrder" xml:space="preserve">
-    <value>16</value>
+    <value>18</value>
   </data>
   <data name="selectDir.Image" type="System.Drawing.Bitmap, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
     <value>
@@ -3857,7 +3917,7 @@ Perfect for playing with friends on the same network!</value>
     <value>mainPanel</value>
   </data>
   <data name="&gt;&gt;selectDir.ZOrder" xml:space="preserve">
-    <value>17</value>
+    <value>19</value>
   </data>
   <data name="label5.Font" type="System.Drawing.Font, System.Drawing">
     <value>Microsoft Sans Serif, 9.75pt</value>
@@ -3891,7 +3951,7 @@ If you have issues, run as Admin.</value>
     <value>mainPanel</value>
   </data>
   <data name="&gt;&gt;label5.ZOrder" xml:space="preserve">
-    <value>18</value>
+    <value>20</value>
   </data>
   <data name="label1.AutoSize" type="System.Boolean, mscorlib">
     <value>True</value>
@@ -3917,6 +3977,10 @@ If you have issues, run as Admin.</value>
   <data name="label1.TextAlign" type="System.Drawing.ContentAlignment, System.Drawing">
     <value>TopCenter</value>
   </data>
+  <data name="label1.ToolTip" xml:space="preserve">
+    <value>Toggle Auto-Crack mode.
+When ON, games are automatically cracked when selected.</value>
+  </data>
   <data name="&gt;&gt;label1.Name" xml:space="preserve">
     <value>label1</value>
   </data>
@@ -3927,7 +3991,7 @@ If you have issues, run as Admin.</value>
     <value>mainPanel</value>
   </data>
   <data name="&gt;&gt;label1.ZOrder" xml:space="preserve">
-    <value>19</value>
+    <value>21</value>
   </data>
   <data name="selectDirLabel.AutoSize" type="System.Boolean, mscorlib">
     <value>True</value>
@@ -3963,7 +4027,7 @@ If you have issues, run as Admin.</value>
     <value>mainPanel</value>
   </data>
   <data name="&gt;&gt;selectDirLabel.ZOrder" xml:space="preserve">
-    <value>20</value>
+    <value>22</value>
   </data>
   <data name="drgdropText.Font" type="System.Drawing.Font, System.Drawing">
     <value>Microsoft Sans Serif, 26pt</value>
@@ -4002,7 +4066,7 @@ If you have issues, run as Admin.</value>
     <value>mainPanel</value>
   </data>
   <data name="&gt;&gt;drgdropText.ZOrder" xml:space="preserve">
-    <value>21</value>
+    <value>23</value>
   </data>
   <data name="mainPanel.Location" type="System.Drawing.Point, System.Drawing">
     <value>3, 0</value>
