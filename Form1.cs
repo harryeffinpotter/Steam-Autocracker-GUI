@@ -2316,58 +2316,48 @@ oLink3.Save";
                 }
                 catch { }
 
-                // Check for suspicious folder structure (multiple steam_api DLLs = likely not a single game)
-                try
+                // Check if this is a folder containing multiple games (batch mode)
+                var gamesInFolder = DetectGamesInFolder(gameDir);
+                if (gamesInFolder.Count > 1)
                 {
-                    var steamApi32Files = Directory.GetFiles(gameDir, "steam_api.dll", SearchOption.AllDirectories)
-                        .Where(f => !f.EndsWith(".bak", StringComparison.OrdinalIgnoreCase)).ToList();
-                    var steamApi64Files = Directory.GetFiles(gameDir, "steam_api64.dll", SearchOption.AllDirectories)
-                        .Where(f => !f.EndsWith(".bak", StringComparison.OrdinalIgnoreCase)).ToList();
-
-                    int totalSteamApis = steamApi32Files.Count + steamApi64Files.Count;
-
-                    // If we find multiple steam_api DLLs, this might be a folder with multiple games
-                    if (steamApi32Files.Count > 1 || steamApi64Files.Count > 1 || totalSteamApis > 2)
+                    // Multiple games detected - batch folder
+                    AppSettings.Default.lastDir = gameDir;
+                    AppSettings.Default.Save();
+                    ShowBatchGameSelection(gamesInFolder);
+                    return;
+                }
+                else if (gamesInFolder.Count == 1)
+                {
+                    // Contains exactly one game subfolder - use that
+                    gameDir = gamesInFolder[0];
+                    gameDirName = Path.GetFileName(gameDir);
+                }
+                else if (!IsGameFolder(gameDir))
+                {
+                    // Not a game folder, not a batch folder - check if they selected something weird
+                    try
                     {
-                        bool isSingleGame = ShowStyledConfirmation(
-                            "Multiple Steam APIs Detected",
-                            $"Found {totalSteamApis} steam_api DLL(s) in this folder.\n" +
-                            $"This usually means the folder contains multiple games.",
-                            gameDir,
-                            "Yes, it's a single game",
-                            "No, show me the games");
+                        var steamApiFiles = Directory.GetFiles(gameDir, "steam_api*.dll", SearchOption.AllDirectories)
+                            .Where(f => !f.EndsWith(".bak", StringComparison.OrdinalIgnoreCase)).ToList();
 
-                        if (!isSingleGame)
+                        if (steamApiFiles.Count > 2)
                         {
-                            // User says it's NOT a single game - try batch detection
-                            var gamesInFolder = DetectGamesInFolder(gameDir);
-                            if (gamesInFolder.Count > 0)
+                            // Has steam_api DLLs but we couldn't detect game structure - might be root drive
+                            bool continueAnyway = ShowStyledConfirmation(
+                                "Unusual Folder Structure",
+                                $"Found {steamApiFiles.Count} steam_api DLLs but couldn't detect game folders.\n" +
+                                $"Did you accidentally select a root drive or system folder?",
+                                gameDir,
+                                "Continue anyway",
+                                "Cancel");
+
+                            if (!continueAnyway)
                             {
-                                AppSettings.Default.lastDir = gameDir;
-                                AppSettings.Default.Save();
-                                ShowBatchGameSelection(gamesInFolder);
                                 return;
                             }
                         }
-                        // If user says Yes, or no games detected, continue with single-game flow
                     }
-                }
-                catch { }
-
-                // Check if this is a folder containing multiple games (batch mode)
-                if (!IsGameFolder(gameDir))
-                {
-                    var gamesInFolder = DetectGamesInFolder(gameDir);
-                    if (gamesInFolder.Count > 0)
-                    {
-                        // For batch folders, remember the batch folder itself (not parent)
-                        AppSettings.Default.lastDir = gameDir;
-                        AppSettings.Default.Save();
-
-                        // It's a batch folder! Show selection dialog
-                        ShowBatchGameSelection(gamesInFolder);
-                        return; // Don't continue with single-game flow
-                    }
+                    catch { }
                 }
 
                 // Hide OpenDir and ZipToShare when new directory selected
@@ -4046,6 +4036,23 @@ oLink3.Save";
         #region Batch Game Detection
 
         /// <summary>
+        /// Checks if a game folder has multiple steam_api DLLs (suspicious structure)
+        /// Returns the count of steam_api DLLs found (excluding .bak backups)
+        /// </summary>
+        public static int CountSteamApiDlls(string gamePath)
+        {
+            try
+            {
+                var count = Directory.GetFiles(gamePath, "steam_api*.dll", SearchOption.AllDirectories)
+                    .Count(f => !f.EndsWith(".bak", StringComparison.OrdinalIgnoreCase) &&
+                               (f.EndsWith("steam_api.dll", StringComparison.OrdinalIgnoreCase) ||
+                                f.EndsWith("steam_api64.dll", StringComparison.OrdinalIgnoreCase)));
+                return count;
+            }
+            catch { return 0; }
+        }
+
+        /// <summary>
         /// Finds steam_api.dll or steam_api64.dll within a folder (with depth limit)
         /// Returns the folder containing the DLL, or null if not found
         /// </summary>
@@ -4362,8 +4369,18 @@ oLink3.Save";
             var uploadedLinks = new System.Collections.Concurrent.ConcurrentBag<(string gameName, string path, string oneFichierUrl)>();
             const int maxRetries = 3;
 
+            // Reset skip/cancel state before starting uploads
+            batchForm.ResetSkipCancelState();
+
             foreach (var game in gamesToUpload)
             {
+                // Check if user cancelled all remaining
+                if (batchForm.ShouldCancelAll())
+                {
+                    batchForm.UpdateStatus(game.Path, "Cancelled", Color.Orange);
+                    continue;
+                }
+
                 string archivePath = archivePaths.ContainsKey(game.Path) ? archivePaths[game.Path] : null;
                 if (string.IsNullOrEmpty(archivePath) || !File.Exists(archivePath))
                 {
@@ -4379,10 +4396,10 @@ oLink3.Save";
                 int attempt = 0;
                 long fileSize = new FileInfo(archivePath).Length;
 
-                // Show upload details panel
+                // Show upload details panel (this resets skip flag for new game)
                 batchForm.ShowUploadDetails(game.Name, fileSize);
 
-                while (!uploadSuccess && attempt < maxRetries)
+                while (!uploadSuccess && attempt < maxRetries && !batchForm.ShouldSkipCurrentGame() && !batchForm.ShouldCancelAll())
                 {
                     attempt++;
                     string statusPrefix = attempt > 1 ? $"Retry {attempt}/{maxRetries}: " : "";
@@ -4499,11 +4516,25 @@ oLink3.Save";
 
                 if (!uploadSuccess)
                 {
-                    uploadFailed++;
-                    string shortError = lastError?.Length > 30 ? lastError.Substring(0, 30) + "..." : lastError;
-                    batchForm.UpdateStatus(game.Path, $"Failed: {shortError}", Color.Red);
-                    batchForm.UpdateUploadStatus(game.Path, false, null, lastError, attempt - 1);
-                    failureReasons.Add((game.Name, $"Upload failed after {attempt} attempts: {lastError}"));
+                    // Check if it was skipped or cancelled
+                    if (batchForm.ShouldSkipCurrentGame() && !batchForm.ShouldCancelAll())
+                    {
+                        batchForm.UpdateStatus(game.Path, "Skipped", Color.Yellow);
+                        batchForm.UpdateUploadStatus(game.Path, false, null, "Skipped by user");
+                    }
+                    else if (batchForm.ShouldCancelAll())
+                    {
+                        batchForm.UpdateStatus(game.Path, "Cancelled", Color.Orange);
+                        batchForm.UpdateUploadStatus(game.Path, false, null, "Cancelled by user");
+                    }
+                    else
+                    {
+                        uploadFailed++;
+                        string shortError = lastError?.Length > 30 ? lastError.Substring(0, 30) + "..." : lastError;
+                        batchForm.UpdateStatus(game.Path, $"Failed: {shortError}", Color.Red);
+                        batchForm.UpdateUploadStatus(game.Path, false, null, lastError, attempt - 1);
+                        failureReasons.Add((game.Name, $"Upload failed after {attempt} attempts: {lastError}"));
+                    }
                 }
             }
 
