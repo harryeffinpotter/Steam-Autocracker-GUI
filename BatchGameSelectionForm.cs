@@ -1082,6 +1082,30 @@ namespace SteamAutocrackGUI
         }
 
         /// <summary>
+        /// Track if batch processing is active
+        /// </summary>
+        public bool IsProcessing { get; private set; }
+
+        /// <summary>
+        /// Update the form title with progress percentage
+        /// </summary>
+        public void UpdateTitleProgress(int percent, string phase = null)
+        {
+            if (this.IsDisposed) return;
+
+            if (this.InvokeRequired)
+            {
+                try { this.BeginInvoke(new Action(() => UpdateTitleProgress(percent, phase))); } catch { }
+                return;
+            }
+
+            string title = $"Batch Processing - {percent}%";
+            if (!string.IsNullOrEmpty(phase))
+                title += $" ({phase})";
+            this.Text = title;
+        }
+
+        /// <summary>
         /// Disables checkboxes and buttons during processing
         /// </summary>
         public void SetProcessingMode(bool processing)
@@ -1093,6 +1117,8 @@ namespace SteamAutocrackGUI
                 try { this.BeginInvoke(new Action(() => SetProcessingMode(processing))); } catch { }
                 return;
             }
+
+            IsProcessing = processing;
 
             // Disable/enable grid interactions
             gameGrid.ReadOnly = processing;
