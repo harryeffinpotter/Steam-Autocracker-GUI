@@ -66,14 +66,30 @@ namespace SteamAppIdIdentifier
         }
     }
 
+    /// <summary>
+    /// Custom DataGridView that supports transparent background for acrylic effect
+    /// </summary>
+    public class TransparentDataGridView : DataGridView
+    {
+        public TransparentDataGridView()
+        {
+            this.SetStyle(ControlStyles.SupportsTransparentBackColor, true);
+            this.SetStyle(ControlStyles.Opaque, false);
+            this.BackgroundColor = Color.FromArgb(5, 8, 15);
+        }
+
+        protected override void OnPaintBackground(PaintEventArgs e)
+        {
+            // Don't paint background - let parent show through
+        }
+    }
+
     public partial class EnhancedShareWindow : Form
     {
-
         private Form parentForm;
         private bool gameSizeColumnSortedOnce = false;
-        private Button btnCustomPath;
 
-        // Upload details panel controls
+        // Upload details panel controls (unused but referenced)
         private Panel uploadDetailsPanel;
         private Label lblUploadGame;
         private Label lblUploadSize;
@@ -96,11 +112,24 @@ namespace SteamAppIdIdentifier
             parentForm = parent;
             InitializeComponent();  // Use the Designer.cs file instead!
 
+            // Enable transparency support on mainPanel for acrylic blur to show through
+            typeof(Panel).InvokeMember("SetStyle",
+                System.Reflection.BindingFlags.InvokeMethod | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic,
+                null, mainPanel, new object[] { ControlStyles.SupportsTransparentBackColor, true });
+            typeof(Panel).InvokeMember("SetStyle",
+                System.Reflection.BindingFlags.InvokeMethod | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic,
+                null, mainPanel, new object[] { ControlStyles.Opaque, false });
+
+            // Enable transparency support on titleBar too
+            typeof(Panel).InvokeMember("SetStyle",
+                System.Reflection.BindingFlags.InvokeMethod | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic,
+                null, titleBar, new object[] { ControlStyles.SupportsTransparentBackColor, true });
+            typeof(Panel).InvokeMember("SetStyle",
+                System.Reflection.BindingFlags.InvokeMethod | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic,
+                null, titleBar, new object[] { ControlStyles.Opaque, false });
+
             // Setup modern progress bar style
             SetupModernProgressBar();
-
-            // Setup upload details panel
-            SetupUploadDetailsPanel();
 
             // Add custom sort for GameSize column
             gamesGrid.SortCompare += GamesGrid_SortCompare;
@@ -117,6 +146,9 @@ namespace SteamAppIdIdentifier
             // Make main panel draggable (empty space drags window)
             mainPanel.MouseDown += TitleBar_MouseDown;
 
+            // Make form draggable (empty space drags window)
+            this.MouseDown += TitleBar_MouseDown;
+
             // Make data grid draggable but exclude column resizing
             gamesGrid.MouseDown += DataGrid_MouseDown;
 
@@ -127,166 +159,6 @@ namespace SteamAppIdIdentifier
                 // Center over parent when loaded
                 CenterOverParent();
             };
-        }
-
-        private void SetupUploadDetailsPanel()
-        {
-            // Create upload details panel (hidden by default, shown during uploads)
-            // Dock to bottom of mainPanel so it appears above everything
-            uploadDetailsPanel = new Panel
-            {
-                Dock = DockStyle.Bottom,
-                Height = 44,
-                BackColor = Color.FromArgb(15, 18, 28),
-                Visible = false
-            };
-
-            // Game name being uploaded (left side)
-            lblUploadGame = new Label
-            {
-                Location = new Point(10, 3),
-                Size = new Size(400, 16),
-                ForeColor = Color.FromArgb(100, 200, 255),
-                Font = new Font("Segoe UI", 8, FontStyle.Bold),
-                Text = "Uploading: "
-            };
-            uploadDetailsPanel.Controls.Add(lblUploadGame);
-
-            // Custom-painted progress bar (modern neon blue style)
-            uploadProgressBar = new ShareNeonProgressBar
-            {
-                Location = new Point(10, 21),
-                Size = new Size(650, 14),
-                Maximum = 100
-            };
-            uploadDetailsPanel.Controls.Add(uploadProgressBar);
-
-            // Header labels
-            var lblSizeHeader = new Label
-            {
-                Location = new Point(670, 5),
-                Size = new Size(130, 12),
-                ForeColor = Color.FromArgb(120, 120, 130),
-                Font = new Font("Segoe UI", 7),
-                Text = "Total Size",
-                TextAlign = ContentAlignment.MiddleLeft
-            };
-            uploadDetailsPanel.Controls.Add(lblSizeHeader);
-
-            var lblSpeedHeader = new Label
-            {
-                Location = new Point(805, 5),
-                Size = new Size(90, 12),
-                ForeColor = Color.FromArgb(120, 120, 130),
-                Font = new Font("Segoe UI", 7),
-                Text = "Speed",
-                TextAlign = ContentAlignment.MiddleLeft
-            };
-            uploadDetailsPanel.Controls.Add(lblSpeedHeader);
-
-            var lblEtaHeader = new Label
-            {
-                Location = new Point(900, 5),
-                Size = new Size(80, 12),
-                ForeColor = Color.FromArgb(120, 120, 130),
-                Font = new Font("Segoe UI", 7),
-                Text = "ETA",
-                TextAlign = ContentAlignment.MiddleLeft
-            };
-            uploadDetailsPanel.Controls.Add(lblEtaHeader);
-
-            // Size info (e.g., "1.2 GB / 7.6 GB")
-            lblUploadSize = new Label
-            {
-                Location = new Point(670, 21),
-                Size = new Size(130, 14),
-                ForeColor = Color.FromArgb(180, 180, 185),
-                Font = new Font("Segoe UI", 8),
-                Text = "",
-                TextAlign = ContentAlignment.MiddleLeft
-            };
-            uploadDetailsPanel.Controls.Add(lblUploadSize);
-
-            // Speed (e.g., "12.5 MB/s")
-            lblUploadSpeed = new Label
-            {
-                Location = new Point(805, 21),
-                Size = new Size(90, 14),
-                ForeColor = Color.FromArgb(100, 255, 150),
-                Font = new Font("Segoe UI", 8),
-                Text = "",
-                TextAlign = ContentAlignment.MiddleLeft
-            };
-            uploadDetailsPanel.Controls.Add(lblUploadSpeed);
-
-            // ETA (e.g., "ETA: 5:32")
-            lblUploadEta = new Label
-            {
-                Location = new Point(900, 21),
-                Size = new Size(80, 14),
-                ForeColor = Color.FromArgb(255, 200, 100),
-                Font = new Font("Segoe UI", 8),
-                Text = "",
-                TextAlign = ContentAlignment.MiddleLeft
-            };
-            uploadDetailsPanel.Controls.Add(lblUploadEta);
-
-            // Skip button - skips current game only
-            var btnSkip = new Button
-            {
-                Name = "btnSkip",
-                Location = new Point(1000, 7),
-                Size = new Size(70, 30),
-                Text = "Skip",
-                BackColor = Color.FromArgb(80, 60, 0),
-                ForeColor = Color.FromArgb(255, 200, 100),
-                FlatStyle = FlatStyle.Flat,
-                Font = new Font("Segoe UI", 8)
-            };
-            btnSkip.FlatAppearance.BorderColor = Color.FromArgb(150, 120, 40);
-            toolTip.SetToolTip(btnSkip, "Skip this game and continue with the next one");
-            btnSkip.Click += (s, e) =>
-            {
-                skipCurrentGame = true;
-                batchCancellationTokenSource?.Cancel();
-                btnSkip.Text = "Skipping...";
-                btnSkip.Enabled = false;
-            };
-
-            // Cancel All button - cancels entire batch
-            btnCancelUpload = new Button
-            {
-                Location = new Point(1080, 7),
-                Size = new Size(100, 30),
-                Text = "Cancel All",
-                BackColor = Color.FromArgb(100, 30, 30),
-                ForeColor = Color.FromArgb(255, 150, 150),
-                FlatStyle = FlatStyle.Flat,
-                Font = new Font("Segoe UI", 8)
-            };
-            btnCancelUpload.FlatAppearance.BorderColor = Color.FromArgb(150, 60, 60);
-            toolTip.SetToolTip(btnCancelUpload, "Cancel this and all remaining uploads");
-            btnCancelUpload.Click += (s, e) =>
-            {
-                cancelAllRemaining = true;
-                skipCurrentGame = true;
-                batchCancellationTokenSource?.Cancel();
-                btnCancelUpload.Text = "Cancelling...";
-                btnCancelUpload.Enabled = false;
-                var skipBtnRef = uploadDetailsPanel.Controls["btnSkip"] as Button;
-                if (skipBtnRef != null) skipBtnRef.Enabled = false;
-            };
-
-            // Add buttons to panel
-            uploadDetailsPanel.Controls.Add(btnSkip);
-            uploadDetailsPanel.Controls.Add(btnCancelUpload);
-
-            // Bring buttons to front to ensure visibility
-            btnSkip.BringToFront();
-            btnCancelUpload.BringToFront();
-
-            // Add panel to mainPanel - Dock=Bottom will push grid up when visible
-            mainPanel.Controls.Add(uploadDetailsPanel);
         }
 
         // Cache info icon for cell painting
@@ -460,9 +332,60 @@ namespace SteamAppIdIdentifier
             }
         }
 
+        [DllImport("user32.dll")]
+        private static extern int SetWindowCompositionAttribute(IntPtr hwnd, ref WindowCompositionAttribData data);
+
+        [DllImport("dwmapi.dll")]
+        private static extern int DwmSetWindowAttribute(IntPtr hwnd, int attr, ref int attrValue, int attrSize);
+
+        [StructLayout(LayoutKind.Sequential)]
+        private struct WindowCompositionAttribData
+        {
+            public int Attribute;
+            public IntPtr Data;
+            public int SizeOfData;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        private struct AccentPolicy
+        {
+            public int AccentState;
+            public int AccentFlags;
+            public int GradientColor;
+            public int AnimationId;
+        }
+
         private void ApplyAcrylicEffect()
         {
-            APPID.AcrylicHelper.ApplyAcrylic(this, roundedCorners: true);
+            // Apply rounded corners (Windows 11)
+            try
+            {
+                int preference = 2; // DWMWCP_ROUND
+                DwmSetWindowAttribute(this.Handle, 33, ref preference, sizeof(int)); // DWMWA_WINDOW_CORNER_PREFERENCE
+            }
+            catch { }
+
+            // Apply acrylic blur effect
+            try
+            {
+                var accent = new AccentPolicy();
+                accent.AccentState = 4; // ACCENT_ENABLE_ACRYLICBLURBEHIND
+                accent.AccentFlags = APPID.ThemeConfig.BlurIntensity;
+                accent.GradientColor = APPID.ThemeConfig.AcrylicBlurColor;
+
+                int accentStructSize = Marshal.SizeOf(accent);
+                IntPtr accentPtr = Marshal.AllocHGlobal(accentStructSize);
+                Marshal.StructureToPtr(accent, accentPtr, false);
+
+                var data = new WindowCompositionAttribData();
+                data.Attribute = 19; // WCA_ACCENT_POLICY
+                data.SizeOfData = accentStructSize;
+                data.Data = accentPtr;
+
+                SetWindowCompositionAttribute(this.Handle, ref data);
+                Marshal.FreeHGlobal(accentPtr);
+            }
+            catch { }
         }
 
         private void SetupModernProgressBar()
@@ -521,6 +444,15 @@ namespace SteamAppIdIdentifier
             // Add to grid with placeholders, calculate sizes async
             foreach (var game in games)
             {
+                // Quick pre-check: skip games without exe files (don't add to grid at all)
+                if (!Directory.Exists(game.InstallDir)) continue;
+                try
+                {
+                    bool hasExe = Directory.EnumerateFiles(game.InstallDir, "*.exe", SearchOption.AllDirectories).Any();
+                    if (!hasExe) continue;
+                }
+                catch { continue; }
+
                 var row = gamesGrid.Rows[gamesGrid.Rows.Add()];
                 row.Cells["GameName"].Value = game.Name;
                 row.Cells["BuildID"].Value = game.BuildId;
@@ -601,11 +533,25 @@ namespace SteamAppIdIdentifier
                     }
                     catch { }
 
+                    // Check if directory contains any exe files
+                    bool hasExe = false;
+                    try
+                    {
+                        hasExe = Directory.EnumerateFiles(game.InstallDir, "*.exe", SearchOption.AllDirectories).Any();
+                    }
+                    catch { }
+
                     // Update UI on main thread
                     this.Invoke(new Action(() =>
                     {
                         if (rowIndex < gamesGrid.Rows.Count)
                         {
+                            // Hide 0B games or games without exe from the list entirely
+                            if (dirSize == 0 || !hasExe)
+                            {
+                                gamesGrid.Rows[rowIndex].Visible = false;
+                                return;
+                            }
                             gamesGrid.Rows[rowIndex].Cells["GameSize"].Value = FormatFileSize(dirSize);
                             gamesGrid.Rows[rowIndex].Cells["GameSize"].Tag = dirSize; // Store actual bytes for sorting
                         }
@@ -667,11 +613,10 @@ namespace SteamAppIdIdentifier
                 }
                 else
                 {
-                    // Games are checked - light up Crack toggle and blink Process
+                    // Games are checked - set crack flag and blink Process
                     if (!toggleCrackOn)
                     {
                         toggleCrackOn = true;
-                        UpdateToggleButtonAppearance(btnToggleCrack, true);
                     }
                     _ = BlinkProcessButton();
                 }
@@ -687,16 +632,14 @@ namespace SteamAppIdIdentifier
                 }
                 else
                 {
-                    // Games are checked - light up Zip+Share toggles and blink Process
+                    // Games are checked - set zip+share flags and blink Process
                     if (!toggleZipOn)
                     {
                         toggleZipOn = true;
-                        UpdateToggleButtonAppearance(btnToggleZip, true);
                     }
                     if (!toggleShareOn)
                     {
                         toggleShareOn = true;
-                        UpdateToggleButtonAppearance(btnToggleShare, true);
                     }
                     _ = BlinkProcessButton();
                 }
@@ -712,21 +655,18 @@ namespace SteamAppIdIdentifier
                 }
                 else
                 {
-                    // Games are checked - light up all toggles and blink Process
+                    // Games are checked - set all flags and blink Process
                     if (!toggleCrackOn)
                     {
                         toggleCrackOn = true;
-                        UpdateToggleButtonAppearance(btnToggleCrack, true);
                     }
                     if (!toggleZipOn)
                     {
                         toggleZipOn = true;
-                        UpdateToggleButtonAppearance(btnToggleZip, true);
                     }
                     if (!toggleShareOn)
                     {
                         toggleShareOn = true;
-                        UpdateToggleButtonAppearance(btnToggleShare, true);
                     }
                     _ = BlinkProcessButton();
                 }
@@ -2195,53 +2135,10 @@ namespace SteamAppIdIdentifier
             _ = LoadGames();
         }
 
-        // Toggle button states
+        // Toggle states for processing logic
         private bool toggleCrackOn = false;
         private bool toggleZipOn = false;
         private bool toggleShareOn = false;
-
-        // Toggle button colors
-        private readonly Color toggleOffBg = Color.FromArgb(35, 35, 42);
-        private readonly Color toggleOffFg = Color.FromArgb(140, 140, 150);
-        private readonly Color toggleOnBg = Color.FromArgb(40, 100, 180);
-        private readonly Color toggleOnFg = Color.White;
-
-        private void UpdateToggleButtonAppearance(Button btn, bool isOn)
-        {
-            btn.BackColor = isOn ? toggleOnBg : toggleOffBg;
-            btn.ForeColor = isOn ? toggleOnFg : toggleOffFg;
-            btn.FlatAppearance.BorderColor = isOn ? Color.FromArgb(80, 150, 220) : Color.FromArgb(60, 60, 70);
-        }
-
-        private void BtnToggleCrack_Click(object sender, EventArgs e)
-        {
-            toggleCrackOn = !toggleCrackOn;
-            UpdateToggleButtonAppearance(btnToggleCrack, toggleCrackOn);
-        }
-
-        private void BtnToggleZip_Click(object sender, EventArgs e)
-        {
-            // If turning off Zip while Share is on, turn off Share too
-            if (toggleZipOn && toggleShareOn)
-            {
-                toggleShareOn = false;
-                UpdateToggleButtonAppearance(btnToggleShare, false);
-            }
-            toggleZipOn = !toggleZipOn;
-            UpdateToggleButtonAppearance(btnToggleZip, toggleZipOn);
-        }
-
-        private void BtnToggleShare_Click(object sender, EventArgs e)
-        {
-            toggleShareOn = !toggleShareOn;
-            // Share auto-enables Zip
-            if (toggleShareOn && !toggleZipOn)
-            {
-                toggleZipOn = true;
-                UpdateToggleButtonAppearance(btnToggleZip, toggleZipOn);
-            }
-            UpdateToggleButtonAppearance(btnToggleShare, toggleShareOn);
-        }
 
         private void BtnSettings_Click(object sender, EventArgs e)
         {
@@ -2294,22 +2191,8 @@ namespace SteamAppIdIdentifier
                 lblSelectedSuffix.Location = new Point(lblSelectedCount.Right, lblSelectedCount.Top);
             }
 
-            btnToggleCrack.Visible = hasSelection;
-            btnToggleZip.Visible = hasSelection;
-            btnToggleShare.Visible = hasSelection;
             btnSettings.Visible = hasSelection;
             btnProcessSelected.Visible = hasSelection;
-
-            // Reset toggles when nothing is selected
-            if (!hasSelection && (toggleCrackOn || toggleZipOn || toggleShareOn))
-            {
-                toggleCrackOn = false;
-                toggleZipOn = false;
-                toggleShareOn = false;
-                UpdateToggleButtonAppearance(btnToggleCrack, false);
-                UpdateToggleButtonAppearance(btnToggleZip, false);
-                UpdateToggleButtonAppearance(btnToggleShare, false);
-            }
         }
 
         // Batch compression settings
@@ -2331,9 +2214,36 @@ namespace SteamAppIdIdentifier
             }
         }
 
-        private async void BtnProcessSelected_Click(object sender, EventArgs e)
+        private void BtnProcessSelected_Click(object sender, EventArgs e)
         {
-            await ProcessSelectedGames();
+            // Collect selected game paths
+            var selectedPaths = new List<string>();
+            foreach (DataGridViewRow row in gamesGrid.Rows)
+            {
+                bool selected = row.Cells["SelectGame"].Value is true;
+                if (!selected) continue;
+
+                string path = row.Cells["InstallPath"].Value?.ToString();
+                if (!string.IsNullOrEmpty(path))
+                    selectedPaths.Add(path);
+            }
+
+            if (selectedPaths.Count == 0)
+            {
+                MessageBox.Show("Please select at least one game.",
+                    "No Selection", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            // Close the share sheet
+            this.Close();
+
+            // Open BatchGameSelectionForm with selected paths
+            var mainForm = parentForm as SteamAppId;
+            if (mainForm != null)
+            {
+                mainForm.OpenBatchConversionWithPaths(selectedPaths);
+            }
         }
 
         /// <summary>
@@ -2379,9 +2289,6 @@ namespace SteamAppIdIdentifier
 
             // Disable UI during processing
             btnProcessSelected.Enabled = false;
-            btnToggleCrack.Enabled = false;
-            btnToggleZip.Enabled = false;
-            btnToggleShare.Enabled = false;
             btnSettings.Enabled = false;
 
             var mainForm = parentForm as SteamAppId;
@@ -2837,9 +2744,6 @@ namespace SteamAppIdIdentifier
         private void ReenableProcessButtons()
         {
             btnProcessSelected.Enabled = true;
-            btnToggleCrack.Enabled = true;
-            btnToggleZip.Enabled = true;
-            btnToggleShare.Enabled = true;
             btnSettings.Enabled = true;
 
             // Hide upload details panel
