@@ -53,20 +53,15 @@ namespace SteamAppIdIdentifier
             this.CrackOnly = new System.Windows.Forms.DataGridViewButtonColumn();
             this.ShareClean = new System.Windows.Forms.DataGridViewButtonColumn();
             this.ShareCracked = new System.Windows.Forms.DataGridViewButtonColumn();
-            this.Details = new System.Windows.Forms.DataGridViewButtonColumn();
             this.lblSelectedPrefix = new System.Windows.Forms.Label();
             this.lblSelectedCount = new System.Windows.Forms.Label();
             this.lblSelectedSuffix = new System.Windows.Forms.Label();
-            this.btnToggleCrack = new System.Windows.Forms.Button();
-            this.btnToggleZip = new System.Windows.Forms.Button();
-            this.btnToggleShare = new System.Windows.Forms.Button();
             this.btnSettings = new System.Windows.Forms.Button();
             this.btnProcessSelected = new System.Windows.Forms.Button();
             this.lblStatus = new System.Windows.Forms.Label();
             this.progressBar = new System.Windows.Forms.ProgressBar();
             this.titleBar = new System.Windows.Forms.Panel();
             this.lblTitle = new System.Windows.Forms.Label();
-            this.btnCustomPath = new System.Windows.Forms.Button();
             this.btnMinimize = new System.Windows.Forms.Button();
             this.btnClose = new System.Windows.Forms.Button();
             this.toolTip = new System.Windows.Forms.ToolTip(this.components);
@@ -74,22 +69,21 @@ namespace SteamAppIdIdentifier
             ((System.ComponentModel.ISupportInitialize)(this.gamesGrid)).BeginInit();
             this.titleBar.SuspendLayout();
             this.SuspendLayout();
-            // 
+            //
             // mainPanel
-            // 
-            this.mainPanel.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(220)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
+            //
+            this.mainPanel.BackColor = System.Drawing.Color.Transparent;
             this.mainPanel.Controls.Add(this.gamesGrid);
             this.mainPanel.Controls.Add(this.lblStatus);
             this.mainPanel.Controls.Add(this.progressBar);
             this.mainPanel.Controls.Add(this.titleBar);
             this.mainPanel.Dock = System.Windows.Forms.DockStyle.Fill;
             this.mainPanel.Location = new System.Drawing.Point(0, 0);
-            this.mainPanel.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
             this.mainPanel.Name = "mainPanel";
             this.mainPanel.Padding = new System.Windows.Forms.Padding(1);
-            this.mainPanel.Size = new System.Drawing.Size(1167, 915);
+            this.mainPanel.Size = new System.Drawing.Size(1200, 915);
             this.mainPanel.TabIndex = 0;
-            // 
+            //
             // gamesGrid
             // 
             this.gamesGrid.AllowUserToAddRows = false;
@@ -97,7 +91,7 @@ namespace SteamAppIdIdentifier
             this.gamesGrid.AllowUserToOrderColumns = true;
             this.gamesGrid.AllowUserToResizeRows = false;
             this.gamesGrid.AutoSizeColumnsMode = System.Windows.Forms.DataGridViewAutoSizeColumnsMode.Fill;
-            this.gamesGrid.BackgroundColor = System.Drawing.Color.FromArgb(((int)(((byte)(5)))), ((int)(((byte)(5)))), ((int)(((byte)(8)))));
+            this.gamesGrid.BackgroundColor = System.Drawing.Color.FromArgb(((int)(((byte)(5)))), ((int)(((byte)(8)))), ((int)(((byte)(15)))));
             this.gamesGrid.BorderStyle = System.Windows.Forms.BorderStyle.None;
             this.gamesGrid.ColumnHeadersBorderStyle = System.Windows.Forms.DataGridViewHeaderBorderStyle.Single;
             dataGridViewCellStyle1.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
@@ -120,8 +114,7 @@ namespace SteamAppIdIdentifier
             this.LastUpdated,
             this.CrackOnly,
             this.ShareClean,
-            this.ShareCracked,
-            this.Details});
+            this.ShareCracked});
             dataGridViewCellStyle2.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
             dataGridViewCellStyle2.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(8)))), ((int)(((byte)(8)))), ((int)(((byte)(12)))));
             dataGridViewCellStyle2.Font = new System.Drawing.Font("Segoe UI", 9F);
@@ -240,15 +233,6 @@ namespace SteamAppIdIdentifier
             this.ShareCracked.FillWeight = 50;
             this.ShareCracked.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             //
-            // Details
-            //
-            this.Details.HeaderText = "";
-            this.Details.MinimumWidth = 30;
-            this.Details.Name = "Details";
-            this.Details.Width = 35;
-            this.Details.FillWeight = 18;
-            this.Details.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            //
             // lblStatus
             // 
             this.lblStatus.BackColor = System.Drawing.Color.Transparent;
@@ -279,13 +263,9 @@ namespace SteamAppIdIdentifier
             // 
             this.titleBar.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(60)))), ((int)(((byte)(50)))), ((int)(((byte)(60)))), ((int)(((byte)(80)))));
             this.titleBar.Controls.Add(this.lblTitle);
-            this.titleBar.Controls.Add(this.btnCustomPath);
             this.titleBar.Controls.Add(this.lblSelectedPrefix);
             this.titleBar.Controls.Add(this.lblSelectedCount);
             this.titleBar.Controls.Add(this.lblSelectedSuffix);
-            this.titleBar.Controls.Add(this.btnToggleCrack);
-            this.titleBar.Controls.Add(this.btnToggleZip);
-            this.titleBar.Controls.Add(this.btnToggleShare);
             this.titleBar.Controls.Add(this.btnSettings);
             this.titleBar.Controls.Add(this.btnProcessSelected);
             this.titleBar.Controls.Add(this.btnMinimize);
@@ -311,26 +291,6 @@ namespace SteamAppIdIdentifier
             this.lblTitle.TabIndex = 0;
             this.lblTitle.Text = "Crack | Share | Export";
             this.lblTitle.MouseDown += new System.Windows.Forms.MouseEventHandler(this.TitleBar_MouseDown);
-            // 
-            // btnCustomPath
-            // 
-            this.btnCustomPath.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.btnCustomPath.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(40)))), ((int)(((byte)(40)))), ((int)(((byte)(50)))));
-            this.btnCustomPath.FlatAppearance.BorderColor = System.Drawing.Color.FromArgb(((int)(((byte)(80)))), ((int)(((byte)(80)))), ((int)(((byte)(100)))));
-            this.btnCustomPath.FlatAppearance.MouseOverBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(60)))), ((int)(((byte)(60)))), ((int)(((byte)(70)))));
-            this.btnCustomPath.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.btnCustomPath.Font = new System.Drawing.Font("Segoe UI", 9F);
-            this.btnCustomPath.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(200)))), ((int)(((byte)(200)))), ((int)(((byte)(210)))));
-            this.btnCustomPath.Location = new System.Drawing.Point(201, 7);
-            this.btnCustomPath.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
-            this.btnCustomPath.Name = "btnCustomPath";
-            this.btnCustomPath.Size = new System.Drawing.Size(122, 33);
-            this.btnCustomPath.TabIndex = 3;
-            this.btnCustomPath.Text = "📁 Custom Path";
-            this.toolTip.SetToolTip(this.btnCustomPath, "Select a custom steam games folder path, must contain .acf manifests and common d" +
-        "irectory.");
-            this.btnCustomPath.UseVisualStyleBackColor = false;
-            this.btnCustomPath.Click += new System.EventHandler(this.BtnCustomPath_Click);
             //
             // lblSelectedPrefix
             //
@@ -365,59 +325,8 @@ namespace SteamAppIdIdentifier
             this.lblSelectedSuffix.Location = new System.Drawing.Point(441, 14);
             this.lblSelectedSuffix.Name = "lblSelectedSuffix";
             this.lblSelectedSuffix.Size = new System.Drawing.Size(18, 15);
-            this.lblSelectedSuffix.Text = " to";
+            this.lblSelectedSuffix.Text = " to process";
             this.lblSelectedSuffix.Visible = false;
-            //
-            // btnToggleCrack
-            //
-            this.btnToggleCrack.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(35)))), ((int)(((byte)(35)))), ((int)(((byte)(42)))));
-            this.btnToggleCrack.FlatAppearance.BorderColor = System.Drawing.Color.FromArgb(((int)(((byte)(60)))), ((int)(((byte)(60)))), ((int)(((byte)(70)))));
-            this.btnToggleCrack.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.btnToggleCrack.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
-            this.btnToggleCrack.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(140)))), ((int)(((byte)(140)))), ((int)(((byte)(150)))));
-            this.btnToggleCrack.Location = new System.Drawing.Point(470, 7);
-            this.btnToggleCrack.Name = "btnToggleCrack";
-            this.btnToggleCrack.Size = new System.Drawing.Size(65, 33);
-            this.btnToggleCrack.TabIndex = 10;
-            this.btnToggleCrack.Text = "Crack";
-            this.btnToggleCrack.Tag = false;
-            this.toolTip.SetToolTip(this.btnToggleCrack, "Toggle: Apply crack to selected games");
-            this.btnToggleCrack.UseVisualStyleBackColor = false;
-            this.btnToggleCrack.Click += new System.EventHandler(this.BtnToggleCrack_Click);
-            //
-            // btnToggleZip
-            //
-            this.btnToggleZip.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(35)))), ((int)(((byte)(35)))), ((int)(((byte)(42)))));
-            this.btnToggleZip.FlatAppearance.BorderColor = System.Drawing.Color.FromArgb(((int)(((byte)(60)))), ((int)(((byte)(60)))), ((int)(((byte)(70)))));
-            this.btnToggleZip.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.btnToggleZip.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
-            this.btnToggleZip.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(140)))), ((int)(((byte)(140)))), ((int)(((byte)(150)))));
-            this.btnToggleZip.Location = new System.Drawing.Point(540, 7);
-            this.btnToggleZip.Name = "btnToggleZip";
-            this.btnToggleZip.Size = new System.Drawing.Size(50, 33);
-            this.btnToggleZip.TabIndex = 11;
-            this.btnToggleZip.Text = "Zip";
-            this.btnToggleZip.Tag = false;
-            this.toolTip.SetToolTip(this.btnToggleZip, "Toggle: Compress selected games");
-            this.btnToggleZip.UseVisualStyleBackColor = false;
-            this.btnToggleZip.Click += new System.EventHandler(this.BtnToggleZip_Click);
-            //
-            // btnToggleShare
-            //
-            this.btnToggleShare.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(35)))), ((int)(((byte)(35)))), ((int)(((byte)(42)))));
-            this.btnToggleShare.FlatAppearance.BorderColor = System.Drawing.Color.FromArgb(((int)(((byte)(60)))), ((int)(((byte)(60)))), ((int)(((byte)(70)))));
-            this.btnToggleShare.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.btnToggleShare.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
-            this.btnToggleShare.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(140)))), ((int)(((byte)(140)))), ((int)(((byte)(150)))));
-            this.btnToggleShare.Location = new System.Drawing.Point(595, 7);
-            this.btnToggleShare.Name = "btnToggleShare";
-            this.btnToggleShare.Size = new System.Drawing.Size(60, 33);
-            this.btnToggleShare.TabIndex = 12;
-            this.btnToggleShare.Text = "Share";
-            this.btnToggleShare.Tag = false;
-            this.toolTip.SetToolTip(this.btnToggleShare, "Toggle: Upload to share (auto-enables Zip)");
-            this.btnToggleShare.UseVisualStyleBackColor = false;
-            this.btnToggleShare.Click += new System.EventHandler(this.BtnToggleShare_Click);
             //
             // btnSettings
             //
@@ -428,7 +337,7 @@ namespace SteamAppIdIdentifier
             this.btnSettings.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btnSettings.Font = new System.Drawing.Font("Segoe UI", 11F);
             this.btnSettings.ForeColor = System.Drawing.Color.White;
-            this.btnSettings.Location = new System.Drawing.Point(665, 7);
+            this.btnSettings.Location = new System.Drawing.Point(765, 7);
             this.btnSettings.Name = "btnSettings";
             this.btnSettings.Size = new System.Drawing.Size(40, 33);
             this.btnSettings.TabIndex = 14;
@@ -446,11 +355,11 @@ namespace SteamAppIdIdentifier
             this.btnProcessSelected.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btnProcessSelected.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
             this.btnProcessSelected.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(150)))), ((int)(((byte)(255)))), ((int)(((byte)(150)))));
-            this.btnProcessSelected.Location = new System.Drawing.Point(715, 7);
+            this.btnProcessSelected.Location = new System.Drawing.Point(665, 7);
             this.btnProcessSelected.Name = "btnProcessSelected";
             this.btnProcessSelected.Size = new System.Drawing.Size(90, 33);
             this.btnProcessSelected.TabIndex = 13;
-            this.btnProcessSelected.Text = "▶ Start";
+            this.btnProcessSelected.Text = "Process";
             this.toolTip.SetToolTip(this.btnProcessSelected, "Process selected games with chosen actions");
             this.btnProcessSelected.UseVisualStyleBackColor = false;
             this.btnProcessSelected.Click += new System.EventHandler(this.BtnProcessSelected_Click);
@@ -535,13 +444,9 @@ namespace SteamAppIdIdentifier
         private System.Windows.Forms.DataGridViewButtonColumn CrackOnly;
         private System.Windows.Forms.DataGridViewButtonColumn ShareClean;
         private System.Windows.Forms.DataGridViewButtonColumn ShareCracked;
-        private System.Windows.Forms.DataGridViewButtonColumn Details;
         private System.Windows.Forms.Label lblSelectedPrefix;
         private System.Windows.Forms.Label lblSelectedCount;
         private System.Windows.Forms.Label lblSelectedSuffix;
-        private System.Windows.Forms.Button btnToggleCrack;
-        private System.Windows.Forms.Button btnToggleZip;
-        private System.Windows.Forms.Button btnToggleShare;
         private System.Windows.Forms.Button btnSettings;
         private System.Windows.Forms.Button btnProcessSelected;
     }
