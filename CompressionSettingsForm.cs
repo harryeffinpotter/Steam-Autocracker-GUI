@@ -34,10 +34,10 @@ namespace SteamAutocrackGUI
             // Enable dragging the form
             this.MouseDown += CompressionSettingsForm_MouseDown;
 
-            // Set icon to match main app
+            // Set icon from resources
             try
             {
-                this.Icon = System.Drawing.Icon.ExtractAssociatedIcon(Environment.ProcessPath);
+                this.Icon = APPID.Properties.Resources.sac_icon;
             }
             catch { }
 
@@ -49,6 +49,26 @@ namespace SteamAutocrackGUI
             UseRinPassword = APPID.AppSettings.Default.UseRinPassword;
             rinPasswordCheckBox.Checked = UseRinPassword;
 
+            // Add Convert to DDL checkbox
+            var convertToDdlCheckBox = new CheckBox
+            {
+                Location = new Point(89, 92),
+                Size = new Size(265, 21),
+                Text = "Convert to DDL (debrid backend)",
+                ForeColor = Color.FromArgb(150, 150, 155),
+                BackColor = Color.Transparent,
+                Font = new Font("Segoe UI", 9),
+                Checked = !APPID.Properties.Settings.Default.SkipPyDriveConversion
+            };
+            convertToDdlCheckBox.CheckedChanged += (s, e) =>
+            {
+                APPID.Properties.Settings.Default.SkipPyDriveConversion = !convertToDdlCheckBox.Checked;
+                APPID.Properties.Settings.Default.Save();
+            };
+            var tooltip = new ToolTip();
+            tooltip.SetToolTip(convertToDdlCheckBox, "Convert 1fichier links to direct download links via debrid proxy");
+            this.Controls.Add(convertToDdlCheckBox);
+
             // Hide the default trackbar and create custom slider
             levelTrackBar.Visible = false;
             CreateCustomSlider();
@@ -59,7 +79,10 @@ namespace SteamAutocrackGUI
             ApplyRoundedCornersToButton(cancelButton);
 
             // Apply acrylic effect
-            this.Load += (s, e) => ApplyAcrylicEffect();
+            this.Load += (s, e) =>
+            {
+                ApplyAcrylicEffect();
+            };
 
             // Auto-close when clicking back to parent form only
             this.Deactivate += (s, e) =>
@@ -71,38 +94,23 @@ namespace SteamAutocrackGUI
                     this.Close();
                 }
             };
+
+            // ESC key closes form and returns to caller
+            this.KeyPreview = true;
+            this.KeyDown += (s, e) =>
+            {
+                if (e.KeyCode == Keys.Escape)
+                {
+                    this.DialogResult = DialogResult.Cancel;
+                    this.Close();
+                    e.Handled = true;
+                }
+            };
         }
 
         private void ApplyAcrylicEffect()
         {
-            try
-            {
-                // Apply rounded corners (Windows 11)
-                int preference = 2; // DWMWCP_ROUND
-                APPID.NativeMethods.DwmSetWindowAttribute(this.Handle, 33, ref preference, sizeof(int));
-            }
-            catch { }
-
-            try
-            {
-                var accent = new APPID.AccentPolicy();
-                accent.AccentState = 4; // ACCENT_ENABLE_ACRYLICBLURBEHIND
-                accent.AccentFlags = APPID.ThemeConfig.BlurIntensity;
-                accent.GradientColor = APPID.ThemeConfig.AcrylicBlurColor;
-
-                int accentStructSize = Marshal.SizeOf(accent);
-                IntPtr accentPtr = Marshal.AllocHGlobal(accentStructSize);
-                Marshal.StructureToPtr(accent, accentPtr, false);
-
-                var data = new APPID.WindowCompositionAttribData();
-                data.Attribute = 19; // WCA_ACCENT_POLICY
-                data.SizeOfData = accentStructSize;
-                data.Data = accentPtr;
-
-                SetWindowCompositionAttribute(this.Handle, ref data);
-                Marshal.FreeHGlobal(accentPtr);
-            }
-            catch { }
+            APPID.AcrylicHelper.ApplyAcrylic(this, roundedCorners: true, disableShadow: true);
         }
 
         private void ApplyRoundedCornersToButton(Button btn)

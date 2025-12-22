@@ -146,5 +146,17 @@ namespace APPID.Properties {
                 this["LastZipRateCompressed"] = value;
             }
         }
+
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool SkipPyDriveConversion {
+            get {
+                return ((bool)(this["SkipPyDriveConversion"]));
+            }
+            set {
+                this["SkipPyDriveConversion"] = value;
+            }
+        }
     }
 }

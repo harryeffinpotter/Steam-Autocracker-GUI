@@ -133,9 +133,9 @@ namespace SteamAutocrackGUI
             this.rinPasswordCheckBox.TabIndex = 11;
             this.rinPasswordCheckBox.Text = "Use cs.rin password";
             this.rinPasswordCheckBox.UseVisualStyleBackColor = false;
-            // 
+            //
             // ctrlSLabel
-            // 
+            //
             this.ctrlSLabel.AutoSize = true;
             this.ctrlSLabel.BackColor = System.Drawing.Color.Transparent;
             this.ctrlSLabel.Font = new System.Drawing.Font("Segoe UI", 8F);
@@ -152,7 +152,7 @@ namespace SteamAutocrackGUI
             this.okButton.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(38)))), ((int)(((byte)(38)))), ((int)(((byte)(42)))));
             this.okButton.FlatAppearance.BorderColor = System.Drawing.Color.FromArgb(((int)(((byte)(55)))), ((int)(((byte)(55)))), ((int)(((byte)(60)))));
             this.okButton.FlatAppearance.MouseDownBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(28)))), ((int)(((byte)(28)))), ((int)(((byte)(32)))));
-            this.okButton.FlatAppearance.MouseOverBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(48)))), ((int)(((byte)(48)))), ((int)(((byte)(52)))));
+            this.okButton.FlatAppearance.MouseOverBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(38)))), ((int)(((byte)(38)))), ((int)(((byte)(42)))));
             this.okButton.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.okButton.Font = new System.Drawing.Font("Segoe UI", 9F);
             this.okButton.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(220)))), ((int)(((byte)(220)))), ((int)(((byte)(225)))));
@@ -170,7 +170,7 @@ namespace SteamAutocrackGUI
             this.cancelButton.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(38)))), ((int)(((byte)(38)))), ((int)(((byte)(42)))));
             this.cancelButton.FlatAppearance.BorderColor = System.Drawing.Color.FromArgb(((int)(((byte)(55)))), ((int)(((byte)(55)))), ((int)(((byte)(60)))));
             this.cancelButton.FlatAppearance.MouseDownBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(28)))), ((int)(((byte)(28)))), ((int)(((byte)(32)))));
-            this.cancelButton.FlatAppearance.MouseOverBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(48)))), ((int)(((byte)(48)))), ((int)(((byte)(52)))));
+            this.cancelButton.FlatAppearance.MouseOverBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(38)))), ((int)(((byte)(38)))), ((int)(((byte)(42)))));
             this.cancelButton.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.cancelButton.Font = new System.Drawing.Font("Segoe UI", 9F);
             this.cancelButton.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(220)))), ((int)(((byte)(220)))), ((int)(((byte)(225)))));
@@ -205,6 +205,7 @@ namespace SteamAutocrackGUI
             this.MaximizeBox = false;
             this.MinimizeBox = false;
             this.Name = "CompressionSettingsForm";
+            this.ShowInTaskbar = true;  // Show in taskbar since parent hides
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
             this.Text = "Compression Settings";
             ((System.ComponentModel.ISupportInitialize)(this.levelTrackBar)).EndInit();

@@ -20,5 +20,8 @@
     <Setting Name="LastZipRateCompressed" Type="System.Double" Scope="User">
       <Value Profile="(Default)">30000000</Value>
     </Setting>
+    <Setting Name="SkipPyDriveConversion" Type="System.Boolean" Scope="User">
+      <Value Profile="(Default)">False</Value>
+    </Setting>
   </Settings>
 </SettingsFile>
