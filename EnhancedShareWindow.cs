@@ -90,7 +90,7 @@ namespace SteamAppIdIdentifier
         private Form parentForm;
         private bool gameSizeColumnSortedOnce = false;
 
-        // Upload details panel controls (unused but referenced)
+        // Upload details panel controls
         private Panel uploadDetailsPanel;
         private Label lblUploadGame;
         private Label lblUploadSize;

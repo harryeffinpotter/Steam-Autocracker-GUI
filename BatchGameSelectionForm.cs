@@ -2376,7 +2376,6 @@ namespace SteamAutocrackGUI
             this.FormBorderStyle = FormBorderStyle.None;
             this.MaximizeBox = false;
             this.MinimizeBox = false;
-            this.ShowInTaskbar = false;
 
             // Title
             var titleLabel = new Label
