@@ -89,22 +89,28 @@ namespace SteamAutocrackGUI
         private Dictionary<string, string> convertingUrls = new Dictionary<string, string>(); // gamePath -> 1fichier URL during conversion
         private Dictionary<string, string> finalUrls = new Dictionary<string, string>(); // gamePath -> final URL (pydrive or 1fichier)
         private Dictionary<string, APPID.SteamAppId.CrackDetails> crackDetailsMap = new Dictionary<string, APPID.SteamAppId.CrackDetails>(); // gamePath -> crack details
-        private Label compressionLabel;
 
-        // Upload details panel
-        private Panel uploadDetailsPanel;
-        private Label lblUploadGame;
-        private Label lblUploadSize;
-        private Label lblUploadSpeed;
-        private Label lblUploadEta;
-        private NeonProgressBar uploadProgressBar;
-        private Button btnSkip;
+        // Upload slots (3 concurrent uploads max)
+        private const int MAX_UPLOAD_SLOTS = 3;
+        private Panel uploadSlotsContainer;
+        private UploadSlot[] uploadSlots = new UploadSlot[MAX_UPLOAD_SLOTS];
         private Button btnCancelAll;
-
-        // Skip/Cancel tracking
-        private bool skipCurrentGame = false;
         private bool cancelAllRemaining = false;
-        private System.Threading.CancellationTokenSource uploadCancellation;
+
+        // Upload slot helper class
+        private class UploadSlot
+        {
+            public Panel Panel;
+            public Label LblGame;
+            public Label LblSize;
+            public Label LblSpeed;
+            public Label LblEta;
+            public NeonProgressBar ProgressBar;
+            public Button BtnSkip;
+            public string GamePath;
+            public bool InUse;
+            public System.Threading.CancellationTokenSource Cancellation;
+        }
 
         // Tooltip for batch form
         private ToolTip batchToolTip;
@@ -126,8 +132,25 @@ namespace SteamAutocrackGUI
             {
                 ApplyAcrylicEffect();
                 CenterToParentWithScreenClamp();
+                // Load icon from resources
+                try
+                {
+                    this.Icon = APPID.Properties.Resources.sac_icon;
+                }
+                catch { }
             };
             this.MouseDown += Form_MouseDown;
+
+            // ESC key closes form and returns to caller
+            this.KeyPreview = true;
+            this.KeyDown += (s, e) =>
+            {
+                if (e.KeyCode == Keys.Escape)
+                {
+                    this.Close();
+                    e.Handled = true;
+                }
+            };
         }
 
         private void CenterToParentWithScreenClamp()
@@ -151,13 +174,14 @@ namespace SteamAutocrackGUI
         {
             this.Text = "Batch Process - Select Games";
             this.Size = new Size(760, 580);
+            this.MinimumSize = new Size(760, 300);
             this.StartPosition = FormStartPosition.Manual;
             this.BackColor = Color.FromArgb(5, 8, 20);
             this.ForeColor = Color.White;
             this.FormBorderStyle = FormBorderStyle.None;
             this.MaximizeBox = false;
             this.MinimizeBox = false;
-            this.ShowInTaskbar = false;
+            this.ShowInTaskbar = true;  // Show in taskbar since main form hides
 
             // Title label
             var titleLabel = new Label
@@ -202,14 +226,15 @@ namespace SteamAutocrackGUI
             };
             this.Controls.Add(subtitleLabel);
 
-            // DataGridView for games
+            // DataGridView for games - anchored to resize with form
             gameGrid = new DataGridView
             {
                 Location = new Point(15, 75),
                 Size = new Size(725, 300),
+                Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right,
                 BackgroundColor = Color.FromArgb(15, 18, 30),
                 ForeColor = Color.FromArgb(220, 255, 255),
-                GridColor = Color.FromArgb(40, 40, 45),
+                GridColor = Color.FromArgb(50, 55, 70),
                 BorderStyle = BorderStyle.None,
                 CellBorderStyle = DataGridViewCellBorderStyle.SingleHorizontal,
                 ColumnHeadersBorderStyle = DataGridViewHeaderBorderStyle.None,
@@ -224,23 +249,23 @@ namespace SteamAutocrackGUI
                 Font = new Font("Segoe UI", 9)
             };
 
-            // Style headers
-            gameGrid.ColumnHeadersDefaultCellStyle.BackColor = Color.FromArgb(25, 28, 40);
+            // Style headers - semi-transparent dark
+            gameGrid.ColumnHeadersDefaultCellStyle.BackColor = Color.FromArgb(20, 25, 40);
             gameGrid.ColumnHeadersDefaultCellStyle.ForeColor = Color.FromArgb(150, 200, 255);
             gameGrid.ColumnHeadersDefaultCellStyle.Font = new Font("Segoe UI", 9, FontStyle.Bold);
-            gameGrid.ColumnHeadersDefaultCellStyle.SelectionBackColor = Color.FromArgb(25, 28, 40);
+            gameGrid.ColumnHeadersDefaultCellStyle.SelectionBackColor = Color.FromArgb(20, 25, 40);
             gameGrid.ColumnHeadersDefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter;
-            gameGrid.ColumnHeadersHeight = 32;
+            gameGrid.ColumnHeadersHeight = 38;
 
-            // Style rows
-            gameGrid.DefaultCellStyle.BackColor = Color.FromArgb(15, 18, 30);
+            // Style rows - semi-transparent dark
+            gameGrid.DefaultCellStyle.BackColor = Color.FromArgb(12, 15, 28);
             gameGrid.DefaultCellStyle.ForeColor = Color.FromArgb(220, 255, 255);
-            gameGrid.DefaultCellStyle.SelectionBackColor = Color.FromArgb(40, 60, 80);
+            gameGrid.DefaultCellStyle.SelectionBackColor = Color.FromArgb(40, 70, 110);
             gameGrid.DefaultCellStyle.SelectionForeColor = Color.White;
             gameGrid.RowTemplate.Height = 28;
 
-            // Alternate row style
-            gameGrid.AlternatingRowsDefaultCellStyle.BackColor = Color.FromArgb(20, 23, 35);
+            // Alternate row style - slightly different shade
+            gameGrid.AlternatingRowsDefaultCellStyle.BackColor = Color.FromArgb(18, 22, 38);
 
             // Add columns
             var nameCol = new DataGridViewTextBoxColumn
@@ -280,7 +305,7 @@ namespace SteamAutocrackGUI
             {
                 Name = "Crack",
                 HeaderText = "Crack",
-                Width = 50
+                Width = 55
             };
             gameGrid.Columns.Add(crackCol);
 
@@ -299,6 +324,11 @@ namespace SteamAutocrackGUI
                 Width = 55
             };
             gameGrid.Columns.Add(uploadCol);
+
+            // Add tooltips to checkbox column headers
+            crackCol.ToolTipText = "Click header to select/deselect all";
+            zipCol.ToolTipText = "Click header to select/deselect all";
+            uploadCol.ToolTipText = "Click header to select/deselect all";
 
             var statusCol = new DataGridViewTextBoxColumn
             {
@@ -323,76 +353,203 @@ namespace SteamAutocrackGUI
             };
             gameGrid.Columns.Add(detailsCol);
 
-            // Custom paint for Details buttons to match dark theme with icon
+            // Track header checkbox states
+            var headerCheckStates = new Dictionary<string, bool> { { "Crack", true }, { "Zip", false }, { "Upload", false } };
+
+            // Custom paint for cells and headers
             Image infoIcon = null;
+            Image zipperIcon = null;
             try { infoIcon = APPID.Properties.Resources.info_icon; } catch { }
+            try { zipperIcon = APPID.Properties.Resources.zipper_icon; } catch { }
 
             gameGrid.CellPainting += (s, e) =>
             {
-                if (e.ColumnIndex >= 0 && gameGrid.Columns[e.ColumnIndex].Name == "Details" && e.RowIndex >= 0)
+                // Paint checkbox column HEADERS with actual checkbox
+                if (e.RowIndex == -1 && e.ColumnIndex >= 0)
                 {
-                    // Let the cell paint its own background naturally, then draw icon on top
-                    e.PaintBackground(e.ClipBounds, true);
+                    string colName = gameGrid.Columns[e.ColumnIndex].Name;
+                    if (colName == "Crack" || colName == "Zip" || colName == "Upload")
+                    {
+                        e.PaintBackground(e.ClipBounds, true);
 
-                    // Just draw the icon centered
-                    if (infoIcon != null)
-                    {
-                        int iconSize = Math.Min(e.CellBounds.Width - 8, e.CellBounds.Height - 8);
-                        iconSize = Math.Min(iconSize, 20); // Cap at 20px
-                        int iconX = e.CellBounds.X + (e.CellBounds.Width - iconSize) / 2;
-                        int iconY = e.CellBounds.Y + (e.CellBounds.Height - iconSize) / 2;
-                        e.Graphics.DrawImage(infoIcon, iconX, iconY, iconSize, iconSize);
-                    }
-                    else
-                    {
-                        // Fallback to simple "i" text if no icon
-                        using (var textBrush = new SolidBrush(Color.FromArgb(150, 200, 255)))
-                        using (var font = new Font("Segoe UI", 10, FontStyle.Bold))
+                        // Draw text above checkbox
+                        using (var brush = new SolidBrush(Color.FromArgb(150, 200, 255)))
+                        using (var font = new Font("Segoe UI", 8, FontStyle.Bold))
                         {
-                            var sf = new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center };
-                            e.Graphics.DrawString("ⓘ", font, textBrush, e.CellBounds, sf);
+                            var sf = new StringFormat { Alignment = StringAlignment.Center };
+                            e.Graphics.DrawString(colName, font, brush, e.CellBounds.X + e.CellBounds.Width / 2, e.CellBounds.Y + 3, sf);
+                        }
+
+                        // Draw checkbox below text (16px)
+                        int boxSize = 16;
+                        int boxX = e.CellBounds.X + (e.CellBounds.Width - boxSize) / 2;
+                        int boxY = e.CellBounds.Y + 18;
+                        var boxRect = new Rectangle(boxX, boxY, boxSize, boxSize);
+
+                        e.Graphics.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
+
+                        bool isChecked = headerCheckStates.ContainsKey(colName) && headerCheckStates[colName];
+
+                        if (isChecked)
+                        {
+                            // Filled rounded rectangle - bright blue like cell checkboxes
+                            using (var path = new System.Drawing.Drawing2D.GraphicsPath())
+                            {
+                                int r = 4; // corner radius
+                                path.AddArc(boxRect.X, boxRect.Y, r * 2, r * 2, 180, 90);
+                                path.AddArc(boxRect.Right - r * 2, boxRect.Y, r * 2, r * 2, 270, 90);
+                                path.AddArc(boxRect.Right - r * 2, boxRect.Bottom - r * 2, r * 2, r * 2, 0, 90);
+                                path.AddArc(boxRect.X, boxRect.Bottom - r * 2, r * 2, r * 2, 90, 90);
+                                path.CloseFigure();
+
+                                using (var brush = new SolidBrush(Color.FromArgb(60, 150, 220)))
+                                    e.Graphics.FillPath(brush, path);
+                            }
+                            // White checkmark (scaled for 16px)
+                            using (var pen = new Pen(Color.White, 2f))
+                            {
+                                e.Graphics.DrawLine(pen, boxX + 3, boxY + 8, boxX + 6, boxY + 11);
+                                e.Graphics.DrawLine(pen, boxX + 6, boxY + 11, boxX + 12, boxY + 4);
+                            }
+                        }
+                        else
+                        {
+                            // Empty rounded rectangle - light gray outline like cell checkboxes
+                            using (var path = new System.Drawing.Drawing2D.GraphicsPath())
+                            {
+                                int r = 4;
+                                path.AddArc(boxRect.X, boxRect.Y, r * 2, r * 2, 180, 90);
+                                path.AddArc(boxRect.Right - r * 2, boxRect.Y, r * 2, r * 2, 270, 90);
+                                path.AddArc(boxRect.Right - r * 2, boxRect.Bottom - r * 2, r * 2, r * 2, 0, 90);
+                                path.AddArc(boxRect.X, boxRect.Bottom - r * 2, r * 2, r * 2, 90, 90);
+                                path.CloseFigure();
+
+                                using (var pen = new Pen(Color.FromArgb(180, 180, 190), 1.5f))
+                                    e.Graphics.DrawPath(pen, path);
+                            }
+                        }
+
+                        e.Handled = true;
+                    }
+                }
+
+                if (e.ColumnIndex >= 0 && e.RowIndex >= 0)
+                {
+                    string colName = gameGrid.Columns[e.ColumnIndex].Name;
+
+                    // Custom paint checkbox cells (Crack, Zip, Upload) - styled
+                    if (colName == "Crack" || colName == "Zip" || colName == "Upload")
+                    {
+                        e.PaintBackground(e.ClipBounds, true);
+
+                        int boxSize = 15;
+                        int boxX = e.CellBounds.X + (e.CellBounds.Width - boxSize) / 2;
+                        int boxY = e.CellBounds.Y + (e.CellBounds.Height - boxSize) / 2;
+                        var boxRect = new Rectangle(boxX, boxY, boxSize, boxSize);
+
+                        e.Graphics.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
+
+                        bool isChecked = (bool)(e.Value ?? false);
+
+                        if (isChecked)
+                        {
+                            // Filled rounded rectangle - bright blue
+                            using (var path = new System.Drawing.Drawing2D.GraphicsPath())
+                            {
+                                int r = 3; // corner radius
+                                path.AddArc(boxRect.X, boxRect.Y, r * 2, r * 2, 180, 90);
+                                path.AddArc(boxRect.Right - r * 2, boxRect.Y, r * 2, r * 2, 270, 90);
+                                path.AddArc(boxRect.Right - r * 2, boxRect.Bottom - r * 2, r * 2, r * 2, 0, 90);
+                                path.AddArc(boxRect.X, boxRect.Bottom - r * 2, r * 2, r * 2, 90, 90);
+                                path.CloseFigure();
+
+                                using (var brush = new SolidBrush(Color.FromArgb(60, 150, 220)))
+                                    e.Graphics.FillPath(brush, path);
+                            }
+                            // White checkmark (scaled for 15px)
+                            using (var pen = new Pen(Color.White, 1.8f))
+                            {
+                                e.Graphics.DrawLine(pen, boxX + 3, boxY + 7, boxX + 5, boxY + 10);
+                                e.Graphics.DrawLine(pen, boxX + 5, boxY + 10, boxX + 11, boxY + 4);
+                            }
+                        }
+                        else
+                        {
+                            // Empty rounded rectangle - light gray outline
+                            using (var path = new System.Drawing.Drawing2D.GraphicsPath())
+                            {
+                                int r = 3;
+                                path.AddArc(boxRect.X, boxRect.Y, r * 2, r * 2, 180, 90);
+                                path.AddArc(boxRect.Right - r * 2, boxRect.Y, r * 2, r * 2, 270, 90);
+                                path.AddArc(boxRect.Right - r * 2, boxRect.Bottom - r * 2, r * 2, r * 2, 0, 90);
+                                path.AddArc(boxRect.X, boxRect.Bottom - r * 2, r * 2, r * 2, 90, 90);
+                                path.CloseFigure();
+
+                                using (var pen = new Pen(Color.FromArgb(180, 180, 190), 1.5f))
+                                    e.Graphics.DrawPath(pen, path);
+                            }
+                        }
+
+                        e.Handled = true;
+                    }
+                    // Details column - info icon
+                    else if (colName == "Details")
+                    {
+                        e.PaintBackground(e.ClipBounds, true);
+                        if (infoIcon != null)
+                        {
+                            int iconSize = Math.Min(e.CellBounds.Width - 8, e.CellBounds.Height - 8);
+                            iconSize = Math.Min(iconSize, 20);
+                            int iconX = e.CellBounds.X + (e.CellBounds.Width - iconSize) / 2;
+                            int iconY = e.CellBounds.Y + (e.CellBounds.Height - iconSize) / 2;
+                            e.Graphics.DrawImage(infoIcon, iconX, iconY, iconSize, iconSize);
+                        }
+                        else
+                        {
+                            using (var textBrush = new SolidBrush(Color.FromArgb(150, 200, 255)))
+                            using (var font = new Font("Segoe UI", 10, FontStyle.Bold))
+                            {
+                                var sf = new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center };
+                                e.Graphics.DrawString("ⓘ", font, textBrush, e.CellBounds, sf);
+                            }
+                        }
+                        e.Handled = true;
+                    }
+                    // Status column - zipper icon when zipping
+                    else if (colName == "Status" && zipperIcon != null)
+                    {
+                        string status = e.Value?.ToString() ?? "";
+                        if (status.StartsWith("Zipping"))
+                        {
+                            e.PaintBackground(e.ClipBounds, true);
+
+                            // Draw zipper icon on left (taller than wide)
+                            int iconHeight = e.CellBounds.Height - 6;
+                            int iconWidth = (int)(iconHeight * 0.6); // Maintain aspect ratio (taller than wide)
+                            int iconX = e.CellBounds.X + 4;
+                            int iconY = e.CellBounds.Y + 3;
+                            e.Graphics.DrawImage(zipperIcon, iconX, iconY, iconWidth, iconHeight);
+
+                            // Draw percentage text next to icon
+                            string pctText = status.Replace("Zipping", "").Trim();
+                            if (!string.IsNullOrEmpty(pctText))
+                            {
+                                using (var textBrush = new SolidBrush(Color.Cyan))
+                                using (var font = new Font("Segoe UI", 8.5f, FontStyle.Bold))
+                                {
+                                    var textRect = new RectangleF(iconX + iconWidth + 4, e.CellBounds.Y, e.CellBounds.Width - iconWidth - 12, e.CellBounds.Height);
+                                    var sf = new StringFormat { Alignment = StringAlignment.Near, LineAlignment = StringAlignment.Center };
+                                    e.Graphics.DrawString(pctText, font, textBrush, textRect, sf);
+                                }
+                            }
+                            e.Handled = true;
                         }
                     }
-                    e.Handled = true;
                 }
             };
 
-            // Add game rows
-            for (int i = 0; i < gamePaths.Count; i++)
-            {
-                string path = gamePaths[i];
-                int rowIndex = gameGrid.Rows.Add();
-
-                // Check for suspicious structure (multiple steam_api DLLs)
-                int steamApiCount = APPID.SteamAppId.CountSteamApiDlls(path);
-                string gameName = Path.GetFileName(path);
-                if (steamApiCount > 2)
-                {
-                    gameName = "⚠️ " + gameName;
-                    gameGrid.Rows[rowIndex].Cells["GameName"].ToolTipText =
-                        $"Warning: Found {steamApiCount} steam_api DLLs in this folder.\nThis might contain multiple games or have an unusual structure.";
-                }
-                gameGrid.Rows[rowIndex].Cells["GameName"].Value = gameName;
-
-                // Auto-detect AppID
-                string appId = DetectAppId(path);
-                detectedAppIds[rowIndex] = appId;
-                gameGrid.Rows[rowIndex].Cells["AppId"].Value = string.IsNullOrEmpty(appId) ? "?" : appId;
-
-                // Style the AppID cell based on whether it was found
-                if (string.IsNullOrEmpty(appId))
-                {
-                    gameGrid.Rows[rowIndex].Cells["AppId"].Style.ForeColor = Color.Orange;
-                    gameGrid.Rows[rowIndex].Cells["AppId"].Style.Font = new Font("Segoe UI", 9, FontStyle.Bold);
-                }
-
-                gameGrid.Rows[rowIndex].Cells["Size"].Value = GetFolderSizeString(path);
-                gameGrid.Rows[rowIndex].Cells["Crack"].Value = true;
-                gameGrid.Rows[rowIndex].Cells["Zip"].Value = false;
-                gameGrid.Rows[rowIndex].Cells["Upload"].Value = false;
-                gameGrid.Rows[rowIndex].Cells["Status"].Value = steamApiCount > 2 ? "⚠️ Check structure" : "Pending";
-                gameGrid.Rows[rowIndex].Tag = path;
-            }
+            // Load games asynchronously to avoid UI freeze
+            LoadGamesAsync();
 
             // Handle clicks on cells
             gameGrid.CellClick += (s, e) =>
@@ -529,185 +686,238 @@ namespace SteamAutocrackGUI
                 ReshowDelay = 200
             };
 
-            // Count label
-            var countLabel = new Label
+            // Compression settings button - bottom left, anchored (custom painted with image)
+            var settingsBtn = new Button
             {
-                Name = "countLabel",
-                Location = new Point(15, 385),
-                Size = new Size(200, 20),
-                ForeColor = Color.Gray,
-                BackColor = Color.Transparent,
-                Font = new Font("Segoe UI", 9),
-                Text = $"{gamePaths.Count} game(s) to crack"
+                Location = new Point(15, 490),
+                Size = new Size(35, 35),
+                FlatStyle = FlatStyle.Flat,
+                Cursor = Cursors.Hand,
+                Anchor = AnchorStyles.Bottom | AnchorStyles.Left
             };
-            this.Controls.Add(countLabel);
+            settingsBtn.FlatAppearance.BorderSize = 0;
+            settingsBtn.FlatAppearance.MouseOverBackColor = Color.Transparent;
+            settingsBtn.FlatAppearance.MouseDownBackColor = Color.Transparent;
 
-            // Compression settings row
-            var settingsBtn = CreateStyledButton("⚙", new Point(15, 410), new Size(35, 35));
-            settingsBtn.Font = new Font("Segoe UI", 12);
+            Image settingsIcon = null;
+            try { settingsIcon = APPID.Properties.Resources.settings_icon; } catch { }
+
+            settingsBtn.Paint += (s, e) =>
+            {
+                e.Graphics.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
+                var rect = new Rectangle(0, 0, settingsBtn.Width - 1, settingsBtn.Height - 1);
+
+                // Background
+                Color bgColor = settingsBtn.ClientRectangle.Contains(settingsBtn.PointToClient(Cursor.Position))
+                    ? Color.FromArgb(50, 50, 55) : Color.FromArgb(38, 38, 42);
+                using (var path = CreateRoundedRectPath(rect, 8))
+                using (var brush = new SolidBrush(bgColor))
+                    e.Graphics.FillPath(brush, path);
+
+                // Draw icon centered with proper aspect ratio
+                if (settingsIcon != null)
+                {
+                    int padding = 6;
+                    int availableW = settingsBtn.Width - padding * 2;
+                    int availableH = settingsBtn.Height - padding * 2;
+
+                    // Calculate scaled size maintaining aspect ratio
+                    float scale = Math.Min((float)availableW / settingsIcon.Width, (float)availableH / settingsIcon.Height);
+                    int drawW = (int)(settingsIcon.Width * scale);
+                    int drawH = (int)(settingsIcon.Height * scale);
+
+                    // Center it
+                    int drawX = padding + (availableW - drawW) / 2;
+                    int drawY = padding + (availableH - drawH) / 2;
+
+                    e.Graphics.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.HighQualityBicubic;
+                    e.Graphics.DrawImage(settingsIcon, drawX, drawY, drawW, drawH);
+                }
+                else
+                {
+                    TextRenderer.DrawText(e.Graphics, "⚙", new Font("Segoe UI", 12), rect, Color.White,
+                        TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter);
+                }
+            };
+            settingsBtn.MouseEnter += (s, e) => settingsBtn.Invalidate();
+            settingsBtn.MouseLeave += (s, e) => settingsBtn.Invalidate();
             settingsBtn.Click += (s, e) => OpenCompressionSettings();
-            batchToolTip.SetToolTip(settingsBtn, "Open compression settings (format, level, password)");
+            batchToolTip.SetToolTip(settingsBtn, "Compression settings");
             this.Controls.Add(settingsBtn);
 
-            compressionLabel = new Label
+            // compressionLabel removed - user didn't want it
+
+            // Column header click toggles all/none for checkbox columns
+            gameGrid.ColumnHeaderMouseClick += (s, e) =>
             {
-                Location = new Point(55, 418),
-                Size = new Size(200, 20),
-                ForeColor = Color.FromArgb(140, 140, 145),
-                BackColor = Color.Transparent,
-                Font = new Font("Segoe UI", 8),
-                Text = "ZIP Level 0 (No compression)"
-            };
-            this.Controls.Add(compressionLabel);
-
-            // Bulk action buttons - compact, minimal padding
-            var selectAllCrackBtn = CreateStyledButton("All Crack", new Point(313, 388), new Size(68, 28));
-            selectAllCrackBtn.Font = new Font("Segoe UI", 8);
-            selectAllCrackBtn.Click += (s, e) => SetAllCheckboxes("Crack", true);
-            batchToolTip.SetToolTip(selectAllCrackBtn, "Enable Crack for all games");
-            this.Controls.Add(selectAllCrackBtn);
-
-            var selectAllZipBtn = CreateStyledButton("All Zip", new Point(384, 388), new Size(55, 28));
-            selectAllZipBtn.Font = new Font("Segoe UI", 8);
-            selectAllZipBtn.Click += (s, e) => SetAllCheckboxes("Zip", true);
-            batchToolTip.SetToolTip(selectAllZipBtn, "Enable Zip for all games");
-            this.Controls.Add(selectAllZipBtn);
-
-            var clearAllBtn = CreateStyledButton("Clear All", new Point(442, 388), new Size(62, 28));
-            clearAllBtn.Font = new Font("Segoe UI", 8);
-            clearAllBtn.Click += (s, e) =>
-            {
-                foreach (DataGridViewRow row in gameGrid.Rows)
+                string colName = gameGrid.Columns[e.ColumnIndex].Name;
+                if (colName == "Crack" || colName == "Zip" || colName == "Upload")
                 {
-                    row.Cells["Crack"].Value = false;
-                    row.Cells["Zip"].Value = false;
-                    row.Cells["Upload"].Value = false;
+                    // Check if any are currently checked
+                    bool anyChecked = false;
+                    foreach (DataGridViewRow row in gameGrid.Rows)
+                    {
+                        if ((bool)(row.Cells[colName].Value ?? false))
+                        {
+                            anyChecked = true;
+                            break;
+                        }
+                    }
+                    // Toggle: if any checked, uncheck all; otherwise check all
+                    bool newValue = !anyChecked;
+                    foreach (DataGridViewRow row in gameGrid.Rows)
+                    {
+                        row.Cells[colName].Value = newValue;
+                        // Dependency: Upload requires Zip
+                        if (colName == "Upload" && newValue)
+                            row.Cells["Zip"].Value = true;
+                        else if (colName == "Zip" && !newValue)
+                            row.Cells["Upload"].Value = false;
+                    }
+                    // Update header checkbox state and refresh
+                    headerCheckStates[colName] = newValue;
+                    if (colName == "Upload" && newValue)
+                        headerCheckStates["Zip"] = true;
+                    else if (colName == "Zip" && !newValue)
+                        headerCheckStates["Upload"] = false;
+                    gameGrid.InvalidateColumn(gameGrid.Columns[colName].Index);
+                    if (colName == "Upload" || colName == "Zip")
+                    {
+                        gameGrid.InvalidateColumn(gameGrid.Columns["Zip"].Index);
+                        gameGrid.InvalidateColumn(gameGrid.Columns["Upload"].Index);
+                    }
+                    UpdateCountLabel();
                 }
-                UpdateCountLabel();
-            };
-            batchToolTip.SetToolTip(clearAllBtn, "Clear all selections (uncheck all Crack/Zip/Upload)");
-            this.Controls.Add(clearAllBtn);
-
-            // Upload details panel (hidden by default, shown during uploads)
-            // Position right below the grid (grid ends at Y=375)
-            uploadDetailsPanel = new Panel
-            {
-                Location = new Point(15, 378),
-                Size = new Size(725, 40),
-                BackColor = Color.FromArgb(20, 23, 35),
-                Visible = false
             };
 
-            // Game name being uploaded (left side)
-            lblUploadGame = new Label
+            // Upload slots container (hidden by default, shown during uploads)
+            // Docked to bottom of form
+            uploadSlotsContainer = new Panel
             {
-                Location = new Point(5, 3),
-                Size = new Size(350, 16),
-                ForeColor = Color.FromArgb(100, 200, 255),
-                Font = new Font("Segoe UI", 8, FontStyle.Bold),
-                Text = "Uploading: "
+                Dock = DockStyle.Bottom,
+                Height = 114, // 3 slots * 38px
+                BackColor = Color.FromArgb(5, 8, 20),
+                Visible = false,
+                Padding = new Padding(15, 0, 15, 0)
             };
-            uploadDetailsPanel.Controls.Add(lblUploadGame);
 
-            // Custom-painted progress bar (modern neon blue style) - shrunk to fit buttons
-            uploadProgressBar = new NeonProgressBar
+            // Create 3 upload slots (added in reverse order for proper Dock.Top stacking)
+            for (int i = MAX_UPLOAD_SLOTS - 1; i >= 0; i--)
             {
-                Location = new Point(5, 21),
-                Size = new Size(350, 14),
-                Maximum = 100
-            };
-            uploadDetailsPanel.Controls.Add(uploadProgressBar);
+                var slot = new UploadSlot();
 
-            // Size info (e.g., "1.2 GB / 7.6 GB")
-            lblUploadSize = new Label
-            {
-                Location = new Point(360, 21),
-                Size = new Size(85, 14),
-                ForeColor = Color.FromArgb(180, 180, 185),
-                Font = new Font("Segoe UI", 8),
-                Text = "",
-                TextAlign = ContentAlignment.MiddleLeft
-            };
-            uploadDetailsPanel.Controls.Add(lblUploadSize);
+                slot.Panel = new Panel
+                {
+                    Dock = DockStyle.Top,
+                    Height = 36,
+                    BackColor = Color.FromArgb(15, 18, 28),
+                    Visible = false,
+                    Margin = new Padding(0, 2, 0, 0)
+                };
 
-            // Speed (e.g., "12.5 MB/s")
-            lblUploadSpeed = new Label
-            {
-                Location = new Point(450, 21),
-                Size = new Size(70, 14),
-                ForeColor = Color.FromArgb(100, 255, 150),
-                Font = new Font("Segoe UI", 8),
-                Text = "",
-                TextAlign = ContentAlignment.MiddleLeft
-            };
-            uploadDetailsPanel.Controls.Add(lblUploadSpeed);
+                slot.LblGame = new Label
+                {
+                    Location = new Point(5, 2),
+                    Size = new Size(280, 14),
+                    ForeColor = Color.FromArgb(100, 200, 255),
+                    Font = new Font("Segoe UI", 8, FontStyle.Bold),
+                    Text = ""
+                };
+                slot.Panel.Controls.Add(slot.LblGame);
 
-            // ETA (e.g., "ETA: 5:32")
-            lblUploadEta = new Label
-            {
-                Location = new Point(525, 21),
-                Size = new Size(70, 14),
-                ForeColor = Color.FromArgb(255, 200, 100),
-                Font = new Font("Segoe UI", 8),
-                Text = "",
-                TextAlign = ContentAlignment.MiddleLeft
-            };
-            uploadDetailsPanel.Controls.Add(lblUploadEta);
+                slot.ProgressBar = new NeonProgressBar
+                {
+                    Location = new Point(5, 18),
+                    Size = new Size(280, 12),
+                    Maximum = 100
+                };
+                slot.Panel.Controls.Add(slot.ProgressBar);
 
-            // Skip button
-            btnSkip = new Button
-            {
-                Name = "btnSkip",
-                Location = new Point(625, 5),
-                Size = new Size(45, 30),
-                Text = "Skip",
-                BackColor = Color.FromArgb(80, 70, 20),
-                ForeColor = Color.FromArgb(255, 220, 120),
-                FlatStyle = FlatStyle.Flat,
-                Font = new Font("Segoe UI", 8)
-            };
-            btnSkip.FlatAppearance.BorderColor = Color.FromArgb(150, 120, 40);
-            batchToolTip.SetToolTip(btnSkip, "Skip this game and continue with the next one");
-            btnSkip.Click += (s, e) =>
-            {
-                skipCurrentGame = true;
-                uploadCancellation?.Cancel();  // Stop current upload
-                btnSkip.Text = "...";
-                btnSkip.Enabled = false;
-            };
-            uploadDetailsPanel.Controls.Add(btnSkip);
+                slot.LblSize = new Label
+                {
+                    Location = new Point(290, 18),
+                    Size = new Size(100, 14),
+                    ForeColor = Color.FromArgb(180, 180, 185),
+                    Font = new Font("Segoe UI", 7.5f),
+                    Text = "",
+                    TextAlign = ContentAlignment.MiddleLeft
+                };
+                slot.Panel.Controls.Add(slot.LblSize);
 
-            // Cancel All button
-            btnCancelAll = new Button
-            {
-                Name = "btnCancelAll",
-                Location = new Point(673, 5),
-                Size = new Size(55, 30),
-                Text = "Cancel",
-                BackColor = Color.FromArgb(100, 30, 30),
-                ForeColor = Color.FromArgb(255, 150, 150),
-                TextAlign = ContentAlignment.MiddleCenter,
-                FlatStyle = FlatStyle.Flat,
-                Font = new Font("Segoe UI", 8)
-            };
-            btnCancelAll.FlatAppearance.BorderColor = Color.FromArgb(150, 60, 60);
-            batchToolTip.SetToolTip(btnCancelAll, "Cancel this and all remaining uploads");
+                slot.LblSpeed = new Label
+                {
+                    Location = new Point(395, 18),
+                    Size = new Size(75, 14),
+                    ForeColor = Color.FromArgb(100, 255, 150),
+                    Font = new Font("Segoe UI", 7.5f),
+                    Text = "",
+                    TextAlign = ContentAlignment.MiddleLeft
+                };
+                slot.Panel.Controls.Add(slot.LblSpeed);
+
+                slot.LblEta = new Label
+                {
+                    Location = new Point(475, 18),
+                    Size = new Size(70, 14),
+                    ForeColor = Color.FromArgb(255, 200, 100),
+                    Font = new Font("Segoe UI", 7.5f),
+                    Text = "",
+                    TextAlign = ContentAlignment.MiddleLeft
+                };
+                slot.Panel.Controls.Add(slot.LblEta);
+
+                // Skip button for this slot - anchored to right
+                int slotIndex = i;
+                slot.BtnSkip = new Button
+                {
+                    Size = new Size(55, 28),
+                    Text = "Skip",
+                    BackColor = Color.FromArgb(80, 70, 20),
+                    ForeColor = Color.FromArgb(255, 220, 120),
+                    FlatStyle = FlatStyle.Flat,
+                    Font = new Font("Segoe UI", 8, FontStyle.Bold),
+                    Anchor = AnchorStyles.Top | AnchorStyles.Right
+                };
+                slot.BtnSkip.FlatAppearance.BorderColor = Color.FromArgb(150, 120, 40);
+                slot.BtnSkip.Location = new Point(660, 4); // Initial position, will adjust on resize
+                slot.Panel.Resize += (s, e) => {
+                    slot.BtnSkip.Location = new Point(slot.Panel.ClientSize.Width - slot.BtnSkip.Width - 10, 4);
+                };
+                slot.BtnSkip.Click += (s, e) =>
+                {
+                    uploadSlots[slotIndex].Cancellation?.Cancel();
+                    slot.BtnSkip.Text = "...";
+                    slot.BtnSkip.Enabled = false;
+                };
+                slot.Panel.Controls.Add(slot.BtnSkip);
+
+                uploadSlotsContainer.Controls.Add(slot.Panel);
+                uploadSlots[i] = slot;
+            }
+
+            this.Controls.Add(uploadSlotsContainer);
+
+            // Cancel All button - top right, same row as subtitle
+            btnCancelAll = CreateStyledButton("Cancel All", new Point(this.ClientSize.Width - 100, 43), new Size(85, 26), Color.FromArgb(80, 35, 35));
+            btnCancelAll.Anchor = AnchorStyles.Top | AnchorStyles.Right;
+            btnCancelAll.Visible = false;
+            batchToolTip.SetToolTip(btnCancelAll, "Cancel all remaining uploads");
             btnCancelAll.Click += (s, e) =>
             {
                 cancelAllRemaining = true;
-                skipCurrentGame = true;
-                uploadCancellation?.Cancel();  // Actually cancel the upload
+                foreach (var slot in uploadSlots)
+                {
+                    slot.Cancellation?.Cancel();
+                    if (slot.BtnSkip != null) slot.BtnSkip.Enabled = false;
+                }
                 btnCancelAll.Text = "...";
                 btnCancelAll.Enabled = false;
-                btnSkip.Enabled = false;
             };
-            uploadDetailsPanel.Controls.Add(btnCancelAll);
+            this.Controls.Add(btnCancelAll);
 
-            this.Controls.Add(uploadDetailsPanel);
-
-            // Process button
-            var processBtn = CreateStyledButton("Process", new Point(560, 495), new Size(90, 40));
-            processBtn.BackColor = Color.FromArgb(0, 100, 70);
+            // Start button - bottom right, anchored
+            var processBtn = CreateStyledButton("Start", new Point(573, 485), new Size(80, 40), Color.FromArgb(0, 100, 70));
+            processBtn.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
             processBtn.Click += (s, e) =>
             {
                 // Check for missing AppIDs on games that need cracking
@@ -772,14 +982,16 @@ namespace SteamAutocrackGUI
             batchToolTip.SetToolTip(processBtn, "Start processing selected games (crack, zip, upload)");
             this.Controls.Add(processBtn);
 
-            // Cancel button
-            var cancelBtn = CreateStyledButton("Cancel", new Point(660, 495), new Size(80, 40));
+            // Cancel button - bottom right, anchored (closer to Start)
+            var cancelBtn = CreateStyledButton("Cancel", new Point(658, 485), new Size(70, 40));
+            cancelBtn.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
             cancelBtn.Click += (s, e) =>
             {
                 this.Close();
             };
             batchToolTip.SetToolTip(cancelBtn, "Close this window without processing");
             this.Controls.Add(cancelBtn);
+
         }
 
         /// <summary>
@@ -890,36 +1102,152 @@ namespace SteamAutocrackGUI
         }
 
         /// <summary>
-        /// Shows the upload details panel with initial info
+        /// Claim an upload slot for a game. Returns slot index (-1 if none available) and sets up cancellation.
         /// </summary>
-        public void ShowUploadDetails(string gameName, long totalBytes)
+        public int ClaimUploadSlot(string gamePath, string gameName, long totalBytes)
         {
-            if (this.IsDisposed) return;
+            if (this.IsDisposed) return -1;
 
             if (this.InvokeRequired)
             {
-                try { this.BeginInvoke(new Action(() => ShowUploadDetails(gameName, totalBytes))); } catch { }
-                return;
+                return (int)this.Invoke(new Func<int>(() => ClaimUploadSlot(gamePath, gameName, totalBytes)));
             }
 
-            // Reset skip flag for new game (but not cancel - that stays)
-            skipCurrentGame = false;
-            btnSkip.Text = "Skip";
-            btnSkip.Enabled = !cancelAllRemaining;
-            btnCancelAll.Text = "Cancel";
-            btnCancelAll.Enabled = !cancelAllRemaining;
+            // Find a free slot
+            for (int i = 0; i < MAX_UPLOAD_SLOTS; i++)
+            {
+                if (!uploadSlots[i].InUse)
+                {
+                    var slot = uploadSlots[i];
+                    slot.InUse = true;
+                    slot.GamePath = gamePath;
+                    slot.Cancellation?.Dispose();
+                    slot.Cancellation = new System.Threading.CancellationTokenSource();
 
-            uploadDetailsPanel.Visible = true;
-            lblUploadGame.Text = $"Uploading: {gameName}";
-            lblUploadSize.Text = $"0 / {FormatBytes(totalBytes)}";
-            lblUploadSpeed.Text = "";
-            lblUploadEta.Text = "";
-            uploadProgressBar.Value = 0;
-            uploadProgressBar.Invalidate(); // Force repaint for custom drawing
+                    slot.LblGame.Text = gameName;
+                    slot.LblSize.Text = $"0 / {FormatBytes(totalBytes)}";
+                    slot.LblSpeed.Text = "";
+                    slot.LblEta.Text = "";
+                    slot.ProgressBar.Value = 0;
+                    slot.BtnSkip.Text = "Skip";
+                    slot.BtnSkip.Enabled = !cancelAllRemaining;
+                    slot.Panel.Visible = true;
+
+                    // Show container, cancel button, and reposition visible slots
+                    uploadSlotsContainer.Visible = true;
+                    uploadSlotsContainer.BringToFront();
+                    btnCancelAll.Visible = true;
+                    btnCancelAll.BringToFront();
+                    RepositionUploadSlots();
+
+                    return i;
+                }
+            }
+            return -1; // No slot available
         }
 
         /// <summary>
-        /// Reset all skip/cancel state - call before starting a batch
+        /// Get the cancellation token for a specific slot
+        /// </summary>
+        public System.Threading.CancellationToken GetSlotCancellationToken(int slotIndex)
+        {
+            if (slotIndex >= 0 && slotIndex < MAX_UPLOAD_SLOTS && uploadSlots[slotIndex].Cancellation != null)
+                return uploadSlots[slotIndex].Cancellation.Token;
+            return System.Threading.CancellationToken.None;
+        }
+
+        /// <summary>
+        /// Update progress for a specific upload slot
+        /// </summary>
+        public void UpdateSlotProgress(int slotIndex, int percent, long uploadedBytes, long totalBytes, double bytesPerSecond)
+        {
+            if (this.IsDisposed || slotIndex < 0 || slotIndex >= MAX_UPLOAD_SLOTS) return;
+
+            if (this.InvokeRequired)
+            {
+                try { this.BeginInvoke(new Action(() => UpdateSlotProgress(slotIndex, percent, uploadedBytes, totalBytes, bytesPerSecond))); } catch { }
+                return;
+            }
+
+            var slot = uploadSlots[slotIndex];
+            if (!slot.InUse) return;
+
+            slot.ProgressBar.Value = Math.Min(percent, 100);
+            slot.ProgressBar.Invalidate();
+            slot.LblSize.Text = $"{FormatBytes(uploadedBytes)} / {FormatBytes(totalBytes)}";
+
+            if (bytesPerSecond > 0)
+            {
+                slot.LblSpeed.Text = $"{FormatBytes((long)bytesPerSecond)}/s";
+                long remainingBytes = totalBytes - uploadedBytes;
+                if (remainingBytes > 0)
+                {
+                    double secondsRemaining = remainingBytes / bytesPerSecond;
+                    slot.LblEta.Text = FormatEta(secondsRemaining);
+                }
+                else
+                {
+                    slot.LblEta.Text = "";
+                }
+            }
+        }
+
+        /// <summary>
+        /// Release an upload slot when done
+        /// </summary>
+        public void ReleaseUploadSlot(int slotIndex)
+        {
+            if (this.IsDisposed || slotIndex < 0 || slotIndex >= MAX_UPLOAD_SLOTS) return;
+
+            if (this.InvokeRequired)
+            {
+                try { this.BeginInvoke(new Action(() => ReleaseUploadSlot(slotIndex))); } catch { }
+                return;
+            }
+
+            var slot = uploadSlots[slotIndex];
+            slot.InUse = false;
+            slot.GamePath = null;
+            slot.Panel.Visible = false;
+            slot.Cancellation?.Dispose();
+            slot.Cancellation = null;
+
+            // Reposition remaining slots and hide container if all empty
+            RepositionUploadSlots();
+
+            bool anyInUse = false;
+            foreach (var s in uploadSlots) if (s.InUse) anyInUse = true;
+            if (!anyInUse)
+            {
+                uploadSlotsContainer.Visible = false;
+                btnCancelAll.Visible = false;
+            }
+        }
+
+        /// <summary>
+        /// Reposition visible upload slots to stack vertically with no gaps, and Cancel button below
+        /// </summary>
+        private void RepositionUploadSlots()
+        {
+            int y = 0;
+            foreach (var slot in uploadSlots)
+            {
+                if (slot.InUse && slot.Panel.Visible)
+                {
+                    slot.Panel.Location = new Point(0, y);
+                    y += 38;
+                }
+            }
+            // Resize container to fit active slots
+            int containerHeight = Math.Max(y, 38);
+            uploadSlotsContainer.Size = new Size(725, containerHeight);
+
+            // Position Cancel All button below the slots container
+            btnCancelAll.Location = new Point(15, 378 + containerHeight + 5);
+        }
+
+        /// <summary>
+        /// Reset cancel state - call before starting a batch
         /// </summary>
         public void ResetSkipCancelState()
         {
@@ -931,18 +1259,18 @@ namespace SteamAutocrackGUI
                 return;
             }
 
-            skipCurrentGame = false;
             cancelAllRemaining = false;
-            btnSkip.Text = "Skip";
-            btnSkip.Enabled = true;
-            btnCancelAll.Text = "Cancel";
+            btnCancelAll.Text = "CANCEL\nALL";
             btnCancelAll.Enabled = true;
-        }
 
-        /// <summary>
-        /// Check if user clicked Skip for current game
-        /// </summary>
-        public bool ShouldSkipCurrentGame() => skipCurrentGame;
+            foreach (var slot in uploadSlots)
+            {
+                slot.InUse = false;
+                slot.Panel.Visible = false;
+                slot.BtnSkip.Text = "Skip";
+                slot.BtnSkip.Enabled = true;
+            }
+        }
 
         /// <summary>
         /// Check if user clicked Cancel All
@@ -950,51 +1278,16 @@ namespace SteamAutocrackGUI
         public bool ShouldCancelAll() => cancelAllRemaining;
 
         /// <summary>
-        /// Get a fresh CancellationToken for the current upload
+        /// Check if a specific slot was skipped
         /// </summary>
-        public System.Threading.CancellationToken GetUploadCancellationToken()
+        public bool WasSlotSkipped(int slotIndex)
         {
-            uploadCancellation?.Dispose();
-            uploadCancellation = new System.Threading.CancellationTokenSource();
-            return uploadCancellation.Token;
+            if (slotIndex < 0 || slotIndex >= MAX_UPLOAD_SLOTS) return false;
+            return uploadSlots[slotIndex].Cancellation?.IsCancellationRequested ?? false;
         }
 
         /// <summary>
-        /// Updates the upload progress with speed and ETA
-        /// </summary>
-        public void UpdateUploadProgress(int percent, long uploadedBytes, long totalBytes, double bytesPerSecond)
-        {
-            if (this.IsDisposed) return;
-
-            if (this.InvokeRequired)
-            {
-                try { this.BeginInvoke(new Action(() => UpdateUploadProgress(percent, uploadedBytes, totalBytes, bytesPerSecond))); } catch { }
-                return;
-            }
-
-            uploadProgressBar.Value = Math.Min(percent, 100);
-            uploadProgressBar.Invalidate(); // Force repaint for custom drawing
-            lblUploadSize.Text = $"{FormatBytes(uploadedBytes)} / {FormatBytes(totalBytes)}";
-
-            if (bytesPerSecond > 0)
-            {
-                lblUploadSpeed.Text = $"{FormatBytes((long)bytesPerSecond)}/s";
-
-                long remainingBytes = totalBytes - uploadedBytes;
-                if (remainingBytes > 0)
-                {
-                    double secondsRemaining = remainingBytes / bytesPerSecond;
-                    lblUploadEta.Text = FormatEta(secondsRemaining);
-                }
-                else
-                {
-                    lblUploadEta.Text = "";
-                }
-            }
-        }
-
-        /// <summary>
-        /// Hides the upload details panel
+        /// Hides all upload slots and cancel button
         /// </summary>
         public void HideUploadDetails()
         {
@@ -1006,7 +1299,13 @@ namespace SteamAutocrackGUI
                 return;
             }
 
-            uploadDetailsPanel.Visible = false;
+            uploadSlotsContainer.Visible = false;
+            btnCancelAll.Visible = false;
+            foreach (var slot in uploadSlots)
+            {
+                slot.InUse = false;
+                slot.Panel.Visible = false;
+            }
         }
 
         private string FormatBytes(long bytes)
@@ -1033,6 +1332,8 @@ namespace SteamAutocrackGUI
         private string allLinksMarkdown = "";
         private Button copyRinBtn;
         private Button copyDiscordBtn;
+        private Button copyPlaintextBtn;
+        private string allLinksPlaintext;
 
         /// <summary>
         /// Shows Copy All buttons after processing completes
@@ -1051,19 +1352,31 @@ namespace SteamAutocrackGUI
 
             // Build markdown version from finalUrls
             var mdLinks = new List<string>();
+            var plainLinks = new List<string>();
             foreach (var kvp in finalUrls)
             {
                 string gameName = Path.GetFileName(kvp.Key);
                 mdLinks.Add($"[{gameName}]({kvp.Value})");
+
+                // Determine if cracked or clean based on details
+                string suffix = "(Cracked)";
+                if (crackDetailsMap.ContainsKey(kvp.Key))
+                {
+                    var details = crackDetailsMap[kvp.Key];
+                    if (details.DllsReplaced.Count == 0 && details.ExesUnpacked.Count == 0)
+                        suffix = "(Clean)";
+                }
+                plainLinks.Add($"{gameName} {suffix}: {kvp.Value}");
             }
             allLinksMarkdown = string.Join("\n", mdLinks);
+            allLinksPlaintext = string.Join("\n", plainLinks);
 
             if (string.IsNullOrEmpty(allLinksPhpBB) && string.IsNullOrEmpty(allLinksMarkdown))
                 return;
 
-            // Create Copy for Rin button
-            copyRinBtn = CreateStyledButton("Copy for Rin", new Point(15, 495), new Size(100, 40));
-            copyRinBtn.BackColor = Color.FromArgb(70, 50, 0);
+            // Create Copy for Rin button - anchored to bottom left
+            copyRinBtn = CreateStyledButton("Copy for Rin", new Point(15, 495), new Size(100, 40), Color.FromArgb(50, 80, 120));
+            copyRinBtn.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
             copyRinBtn.Click += (s, e) =>
             {
                 if (!string.IsNullOrEmpty(allLinksPhpBB))
@@ -1081,9 +1394,9 @@ namespace SteamAutocrackGUI
             };
             this.Controls.Add(copyRinBtn);
 
-            // Create Copy for Discord button
-            copyDiscordBtn = CreateStyledButton("Copy for Discord", new Point(125, 495), new Size(120, 40));
-            copyDiscordBtn.BackColor = Color.FromArgb(88, 101, 242); // Discord blurple
+            // Create Copy for Discord button - anchored to bottom left
+            copyDiscordBtn = CreateStyledButton("Copy for Discord", new Point(125, 495), new Size(120, 40), Color.FromArgb(88, 101, 242));
+            copyDiscordBtn.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
             copyDiscordBtn.Click += (s, e) =>
             {
                 if (!string.IsNullOrEmpty(allLinksMarkdown))
@@ -1101,9 +1414,30 @@ namespace SteamAutocrackGUI
             };
             this.Controls.Add(copyDiscordBtn);
 
+            // Create Copy Plaintext button - anchored to bottom left
+            copyPlaintextBtn = CreateStyledButton("Copy Plaintext", new Point(255, 495), new Size(110, 40), Color.FromArgb(60, 60, 70));
+            copyPlaintextBtn.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
+            copyPlaintextBtn.Click += (s, e) =>
+            {
+                if (!string.IsNullOrEmpty(allLinksPlaintext))
+                {
+                    try
+                    {
+                        Clipboard.SetText(allLinksPlaintext);
+                        copyPlaintextBtn.Text = "Copied! ✓";
+                        var timer = new Timer { Interval = 2000 };
+                        timer.Tick += (ts, te) => { timer.Stop(); timer.Dispose(); copyPlaintextBtn.Text = "Copy Plaintext"; };
+                        timer.Start();
+                    }
+                    catch { }
+                }
+            };
+            this.Controls.Add(copyPlaintextBtn);
+
             // Make sure they're on top
             copyRinBtn.BringToFront();
             copyDiscordBtn.BringToFront();
+            copyPlaintextBtn.BringToFront();
         }
 
         /// <summary>
@@ -1146,7 +1480,7 @@ namespace SteamAutocrackGUI
                 return;
             }
 
-            string etaStr = FormatEtaLong(etaSeconds);
+            string etaStr = percent >= 99 ? "a few seconds..." : FormatEtaLong(etaSeconds);
             string text = $"{percent}% - ETA {etaStr}";
 
             var titleLabel = this.Controls["titleLabel"] as Label;
@@ -1206,7 +1540,6 @@ namespace SteamAutocrackGUI
             // Hide count label and buttons during processing
             var countLabel = this.Controls["countLabel"] as Label;
             if (countLabel != null) countLabel.Visible = !processing;
-            if (compressionLabel != null) compressionLabel.Visible = !processing;
 
             // Find and disable/enable buttons
             foreach (Control c in this.Controls)
@@ -1216,22 +1549,6 @@ namespace SteamAutocrackGUI
                     btn.Visible = !processing;
                 }
             }
-        }
-
-        private void SetAllCheckboxes(string columnName, bool value)
-        {
-            foreach (DataGridViewRow row in gameGrid.Rows)
-            {
-                row.Cells[columnName].Value = value;
-
-                // If enabling Upload, also enable Zip (required for 1fichier)
-                // Note: Crack is now independent - Zip/Upload don't require Crack
-                if (value && columnName == "Upload")
-                {
-                    row.Cells["Zip"].Value = true;
-                }
-            }
-            UpdateCountLabel();
         }
 
         private void UpdateCountLabel()
@@ -1262,27 +1579,94 @@ namespace SteamAutocrackGUI
             using (var form = new CompressionSettingsForm())
             {
                 form.Owner = this;
-                if (form.ShowDialog(this) == DialogResult.OK)
+                this.Hide(); // Hide batch form while settings open
+                if (form.ShowDialog() == DialogResult.OK)
                 {
                     CompressionFormat = form.SelectedFormat;
                     CompressionLevel = form.SelectedLevel;
                     UseRinPassword = form.UseRinPassword;
                     UpdateCompressionLabel();
                 }
+                this.Show(); // Show batch form again
             }
         }
 
         private void UpdateCompressionLabel()
         {
-            string levelDesc;
-            switch (CompressionLevel)
+            // Label was removed - method kept for compatibility
+        }
+
+        /// <summary>
+        /// Loads games asynchronously to prevent UI freeze
+        /// </summary>
+        private async void LoadGamesAsync()
+        {
+            // Prepare game info in background
+            var validGames = await System.Threading.Tasks.Task.Run(() =>
             {
-                case "0": levelDesc = "No compression"; break;
-                case "5": levelDesc = "Medium"; break;
-                case "10": levelDesc = "Ultra"; break;
-                default: levelDesc = $"Level {CompressionLevel}"; break;
+                var results = new List<(string path, string name, string appId, string size, int steamApiCount)>();
+
+                foreach (string path in gamePaths)
+                {
+                    if (!Directory.Exists(path)) continue;
+                    try
+                    {
+                        bool hasExe = Directory.EnumerateFiles(path, "*.exe", SearchOption.AllDirectories).Any();
+                        if (!hasExe) continue;
+
+                        long size = new DirectoryInfo(path).EnumerateFiles("*", SearchOption.AllDirectories).Sum(f => f.Length);
+                        if (size == 0) continue;
+
+                        int steamApiCount = APPID.SteamAppId.CountSteamApiDlls(path);
+                        string gameName = Path.GetFileName(path);
+                        string appId = DetectAppId(path);
+                        string sizeStr = FormatFileSize(size);
+
+                        results.Add((path, gameName, appId, sizeStr, steamApiCount));
+                    }
+                    catch { continue; }
+                }
+                return results;
+            });
+
+            // Update UI on main thread
+            if (this.IsDisposed) return;
+
+            foreach (var game in validGames)
+            {
+                int rowIndex = gameGrid.Rows.Add();
+                string displayName = game.steamApiCount > 2 ? "⚠️ " + game.name : game.name;
+
+                if (game.steamApiCount > 2)
+                {
+                    gameGrid.Rows[rowIndex].Cells["GameName"].ToolTipText =
+                        $"Warning: Found {game.steamApiCount} steam_api DLLs in this folder.\nThis might contain multiple games or have an unusual structure.";
+                }
+                gameGrid.Rows[rowIndex].Cells["GameName"].Value = displayName;
+
+                detectedAppIds[rowIndex] = game.appId;
+                gameGrid.Rows[rowIndex].Cells["AppId"].Value = string.IsNullOrEmpty(game.appId) ? "?" : game.appId;
+
+                if (string.IsNullOrEmpty(game.appId))
+                {
+                    gameGrid.Rows[rowIndex].Cells["AppId"].Style.ForeColor = Color.Orange;
+                    gameGrid.Rows[rowIndex].Cells["AppId"].Style.Font = new Font("Segoe UI", 9, FontStyle.Bold);
+                }
+
+                gameGrid.Rows[rowIndex].Cells["Size"].Value = game.size;
+                gameGrid.Rows[rowIndex].Cells["Crack"].Value = true;
+                gameGrid.Rows[rowIndex].Cells["Zip"].Value = false;
+                gameGrid.Rows[rowIndex].Cells["Upload"].Value = false;
+                gameGrid.Rows[rowIndex].Cells["Status"].Value = game.steamApiCount > 2 ? "⚠️ Check structure" : "Pending";
+                gameGrid.Rows[rowIndex].Tag = game.path;
             }
-            compressionLabel.Text = $"{CompressionFormat} {levelDesc}";
+
+            // Update subtitle with actual count
+            var subtitleLabel = this.Controls.OfType<Label>().FirstOrDefault(l => l.Text.Contains("games"));
+            if (subtitleLabel != null)
+            {
+                subtitleLabel.Text = $"Found {gameGrid.Rows.Count} games. Select actions for each:";
+            }
         }
 
         private string GetFolderSizeString(string folderPath)
@@ -1569,27 +1953,76 @@ namespace SteamAutocrackGUI
             return null; // User cancelled
         }
 
-        private Button CreateStyledButton(string text, Point location, Size size)
+        private Button CreateStyledButton(string text, Point location, Size size, Color? customColor = null)
         {
             var btn = new Button
             {
                 Text = text,
                 Location = location,
                 Size = size,
-                BackColor = Color.FromArgb(38, 38, 42),
+                BackColor = Color.Transparent,
                 ForeColor = Color.FromArgb(220, 220, 225),
                 FlatStyle = FlatStyle.Flat,
                 Font = new Font("Segoe UI", 9),
                 Cursor = Cursors.Hand
             };
-            btn.FlatAppearance.BorderColor = Color.FromArgb(55, 55, 60);
-            btn.FlatAppearance.MouseOverBackColor = Color.FromArgb(48, 48, 52);
-            btn.FlatAppearance.MouseDownBackColor = Color.FromArgb(28, 28, 32);
+            btn.FlatAppearance.BorderSize = 0;
+            btn.FlatAppearance.MouseOverBackColor = Color.Transparent;
+            btn.FlatAppearance.MouseDownBackColor = Color.Transparent;
 
-            // Round the corners
-            btn.Region = Region.FromHrgn(CreateRoundRectRgn(0, 0, btn.Width, btn.Height, 8, 8));
+            // Store the actual button color for painting
+            Color buttonColor = customColor ?? Color.FromArgb(38, 38, 42);
+
+            // Custom paint for smooth rounded corners with anti-aliasing
+            btn.Paint += (s, e) =>
+            {
+                e.Graphics.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
+                e.Graphics.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.HighQualityBicubic;
+                e.Graphics.CompositingQuality = System.Drawing.Drawing2D.CompositingQuality.HighQuality;
+
+                int radius = 8;
+                var rect = new Rectangle(0, 0, btn.Width - 1, btn.Height - 1);
+
+                // Determine color based on hover state
+                Color bgColor = buttonColor;
+                if (btn.ClientRectangle.Contains(btn.PointToClient(Cursor.Position)))
+                {
+                    bgColor = Color.FromArgb(50, 50, 55);
+                }
+
+                using (var path = CreateRoundedRectPath(rect, radius))
+                {
+                    using (var brush = new SolidBrush(bgColor))
+                    {
+                        e.Graphics.FillPath(brush, path);
+                    }
+                    using (var pen = new Pen(Color.FromArgb(55, 55, 60), 1))
+                    {
+                        e.Graphics.DrawPath(pen, path);
+                    }
+                }
+                // Draw text centered
+                TextRenderer.DrawText(e.Graphics, btn.Text, btn.Font, rect, btn.ForeColor,
+                    TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter);
+            };
+
+            // Refresh on mouse enter/leave for hover effect
+            btn.MouseEnter += (s, e) => btn.Invalidate();
+            btn.MouseLeave += (s, e) => btn.Invalidate();
 
             return btn;
+        }
+
+        private System.Drawing.Drawing2D.GraphicsPath CreateRoundedRectPath(Rectangle rect, int radius)
+        {
+            var path = new System.Drawing.Drawing2D.GraphicsPath();
+            int d = radius * 2;
+            path.AddArc(rect.X, rect.Y, d, d, 180, 90);
+            path.AddArc(rect.Right - d, rect.Y, d, d, 270, 90);
+            path.AddArc(rect.Right - d, rect.Bottom - d, d, d, 0, 90);
+            path.AddArc(rect.X, rect.Bottom - d, d, d, 90, 90);
+            path.CloseFigure();
+            return path;
         }
 
         /// <summary>
@@ -1648,6 +2081,31 @@ namespace SteamAutocrackGUI
             details.UploadUrl = url;
             details.UploadError = error;
             details.UploadRetryCount = retryCount;
+        }
+
+        /// <summary>
+        /// Update PyDrive URL for a game's details (called when conversion completes)
+        /// </summary>
+        public void UpdatePyDriveUrl(string gamePath, string pydriveUrl)
+        {
+            if (string.IsNullOrEmpty(gamePath) || string.IsNullOrEmpty(pydriveUrl)) return;
+
+            if (this.InvokeRequired)
+            {
+                try { this.BeginInvoke(new Action(() => UpdatePyDriveUrl(gamePath, pydriveUrl))); } catch { }
+                return;
+            }
+
+            if (!crackDetailsMap.ContainsKey(gamePath))
+            {
+                crackDetailsMap[gamePath] = new APPID.SteamAppId.CrackDetails
+                {
+                    GameName = Path.GetFileName(gamePath),
+                    GamePath = gamePath
+                };
+            }
+
+            crackDetailsMap[gamePath].PyDriveUrl = pydriveUrl;
         }
 
         /// <summary>
@@ -1786,10 +2244,15 @@ namespace SteamAutocrackGUI
                     textBox.SelectionColor = Color.Cyan;
                     textBox.AppendText($"  1fichier: {details.UploadUrl}\n");
                 }
+                textBox.AppendText("\n");
+
+                // Conversion status (only if PyDrive conversion was attempted)
                 if (!string.IsNullOrEmpty(details.PyDriveUrl))
                 {
                     textBox.SelectionColor = Color.LightGreen;
-                    textBox.AppendText($"  PyDrive: {details.PyDriveUrl}\n");
+                    textBox.AppendText($"Conversion: Success\n");
+                    textBox.SelectionColor = Color.Cyan;
+                    textBox.AppendText($"  pydrive (debrid DDL): {details.PyDriveUrl}\n");
                 }
                 if (!string.IsNullOrEmpty(details.UploadError))
                 {
@@ -1841,7 +2304,7 @@ namespace SteamAutocrackGUI
             try
             {
                 // Use the shared AcrylicHelper for consistent styling
-                APPID.AcrylicHelper.ApplyAcrylic(this);
+                APPID.AcrylicHelper.ApplyAcrylic(this, disableShadow: true);
             }
             catch { }
         }
@@ -1980,7 +2443,7 @@ namespace SteamAutocrackGUI
             {
                 Location = new Point(15, 100),
                 Size = new Size(415, 210),
-                BackgroundColor = Color.FromArgb(15, 18, 30),
+                BackgroundColor = Color.FromArgb(5, 8, 20),
                 ForeColor = Color.FromArgb(220, 255, 255),
                 GridColor = Color.FromArgb(40, 40, 45),
                 BorderStyle = BorderStyle.None,
@@ -2173,7 +2636,7 @@ namespace SteamAutocrackGUI
         {
             try
             {
-                APPID.AcrylicHelper.ApplyAcrylic(this);
+                APPID.AcrylicHelper.ApplyAcrylic(this, disableShadow: true);
             }
             catch { }
         }

@@ -72,7 +72,7 @@ namespace SteamAppIdIdentifier
             //
             // mainPanel
             //
-            this.mainPanel.BackColor = System.Drawing.Color.Transparent;
+            this.mainPanel.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(220)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
             this.mainPanel.Controls.Add(this.gamesGrid);
             this.mainPanel.Controls.Add(this.lblStatus);
             this.mainPanel.Controls.Add(this.progressBar);
@@ -80,7 +80,7 @@ namespace SteamAppIdIdentifier
             this.mainPanel.Dock = System.Windows.Forms.DockStyle.Fill;
             this.mainPanel.Location = new System.Drawing.Point(0, 0);
             this.mainPanel.Name = "mainPanel";
-            this.mainPanel.Padding = new System.Windows.Forms.Padding(1);
+            this.mainPanel.Padding = new System.Windows.Forms.Padding(0);
             this.mainPanel.Size = new System.Drawing.Size(1200, 915);
             this.mainPanel.TabIndex = 0;
             //
@@ -91,7 +91,7 @@ namespace SteamAppIdIdentifier
             this.gamesGrid.AllowUserToOrderColumns = true;
             this.gamesGrid.AllowUserToResizeRows = false;
             this.gamesGrid.AutoSizeColumnsMode = System.Windows.Forms.DataGridViewAutoSizeColumnsMode.Fill;
-            this.gamesGrid.BackgroundColor = System.Drawing.Color.FromArgb(((int)(((byte)(5)))), ((int)(((byte)(8)))), ((int)(((byte)(15)))));
+            this.gamesGrid.BackgroundColor = System.Drawing.Color.FromArgb(((int)(((byte)(8)))), ((int)(((byte)(8)))), ((int)(((byte)(12)))));
             this.gamesGrid.BorderStyle = System.Windows.Forms.BorderStyle.None;
             this.gamesGrid.ColumnHeadersBorderStyle = System.Windows.Forms.DataGridViewHeaderBorderStyle.Single;
             dataGridViewCellStyle1.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
@@ -125,7 +125,7 @@ namespace SteamAppIdIdentifier
             this.gamesGrid.DefaultCellStyle = dataGridViewCellStyle2;
             this.gamesGrid.Dock = System.Windows.Forms.DockStyle.Fill;
             this.gamesGrid.EnableHeadersVisualStyles = false;
-            this.gamesGrid.GridColor = System.Drawing.Color.FromArgb(((int)(((byte)(30)))), ((int)(((byte)(35)))), ((int)(((byte)(45)))));
+            this.gamesGrid.GridColor = System.Drawing.Color.FromArgb(((int)(((byte)(40)))), ((int)(((byte)(40)))), ((int)(((byte)(45)))));
             this.gamesGrid.Location = new System.Drawing.Point(1, 47);
             this.gamesGrid.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
             this.gamesGrid.MultiSelect = false;
@@ -289,7 +289,7 @@ namespace SteamAppIdIdentifier
             this.lblTitle.Name = "lblTitle";
             this.lblTitle.Size = new System.Drawing.Size(155, 19);
             this.lblTitle.TabIndex = 0;
-            this.lblTitle.Text = "Crack | Share | Export";
+            this.lblTitle.Text = "Crack | Zip | Share";
             this.lblTitle.MouseDown += new System.Windows.Forms.MouseEventHandler(this.TitleBar_MouseDown);
             //
             // lblSelectedPrefix
@@ -298,7 +298,7 @@ namespace SteamAppIdIdentifier
             this.lblSelectedPrefix.BackColor = System.Drawing.Color.Transparent;
             this.lblSelectedPrefix.Font = new System.Drawing.Font("Segoe UI", 9F);
             this.lblSelectedPrefix.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(150)))), ((int)(((byte)(150)))), ((int)(((byte)(160)))));
-            this.lblSelectedPrefix.Location = new System.Drawing.Point(369, 14);
+            this.lblSelectedPrefix.Location = new System.Drawing.Point(185, 16);
             this.lblSelectedPrefix.Name = "lblSelectedPrefix";
             this.lblSelectedPrefix.Size = new System.Drawing.Size(52, 15);
             this.lblSelectedPrefix.Text = "Selected ";
@@ -310,7 +310,7 @@ namespace SteamAppIdIdentifier
             this.lblSelectedCount.BackColor = System.Drawing.Color.Transparent;
             this.lblSelectedCount.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
             this.lblSelectedCount.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(100)))), ((int)(((byte)(255)))), ((int)(((byte)(150)))));
-            this.lblSelectedCount.Location = new System.Drawing.Point(427, 14);
+            this.lblSelectedCount.Location = new System.Drawing.Point(185, 16);
             this.lblSelectedCount.Name = "lblSelectedCount";
             this.lblSelectedCount.Size = new System.Drawing.Size(14, 15);
             this.lblSelectedCount.Text = "0";
@@ -322,22 +322,22 @@ namespace SteamAppIdIdentifier
             this.lblSelectedSuffix.BackColor = System.Drawing.Color.Transparent;
             this.lblSelectedSuffix.Font = new System.Drawing.Font("Segoe UI", 9F);
             this.lblSelectedSuffix.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(150)))), ((int)(((byte)(150)))), ((int)(((byte)(160)))));
-            this.lblSelectedSuffix.Location = new System.Drawing.Point(441, 14);
+            this.lblSelectedSuffix.Location = new System.Drawing.Point(257, 16);
             this.lblSelectedSuffix.Name = "lblSelectedSuffix";
             this.lblSelectedSuffix.Size = new System.Drawing.Size(18, 15);
-            this.lblSelectedSuffix.Text = " to process";
+            this.lblSelectedSuffix.Text = " to";
             this.lblSelectedSuffix.Visible = false;
             //
             // btnSettings
             //
             this.btnSettings.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(20)))), ((int)(((byte)(22)))), ((int)(((byte)(28)))));
             this.btnSettings.FlatAppearance.BorderColor = System.Drawing.Color.FromArgb(((int)(((byte)(60)))), ((int)(((byte)(65)))), ((int)(((byte)(75)))));
-            this.btnSettings.FlatAppearance.MouseOverBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(35)))), ((int)(((byte)(40)))), ((int)(((byte)(50)))));
+            this.btnSettings.FlatAppearance.MouseOverBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(20)))), ((int)(((byte)(22)))), ((int)(((byte)(28)))));
             this.btnSettings.FlatAppearance.MouseDownBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(15)))), ((int)(((byte)(18)))), ((int)(((byte)(22)))));
             this.btnSettings.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btnSettings.Font = new System.Drawing.Font("Segoe UI", 11F);
             this.btnSettings.ForeColor = System.Drawing.Color.White;
-            this.btnSettings.Location = new System.Drawing.Point(765, 7);
+            this.btnSettings.Location = new System.Drawing.Point(388, 7);
             this.btnSettings.Name = "btnSettings";
             this.btnSettings.Size = new System.Drawing.Size(40, 33);
             this.btnSettings.TabIndex = 14;
@@ -355,7 +355,7 @@ namespace SteamAppIdIdentifier
             this.btnProcessSelected.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btnProcessSelected.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
             this.btnProcessSelected.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(150)))), ((int)(((byte)(255)))), ((int)(((byte)(150)))));
-            this.btnProcessSelected.Location = new System.Drawing.Point(665, 7);
+            this.btnProcessSelected.Location = new System.Drawing.Point(290, 7);
             this.btnProcessSelected.Name = "btnProcessSelected";
             this.btnProcessSelected.Size = new System.Drawing.Size(90, 33);
             this.btnProcessSelected.TabIndex = 13;
@@ -369,7 +369,7 @@ namespace SteamAppIdIdentifier
             this.btnMinimize.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.btnMinimize.BackColor = System.Drawing.Color.Transparent;
             this.btnMinimize.FlatAppearance.BorderSize = 0;
-            this.btnMinimize.FlatAppearance.MouseOverBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(180)))), ((int)(((byte)(40)))), ((int)(((byte)(40)))), ((int)(((byte)(45)))));
+            this.btnMinimize.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Transparent;
             this.btnMinimize.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btnMinimize.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Bold);
             this.btnMinimize.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(150)))), ((int)(((byte)(200)))), ((int)(((byte)(255)))));
@@ -388,7 +388,7 @@ namespace SteamAppIdIdentifier
             this.btnClose.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.btnClose.BackColor = System.Drawing.Color.Transparent;
             this.btnClose.FlatAppearance.BorderSize = 0;
-            this.btnClose.FlatAppearance.MouseOverBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(220)))), ((int)(((byte)(150)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
+            this.btnClose.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Transparent;
             this.btnClose.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btnClose.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Bold);
             this.btnClose.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(150)))), ((int)(((byte)(200)))), ((int)(((byte)(255)))));
@@ -412,14 +412,15 @@ namespace SteamAppIdIdentifier
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 17F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(5)))), ((int)(((byte)(8)))), ((int)(((byte)(15)))));
+            this.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(5)))), ((int)(((byte)(8)))), ((int)(((byte)(20)))));
             this.ClientSize = new System.Drawing.Size(1200, 915);
             this.Controls.Add(this.mainPanel);
             this.ForeColor = System.Drawing.Color.White;
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.None;
             this.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
             this.Name = "EnhancedShareWindow";
-            this.ShowInTaskbar = false;
+            this.Opacity = 0.95D;
+            this.ShowInTaskbar = true;  // Show in taskbar since main form hides
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
             this.Text = "Game Manager - Crack, Share & Export";
             this.FormClosed += new System.Windows.Forms.FormClosedEventHandler(this.EnhancedShareWindow_FormClosed);

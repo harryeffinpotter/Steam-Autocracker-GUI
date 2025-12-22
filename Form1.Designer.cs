@@ -35,17 +35,18 @@ namespace APPID
         {
             components = new System.ComponentModel.Container();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(SteamAppId));
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle1 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle2 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle3 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle4 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle5 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle6 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle7 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle8 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle9 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle10 = new System.Windows.Forms.DataGridViewCellStyle();
             searchTextBox = new System.Windows.Forms.TextBox();
             dataGridView1 = new System.Windows.Forms.DataGridView();
             btnSearch = new System.Windows.Forms.Button();
             resinstruccZip = new System.Windows.Forms.Label();
             tgDisc = new System.Windows.Forms.Label();
             mainPanel = new System.Windows.Forms.Panel();
+            arrowBatchConversionLabel = new System.Windows.Forms.Label();
             batchProgressLabel = new System.Windows.Forms.Label();
             batchProgressIcon = new System.Windows.Forms.PictureBox();
             UploadZipButton = new System.Windows.Forms.Button();
@@ -110,51 +111,51 @@ namespace APPID
             dataGridView1.AllowUserToAddRows = false;
             dataGridView1.AllowUserToDeleteRows = false;
             dataGridView1.AllowUserToResizeRows = false;
-            dataGridViewCellStyle1.BackColor = System.Drawing.Color.FromArgb(0, 5, 25);
-            dataGridViewCellStyle1.ForeColor = System.Drawing.Color.White;
-            dataGridViewCellStyle1.SelectionBackColor = System.Drawing.Color.SpringGreen;
-            dataGridViewCellStyle1.SelectionForeColor = System.Drawing.Color.Black;
-            dataGridView1.AlternatingRowsDefaultCellStyle = dataGridViewCellStyle1;
+            dataGridViewCellStyle6.BackColor = System.Drawing.Color.FromArgb(0, 5, 25);
+            dataGridViewCellStyle6.ForeColor = System.Drawing.Color.White;
+            dataGridViewCellStyle6.SelectionBackColor = System.Drawing.Color.SpringGreen;
+            dataGridViewCellStyle6.SelectionForeColor = System.Drawing.Color.Black;
+            dataGridView1.AlternatingRowsDefaultCellStyle = dataGridViewCellStyle6;
             dataGridView1.AutoSizeColumnsMode = System.Windows.Forms.DataGridViewAutoSizeColumnsMode.Fill;
             dataGridView1.BackgroundColor = System.Drawing.Color.FromArgb(5, 10, 30);
             dataGridView1.BorderStyle = System.Windows.Forms.BorderStyle.None;
-            dataGridViewCellStyle2.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
-            dataGridViewCellStyle2.BackColor = System.Drawing.Color.FromArgb(0, 25, 75);
-            dataGridViewCellStyle2.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
-            dataGridViewCellStyle2.ForeColor = System.Drawing.Color.Ivory;
-            dataGridViewCellStyle2.SelectionBackColor = System.Drawing.Color.FromArgb(0, 25, 75);
-            dataGridViewCellStyle2.SelectionForeColor = System.Drawing.Color.Ivory;
-            dataGridViewCellStyle2.WrapMode = System.Windows.Forms.DataGridViewTriState.True;
-            dataGridView1.ColumnHeadersDefaultCellStyle = dataGridViewCellStyle2;
+            dataGridViewCellStyle7.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
+            dataGridViewCellStyle7.BackColor = System.Drawing.Color.FromArgb(0, 25, 75);
+            dataGridViewCellStyle7.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
+            dataGridViewCellStyle7.ForeColor = System.Drawing.Color.Ivory;
+            dataGridViewCellStyle7.SelectionBackColor = System.Drawing.Color.FromArgb(0, 25, 75);
+            dataGridViewCellStyle7.SelectionForeColor = System.Drawing.Color.Ivory;
+            dataGridViewCellStyle7.WrapMode = System.Windows.Forms.DataGridViewTriState.True;
+            dataGridView1.ColumnHeadersDefaultCellStyle = dataGridViewCellStyle7;
             resources.ApplyResources(dataGridView1, "dataGridView1");
             dataGridView1.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.DisableResizing;
-            dataGridViewCellStyle3.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
-            dataGridViewCellStyle3.BackColor = System.Drawing.Color.FromArgb(0, 2, 10);
-            dataGridViewCellStyle3.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
-            dataGridViewCellStyle3.ForeColor = System.Drawing.SystemColors.ActiveCaptionText;
-            dataGridViewCellStyle3.SelectionBackColor = System.Drawing.Color.SpringGreen;
-            dataGridViewCellStyle3.SelectionForeColor = System.Drawing.Color.Black;
-            dataGridViewCellStyle3.WrapMode = System.Windows.Forms.DataGridViewTriState.False;
-            dataGridView1.DefaultCellStyle = dataGridViewCellStyle3;
+            dataGridViewCellStyle8.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
+            dataGridViewCellStyle8.BackColor = System.Drawing.Color.FromArgb(0, 2, 10);
+            dataGridViewCellStyle8.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
+            dataGridViewCellStyle8.ForeColor = System.Drawing.SystemColors.ActiveCaptionText;
+            dataGridViewCellStyle8.SelectionBackColor = System.Drawing.Color.SpringGreen;
+            dataGridViewCellStyle8.SelectionForeColor = System.Drawing.Color.Black;
+            dataGridViewCellStyle8.WrapMode = System.Windows.Forms.DataGridViewTriState.False;
+            dataGridView1.DefaultCellStyle = dataGridViewCellStyle8;
             dataGridView1.EditMode = System.Windows.Forms.DataGridViewEditMode.EditProgrammatically;
             dataGridView1.GridColor = System.Drawing.Color.White;
             dataGridView1.MultiSelect = false;
             dataGridView1.Name = "dataGridView1";
             dataGridView1.ReadOnly = true;
-            dataGridViewCellStyle4.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
-            dataGridViewCellStyle4.BackColor = System.Drawing.Color.FromArgb(0, 5, 25);
-            dataGridViewCellStyle4.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
-            dataGridViewCellStyle4.ForeColor = System.Drawing.Color.White;
-            dataGridViewCellStyle4.SelectionBackColor = System.Drawing.Color.SteelBlue;
-            dataGridViewCellStyle4.SelectionForeColor = System.Drawing.Color.Black;
-            dataGridViewCellStyle4.WrapMode = System.Windows.Forms.DataGridViewTriState.True;
-            dataGridView1.RowHeadersDefaultCellStyle = dataGridViewCellStyle4;
+            dataGridViewCellStyle9.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
+            dataGridViewCellStyle9.BackColor = System.Drawing.Color.FromArgb(0, 5, 25);
+            dataGridViewCellStyle9.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
+            dataGridViewCellStyle9.ForeColor = System.Drawing.Color.White;
+            dataGridViewCellStyle9.SelectionBackColor = System.Drawing.Color.SteelBlue;
+            dataGridViewCellStyle9.SelectionForeColor = System.Drawing.Color.Black;
+            dataGridViewCellStyle9.WrapMode = System.Windows.Forms.DataGridViewTriState.True;
+            dataGridView1.RowHeadersDefaultCellStyle = dataGridViewCellStyle9;
             dataGridView1.RowHeadersWidthSizeMode = System.Windows.Forms.DataGridViewRowHeadersWidthSizeMode.DisableResizing;
-            dataGridViewCellStyle5.BackColor = System.Drawing.Color.FromArgb(0, 10, 35);
-            dataGridViewCellStyle5.ForeColor = System.Drawing.Color.White;
-            dataGridViewCellStyle5.SelectionBackColor = System.Drawing.Color.FromArgb(20, 111, 65);
-            dataGridViewCellStyle5.SelectionForeColor = System.Drawing.Color.Black;
-            dataGridView1.RowsDefaultCellStyle = dataGridViewCellStyle5;
+            dataGridViewCellStyle10.BackColor = System.Drawing.Color.FromArgb(0, 10, 35);
+            dataGridViewCellStyle10.ForeColor = System.Drawing.Color.White;
+            dataGridViewCellStyle10.SelectionBackColor = System.Drawing.Color.FromArgb(20, 111, 65);
+            dataGridViewCellStyle10.SelectionForeColor = System.Drawing.Color.Black;
+            dataGridView1.RowsDefaultCellStyle = dataGridViewCellStyle10;
             dataGridView1.RowTemplate.DefaultCellStyle.BackColor = System.Drawing.Color.FromArgb(0, 5, 25);
             dataGridView1.RowTemplate.DefaultCellStyle.ForeColor = System.Drawing.Color.White;
             dataGridView1.RowTemplate.DefaultCellStyle.SelectionBackColor = System.Drawing.Color.FromArgb(30, 70, 100);
@@ -194,6 +195,7 @@ namespace APPID
             // 
             // mainPanel
             // 
+            mainPanel.Controls.Add(arrowBatchConversionLabel);
             mainPanel.Controls.Add(batchProgressLabel);
             mainPanel.Controls.Add(batchProgressIcon);
             mainPanel.Controls.Add(UploadZipButton);
@@ -225,11 +227,19 @@ namespace APPID
             mainPanel.DragEnter += mainPanel_DragEnter;
             mainPanel.DragLeave += mainPanel_DragLeave;
             // 
+            // arrowBatchConversionLabel
+            // 
+            resources.ApplyResources(arrowBatchConversionLabel, "arrowBatchConversionLabel");
+            arrowBatchConversionLabel.BackColor = System.Drawing.Color.Transparent;
+            arrowBatchConversionLabel.ForeColor = System.Drawing.Color.AliceBlue;
+            arrowBatchConversionLabel.Name = "arrowBatchConversionLabel";
+            // 
             // batchProgressLabel
             // 
+            batchProgressLabel.BackColor = System.Drawing.Color.FromArgb(132, 160, 213);
+            batchProgressLabel.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             resources.ApplyResources(batchProgressLabel, "batchProgressLabel");
-            batchProgressLabel.BackColor = System.Drawing.Color.Transparent;
-            batchProgressLabel.ForeColor = System.Drawing.Color.FromArgb(100, 200, 255);
+            batchProgressLabel.ForeColor = System.Drawing.Color.Black;
             batchProgressLabel.Name = "batchProgressLabel";
             // 
             // batchProgressIcon
@@ -659,6 +669,7 @@ namespace APPID
         private System.Windows.Forms.Label label1;
         public System.Windows.Forms.PictureBox batchProgressIcon;
         public System.Windows.Forms.Label batchProgressLabel;
+        public System.Windows.Forms.Label arrowBatchConversionLabel;
     }
 }
 

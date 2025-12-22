@@ -75,12 +75,13 @@ namespace SteamAppIdIdentifier
         {
             this.SetStyle(ControlStyles.SupportsTransparentBackColor, true);
             this.SetStyle(ControlStyles.Opaque, false);
-            this.BackgroundColor = Color.FromArgb(5, 8, 15);
+            this.SetStyle(ControlStyles.AllPaintingInWmPaint, true);
+            this.DoubleBuffered = true;
         }
 
         protected override void OnPaintBackground(PaintEventArgs e)
         {
-            // Don't paint background - let parent show through
+            // Don't paint background - let acrylic show through
         }
     }
 
@@ -112,22 +113,6 @@ namespace SteamAppIdIdentifier
             parentForm = parent;
             InitializeComponent();  // Use the Designer.cs file instead!
 
-            // Enable transparency support on mainPanel for acrylic blur to show through
-            typeof(Panel).InvokeMember("SetStyle",
-                System.Reflection.BindingFlags.InvokeMethod | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic,
-                null, mainPanel, new object[] { ControlStyles.SupportsTransparentBackColor, true });
-            typeof(Panel).InvokeMember("SetStyle",
-                System.Reflection.BindingFlags.InvokeMethod | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic,
-                null, mainPanel, new object[] { ControlStyles.Opaque, false });
-
-            // Enable transparency support on titleBar too
-            typeof(Panel).InvokeMember("SetStyle",
-                System.Reflection.BindingFlags.InvokeMethod | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic,
-                null, titleBar, new object[] { ControlStyles.SupportsTransparentBackColor, true });
-            typeof(Panel).InvokeMember("SetStyle",
-                System.Reflection.BindingFlags.InvokeMethod | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic,
-                null, titleBar, new object[] { ControlStyles.Opaque, false });
-
             // Setup modern progress bar style
             SetupModernProgressBar();
 
@@ -135,19 +120,8 @@ namespace SteamAppIdIdentifier
             gamesGrid.SortCompare += GamesGrid_SortCompare;
             gamesGrid.ColumnHeaderMouseClick += GamesGrid_ColumnHeaderMouseClick;
 
-            // Dark mode checkbox painting + Details button painting
-            gamesGrid.CellPainting += GamesGrid_CellPainting;
-
-            // Enable double buffering on grid to prevent flickering
-            typeof(DataGridView).InvokeMember("DoubleBuffered",
-                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.SetProperty,
-                null, gamesGrid, new object[] { true });
-
             // Make main panel draggable (empty space drags window)
             mainPanel.MouseDown += TitleBar_MouseDown;
-
-            // Make form draggable (empty space drags window)
-            this.MouseDown += TitleBar_MouseDown;
 
             // Make data grid draggable but exclude column resizing
             gamesGrid.MouseDown += DataGrid_MouseDown;
@@ -158,6 +132,17 @@ namespace SteamAppIdIdentifier
                 ApplyAcrylicEffect();
                 // Center over parent when loaded
                 CenterOverParent();
+            };
+
+            // ESC key closes form and returns to caller
+            this.KeyPreview = true;
+            this.KeyDown += (s, e) =>
+            {
+                if (e.KeyCode == Keys.Escape)
+                {
+                    this.Close();
+                    e.Handled = true;
+                }
             };
         }
 
@@ -357,35 +342,7 @@ namespace SteamAppIdIdentifier
 
         private void ApplyAcrylicEffect()
         {
-            // Apply rounded corners (Windows 11)
-            try
-            {
-                int preference = 2; // DWMWCP_ROUND
-                DwmSetWindowAttribute(this.Handle, 33, ref preference, sizeof(int)); // DWMWA_WINDOW_CORNER_PREFERENCE
-            }
-            catch { }
-
-            // Apply acrylic blur effect
-            try
-            {
-                var accent = new AccentPolicy();
-                accent.AccentState = 4; // ACCENT_ENABLE_ACRYLICBLURBEHIND
-                accent.AccentFlags = APPID.ThemeConfig.BlurIntensity;
-                accent.GradientColor = APPID.ThemeConfig.AcrylicBlurColor;
-
-                int accentStructSize = Marshal.SizeOf(accent);
-                IntPtr accentPtr = Marshal.AllocHGlobal(accentStructSize);
-                Marshal.StructureToPtr(accent, accentPtr, false);
-
-                var data = new WindowCompositionAttribData();
-                data.Attribute = 19; // WCA_ACCENT_POLICY
-                data.SizeOfData = accentStructSize;
-                data.Data = accentPtr;
-
-                SetWindowCompositionAttribute(this.Handle, ref data);
-                Marshal.FreeHGlobal(accentPtr);
-            }
-            catch { }
+            APPID.AcrylicHelper.ApplyAcrylic(this, roundedCorners: true, disableShadow: true);
         }
 
         private void SetupModernProgressBar()
@@ -1094,8 +1051,6 @@ namespace SteamAppIdIdentifier
                 using (var compressionForm = new SteamAutocrackGUI.CompressionSettingsForm())
                 {
                     compressionForm.StartPosition = FormStartPosition.CenterParent;
-                    compressionForm.ShowInTaskbar = false;  // Don't show in taskbar
-
                     if (compressionForm.ShowDialog(this) != DialogResult.OK)
                     {
                         // User cancelled - reset the button status
@@ -2132,6 +2087,13 @@ namespace SteamAppIdIdentifier
             // Initialize batch controls as disabled (no selection yet)
             UpdateSelectedCount();
 
+            // Load icon from resources
+            try
+            {
+                this.Icon = APPID.Properties.Resources.sac_icon;
+            }
+            catch { }
+
             _ = LoadGames();
         }
 
@@ -2174,22 +2136,23 @@ namespace SteamAppIdIdentifier
             // Show/hide batch controls based on selection
             bool hasSelection = count > 0;
 
-            // Update the 3 labels: "Selected " (gray) + count (green bold) + " to" (gray)
-            lblSelectedPrefix.Text = "Selected ";
-            lblSelectedPrefix.Visible = hasSelection;
-
+            // Update labels: "X" (green) + " selected" (gray)
             lblSelectedCount.Text = count.ToString();
             lblSelectedCount.Visible = hasSelection;
 
-            lblSelectedSuffix.Text = " to";
+            lblSelectedSuffix.Text = " selected";
             lblSelectedSuffix.Visible = hasSelection;
 
-            // Position the count label right after prefix, and suffix after count
+            // Position elements in a row: count -> suffix -> Process -> Settings
             if (hasSelection)
             {
-                lblSelectedCount.Location = new Point(lblSelectedPrefix.Right, lblSelectedPrefix.Top);
                 lblSelectedSuffix.Location = new Point(lblSelectedCount.Right, lblSelectedCount.Top);
+                btnProcessSelected.Location = new Point(lblSelectedSuffix.Right + 8, btnProcessSelected.Top);
+                btnSettings.Location = new Point(btnProcessSelected.Right + 5, btnSettings.Top);
             }
+
+            // Hide prefix - not needed anymore
+            lblSelectedPrefix.Visible = false;
 
             btnSettings.Visible = hasSelection;
             btnProcessSelected.Visible = hasSelection;
@@ -4402,7 +4365,6 @@ namespace SteamAppIdIdentifier
             this.StartPosition = FormStartPosition.Manual;  // We'll set position manually
             this.FormBorderStyle = FormBorderStyle.None;
             this.BackColor = Color.FromArgb(5, 8, 20);
-            this.ShowInTaskbar = false;  // Don't show in taskbar
 
             // Apply rounded corners when form loads
             this.Load += (s, e) =>

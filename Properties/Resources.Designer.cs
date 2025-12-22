@@ -171,6 +171,16 @@ namespace APPID.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Icon.
+        /// </summary>
+        internal static System.Drawing.Icon sac_icon {
+            get {
+                object obj = ResourceManager.GetObject("sac_icon", resourceCulture);
+                return ((System.Drawing.Icon)(obj));
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
         internal static System.Drawing.Bitmap info_icon {
@@ -226,6 +236,16 @@ namespace APPID.Properties {
         internal static System.Drawing.Bitmap settings_icon {
             get {
                 object obj = ResourceManager.GetObject("settings_icon", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap zipper_icon {
+            get {
+                object obj = ResourceManager.GetObject("zipper_icon", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }

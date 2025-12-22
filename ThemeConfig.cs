@@ -26,7 +26,7 @@ namespace APPID
         /// Main acrylic blur color for all windows
         /// Change this to adjust the frosted glass effect!
         /// </summary>
-        public static int AcrylicBlurColor = unchecked((int)0xBB0A0A0F);
+        public static int AcrylicBlurColor = unchecked((int)0x80000000); // Dark black tint ~50% opacity
 
         /// <summary>
         /// Blur intensity (0-2)
@@ -34,7 +34,7 @@ namespace APPID
         /// 1 = Medium blur
         /// 2 = Maximum blur
         /// </summary>
-        public static int BlurIntensity = 2;
+        public static int BlurIntensity = 0;
 
 
         // ═══════════════════════════════════════════════════════════════

@@ -66,15 +66,17 @@ namespace APPID
 
         public static async System.Threading.Tasks.Task CheckGitHubNewerVersion(string User, string Repo, string APIBase)
         {
-            ServicePointManager.ServerCertificateValidationCallback = delegate { return true; };
-            var obj = getJson($"{User}/{Repo}/releases");
-            GitHubClient client = new GitHubClient(new ProductHeaderValue($"{Repo}"));
-            IReadOnlyList<Release> releases = await client.Repository.Release.GetAll(User, Repo);
-            string balls = releases.ToString();
-            string latestGitHubVersion = releases[0].TagName.ToString().Replace("v", "");
-            string localVersion = File.ReadAllText(Path.Combine(BinPath, $"{Repo}.ver")).Trim();
-            if (localVersion != latestGitHubVersion)
+            try
             {
+                ServicePointManager.ServerCertificateValidationCallback = delegate { return true; };
+                var obj = getJson($"{User}/{Repo}/releases");
+                GitHubClient client = new GitHubClient(new ProductHeaderValue($"{Repo}"));
+                IReadOnlyList<Release> releases = await client.Repository.Release.GetAll(User, Repo);
+                string balls = releases.ToString();
+                string latestGitHubVersion = releases[0].TagName.ToString().Replace("v", "");
+                string localVersion = File.ReadAllText(Path.Combine(BinPath, $"{Repo}.ver")).Trim();
+                if (localVersion != latestGitHubVersion)
+                {
                 LogHelper.LogUpdate($"Steamless", $"{localVersion} -> {latestGitHubVersion}");
 
                 if (Directory.Exists(Path.Combine(BinPath, "Steamless")))
@@ -106,6 +108,12 @@ namespace APPID
             else
             {
                 return;
+            }
+            }
+            catch (Exception ex)
+            {
+                // Silently ignore rate limit and other API errors - not critical
+                LogHelper.LogNetwork($"GitHub API check skipped: {ex.Message}");
             }
         }
 
@@ -247,8 +255,8 @@ namespace APPID
             }
             catch (Exception ex)
             {
+                // Silently ignore - not critical, probably rate limited
                 LogHelper.LogError("UpdateGoldBerg failed", ex);
-                MessageBox.Show($"Unable to update GoldBerg: {ex.Message}");
             }
         }
         public static async System.Threading.Tasks.Task ExtractFileAsync(string sourceArchive, string destination)
