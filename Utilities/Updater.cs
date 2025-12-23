@@ -45,16 +45,18 @@ namespace APPID
             }
         }
         public static bool offline = false;
-        public static bool CheckForNet()
+        public static async System.Threading.Tasks.Task<bool> CheckForNetAsync()
         {
             ServicePointManager.ServerCertificateValidationCallback = delegate { return true; };
-            int i = 0;
             if (!offline)
             {
-                while (!hasinternet && i < hosts.Length)
+                foreach (var host in hosts)
                 {
-                    hasinternet = CheckForInternet(hosts[i]);
-                    i++;
+                    if (await CheckForInternetAsync(host))
+                    {
+                        hasinternet = true;
+                        return true;
+                    }
                 }
                 if (!hasinternet)
                 {
@@ -279,40 +281,29 @@ namespace APPID
             }
         }
 
-        public static bool CheckForInternet(string host)
+        public static async System.Threading.Tasks.Task<bool> CheckForInternetAsync(string host)
         {
-            bool success = false;
-            Ping myPing = new Ping();
-            byte[] buffer = new byte[32];
-            int timeout = 60000;
-            PingOptions pingOptions = new PingOptions();
-            try
+            using (Ping myPing = new Ping())
             {
-                PingReply reply = myPing.Send(host, timeout, buffer, pingOptions);
-                if (reply.Status == IPStatus.Success)
+                byte[] buffer = new byte[32];
+                int timeout = 20000; // 20 seconds - async so no UI blocking
+                PingOptions pingOptions = new PingOptions();
+                try
                 {
-                    hasinternet = true;
-                    offline = false;
-                    success = true;
-                    return true;
+                    PingReply reply = await myPing.SendPingAsync(host, timeout, buffer, pingOptions);
+                    if (reply.Status == IPStatus.Success)
+                    {
+                        hasinternet = true;
+                        offline = false;
+                        return true;
+                    }
                 }
-            }
-            catch (Exception ex)
-            {
-                LogHelper.LogNetwork($"Internet check failed for {host}: {ex.Message}");
-                hasinternet = false;
-                offline = true;
+                catch (Exception ex)
+                {
+                    LogHelper.LogNetwork($"Internet check failed for {host}: {ex.Message}");
+                }
                 return false;
             }
-            if (success == true)
-            {
-                hasinternet = true;
-                offline = false;
-                return true;
-            }
-            offline = true;
-            return false;
-
         }
     }
 }

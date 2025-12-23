@@ -22,6 +22,10 @@ namespace SAC_GUI
         private readonly string _boundary;
         private readonly byte[] _headerBytes;
         private readonly byte[] _footerBytes;
+
+        // Track concurrent uploads for bandwidth limiting
+        private static int _concurrentUploads = 0;
+        private static readonly object _uploadCountLock = new object();
         private readonly long _fileSize;
         private readonly IProgress<double> _progressCallback;
         private readonly IProgress<string> _statusCallback;
@@ -69,55 +73,102 @@ namespace SAC_GUI
         /// </summary>
         protected override async Task SerializeToStreamAsync(Stream stream, System.Net.TransportContext context)
         {
-            // Write header
-            await stream.WriteAsync(_headerBytes, 0, _headerBytes.Length);
+            // Track concurrent uploads
+            lock (_uploadCountLock) { _concurrentUploads++; }
+            System.Diagnostics.Debug.WriteLine($"[1FICHIER] Upload started. Concurrent uploads: {_concurrentUploads}");
 
-            // Stream file content with progress reporting
-            using (var fileStream = new FileStream(_filePath, FileMode.Open, FileAccess.Read, FileShare.Read, 81920))
+            try
             {
-                var buffer = new byte[81920]; // 80KB buffer
-                long totalWritten = 0;
-                int bytesRead;
+                // Write header
+                await stream.WriteAsync(_headerBytes, 0, _headerBytes.Length);
 
-                var startTime = DateTime.Now;
-                var lastUpdateTime = DateTime.Now;
-                long lastBytesWritten = 0;
-
-                while ((bytesRead = await fileStream.ReadAsync(buffer, 0, buffer.Length)) > 0)
+                // Stream file content with progress reporting
+                using (var fileStream = new FileStream(_filePath, FileMode.Open, FileAccess.Read, FileShare.Read, 81920))
                 {
-                    await stream.WriteAsync(buffer, 0, bytesRead);
-                    totalWritten += bytesRead;
+                    var buffer = new byte[81920]; // 80KB buffer
+                    long totalWritten = 0;
+                    int bytesRead;
 
-                    // Calculate and report progress/speed every 0.5 seconds
-                    var now = DateTime.Now;
-                    var timeSinceLastUpdate = (now - lastUpdateTime).TotalSeconds;
+                    var startTime = DateTime.Now;
+                    var lastUpdateTime = DateTime.Now;
+                    var lastThrottleTime = DateTime.Now;
+                    long lastBytesWritten = 0;
+                    long bytesThisSecond = 0;
 
-                    if (timeSinceLastUpdate >= 0.5)
+                    while ((bytesRead = await fileStream.ReadAsync(buffer, 0, buffer.Length)) > 0)
                     {
-                        var bytesThisInterval = totalWritten - lastBytesWritten;
-                        var speedMBps = (bytesThisInterval / (1024.0 * 1024.0)) / timeSinceLastUpdate;
-                        var totalElapsed = (now - startTime).TotalSeconds;
-                        var avgSpeedMBps = totalElapsed > 0 ? (totalWritten / (1024.0 * 1024.0)) / totalElapsed : 0;
-                        var bytesRemaining = _fileSize - totalWritten;
-                        var etaSeconds = avgSpeedMBps > 0 ? (bytesRemaining / (1024.0 * 1024.0)) / avgSpeedMBps : 0;
+                        await stream.WriteAsync(buffer, 0, bytesRead);
+                        totalWritten += bytesRead;
+                        bytesThisSecond += bytesRead;
 
-                        var statusText = $"Uploading: {speedMBps:F2} MB/s (Avg: {avgSpeedMBps:F2} MB/s) - ETA: {TimeSpan.FromSeconds(etaSeconds):hh\\:mm\\:ss}";
-                        System.Diagnostics.Debug.WriteLine($"[1FICHIER] {statusText}");
-                        _statusCallback?.Report(statusText);
+                        // Bandwidth throttling - check every write
+                        long bandwidthLimit = SteamAutocrackGUI.CompressionSettingsForm.UploadBandwidthLimitBytesPerSecond;
+                        if (bandwidthLimit > 0)
+                        {
+                            int currentUploads;
+                            lock (_uploadCountLock) { currentUploads = _concurrentUploads; }
+                            long perUploadLimit = bandwidthLimit / Math.Max(1, currentUploads);
 
-                        lastUpdateTime = now;
-                        lastBytesWritten = totalWritten;
+                            var throttleElapsed = (DateTime.Now - lastThrottleTime).TotalSeconds;
+                            if (throttleElapsed > 0)
+                            {
+                                double currentRate = bytesThisSecond / throttleElapsed;
+                                if (currentRate > perUploadLimit)
+                                {
+                                    // Calculate how long to sleep to achieve target rate
+                                    double targetTime = (double)bytesThisSecond / perUploadLimit;
+                                    double sleepMs = (targetTime - throttleElapsed) * 1000;
+                                    if (sleepMs > 10)
+                                    {
+                                        await Task.Delay((int)Math.Min(sleepMs, 500)); // Cap at 500ms
+                                    }
+                                }
+                            }
+
+                            // Reset throttle counter every second
+                            if (throttleElapsed >= 1.0)
+                            {
+                                lastThrottleTime = DateTime.Now;
+                                bytesThisSecond = 0;
+                            }
+                        }
+
+                        // Calculate and report progress/speed every 0.5 seconds
+                        var now = DateTime.Now;
+                        var timeSinceLastUpdate = (now - lastUpdateTime).TotalSeconds;
+
+                        if (timeSinceLastUpdate >= 0.5)
+                        {
+                            var bytesThisInterval = totalWritten - lastBytesWritten;
+                            var speedMBps = (bytesThisInterval / (1024.0 * 1024.0)) / timeSinceLastUpdate;
+                            var totalElapsed = (now - startTime).TotalSeconds;
+                            var avgSpeedMBps = totalElapsed > 0 ? (totalWritten / (1024.0 * 1024.0)) / totalElapsed : 0;
+                            var bytesRemaining = _fileSize - totalWritten;
+                            var etaSeconds = avgSpeedMBps > 0 ? (bytesRemaining / (1024.0 * 1024.0)) / avgSpeedMBps : 0;
+
+                            var statusText = $"Uploading: {speedMBps:F2} MB/s (Avg: {avgSpeedMBps:F2} MB/s) - ETA: {TimeSpan.FromSeconds(etaSeconds):hh\\:mm\\:ss}";
+                            System.Diagnostics.Debug.WriteLine($"[1FICHIER] {statusText}");
+                            _statusCallback?.Report(statusText);
+
+                            lastUpdateTime = now;
+                            lastBytesWritten = totalWritten;
+                        }
+
+                        // Report progress (0.0 to 1.0)
+                        _progressCallback?.Report((double)totalWritten / _fileSize);
                     }
 
-                    // Report progress (0.0 to 1.0)
-                    _progressCallback?.Report((double)totalWritten / _fileSize);
+                    System.Diagnostics.Debug.WriteLine($"[1FICHIER] Streamed {totalWritten} bytes to network");
                 }
 
-                System.Diagnostics.Debug.WriteLine($"[1FICHIER] Streamed {totalWritten} bytes to network");
+                // Write footer
+                await stream.WriteAsync(_footerBytes, 0, _footerBytes.Length);
             }
-
-            // Write footer
-            await stream.WriteAsync(_footerBytes, 0, _footerBytes.Length);
+            finally
+            {
+                lock (_uploadCountLock) { _concurrentUploads = Math.Max(0, _concurrentUploads - 1); }
+                System.Diagnostics.Debug.WriteLine($"[1FICHIER] Upload finished. Concurrent uploads: {_concurrentUploads}");
+            }
         }
     }
 

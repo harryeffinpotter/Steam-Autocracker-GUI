@@ -33,7 +33,6 @@ namespace SteamAutocrackGUI
             this.sevenZipRadioButton = new System.Windows.Forms.RadioButton();
             this.levelTrackBar = new System.Windows.Forms.TrackBar();
             this.levelDescriptionLabel = new System.Windows.Forms.Label();
-            this.rememberCheckBox = new System.Windows.Forms.CheckBox();
             this.rinPasswordCheckBox = new System.Windows.Forms.CheckBox();
             this.ctrlSLabel = new System.Windows.Forms.Label();
             this.okButton = new System.Windows.Forms.Button();
@@ -98,27 +97,13 @@ namespace SteamAutocrackGUI
             // 
             this.levelDescriptionLabel.BackColor = System.Drawing.Color.Transparent;
             this.levelDescriptionLabel.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(192)))), ((int)(((byte)(255)))), ((int)(((byte)(255)))));
-            this.levelDescriptionLabel.Location = new System.Drawing.Point(64, 150);
+            this.levelDescriptionLabel.Location = new System.Drawing.Point(64, 210);
             this.levelDescriptionLabel.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.levelDescriptionLabel.Name = "levelDescriptionLabel";
             this.levelDescriptionLabel.Size = new System.Drawing.Size(315, 26);
             this.levelDescriptionLabel.TabIndex = 10;
             this.levelDescriptionLabel.Text = "0 - No Compression (Instant)";
             this.levelDescriptionLabel.TextAlign = System.Drawing.ContentAlignment.TopCenter;
-            // 
-            // rememberCheckBox
-            // 
-            this.rememberCheckBox.AutoSize = true;
-            this.rememberCheckBox.BackColor = System.Drawing.Color.Transparent;
-            this.rememberCheckBox.FlatAppearance.CheckedBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(20)))));
-            this.rememberCheckBox.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(192)))), ((int)(((byte)(255)))), ((int)(((byte)(255)))));
-            this.rememberCheckBox.Location = new System.Drawing.Point(239, 60);
-            this.rememberCheckBox.Margin = new System.Windows.Forms.Padding(4);
-            this.rememberCheckBox.Name = "rememberCheckBox";
-            this.rememberCheckBox.Size = new System.Drawing.Size(115, 21);
-            this.rememberCheckBox.TabIndex = 6;
-            this.rememberCheckBox.Text = "Dont ask again";
-            this.rememberCheckBox.UseVisualStyleBackColor = false;
             // 
             // rinPasswordCheckBox
             // 
@@ -140,7 +125,7 @@ namespace SteamAutocrackGUI
             this.ctrlSLabel.BackColor = System.Drawing.Color.Transparent;
             this.ctrlSLabel.Font = new System.Drawing.Font("Segoe UI", 8F);
             this.ctrlSLabel.ForeColor = System.Drawing.Color.Gray;
-            this.ctrlSLabel.Location = new System.Drawing.Point(125, 298);
+            this.ctrlSLabel.Location = new System.Drawing.Point(125, 338);
             this.ctrlSLabel.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.ctrlSLabel.Name = "ctrlSLabel";
             this.ctrlSLabel.Size = new System.Drawing.Size(193, 13);
@@ -156,7 +141,7 @@ namespace SteamAutocrackGUI
             this.okButton.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.okButton.Font = new System.Drawing.Font("Segoe UI", 9F);
             this.okButton.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(220)))), ((int)(((byte)(220)))), ((int)(((byte)(225)))));
-            this.okButton.Location = new System.Drawing.Point(122, 234);
+            this.okButton.Location = new System.Drawing.Point(122, 274);
             this.okButton.Margin = new System.Windows.Forms.Padding(4);
             this.okButton.Name = "okButton";
             this.okButton.Size = new System.Drawing.Size(93, 39);
@@ -174,7 +159,7 @@ namespace SteamAutocrackGUI
             this.cancelButton.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.cancelButton.Font = new System.Drawing.Font("Segoe UI", 9F);
             this.cancelButton.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(220)))), ((int)(((byte)(220)))), ((int)(((byte)(225)))));
-            this.cancelButton.Location = new System.Drawing.Point(227, 234);
+            this.cancelButton.Location = new System.Drawing.Point(227, 274);
             this.cancelButton.Margin = new System.Windows.Forms.Padding(4);
             this.cancelButton.Name = "cancelButton";
             this.cancelButton.Size = new System.Drawing.Size(93, 39);
@@ -188,12 +173,11 @@ namespace SteamAutocrackGUI
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 17F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(5)))), ((int)(((byte)(8)))), ((int)(((byte)(20)))));
-            this.ClientSize = new System.Drawing.Size(443, 320);
+            this.ClientSize = new System.Drawing.Size(443, 360);
             this.Controls.Add(this.cancelButton);
             this.Controls.Add(this.okButton);
             this.Controls.Add(this.ctrlSLabel);
             this.Controls.Add(this.rinPasswordCheckBox);
-            this.Controls.Add(this.rememberCheckBox);
             this.Controls.Add(this.levelDescriptionLabel);
             this.Controls.Add(this.levelTrackBar);
             this.Controls.Add(this.sevenZipRadioButton);
@@ -221,7 +205,6 @@ namespace SteamAutocrackGUI
         private System.Windows.Forms.RadioButton sevenZipRadioButton;
         private System.Windows.Forms.TrackBar levelTrackBar;
         private System.Windows.Forms.Label levelDescriptionLabel;
-        private System.Windows.Forms.CheckBox rememberCheckBox;
         private System.Windows.Forms.CheckBox rinPasswordCheckBox;
         private System.Windows.Forms.Label ctrlSLabel;
         private System.Windows.Forms.Button okButton;
