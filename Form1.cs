@@ -64,17 +64,24 @@ namespace APPID
 
         private const int WCA_ACCENT_POLICY = 19;
         private const int ACCENT_ENABLE_ACRYLICBLURBEHIND = 4;
-        private const int ACCENT_ENABLE_TRANSPARENTGRADIENT = 2;
 
-        // Force taskbar visibility for borderless form
-        private const int WS_EX_APPWINDOW = 0x40000;
+        // Fix borderless form taskbar
+        private const int WS_MINIMIZEBOX = 0x20000;
+        private const int CS_DBLCLKS = 0x8;
+
+        [DllImport("user32.dll")]
+        private static extern bool SetForegroundWindow(IntPtr hWnd);
+
+        [DllImport("user32.dll")]
+        private static extern IntPtr GetDesktopWindow();
 
         protected override CreateParams CreateParams
         {
             get
             {
                 CreateParams cp = base.CreateParams;
-                cp.ExStyle |= WS_EX_APPWINDOW;  // Force appear in taskbar
+                cp.Style |= WS_MINIMIZEBOX;
+                cp.ClassStyle |= CS_DBLCLKS;
                 return cp;
             }
         }
@@ -220,10 +227,8 @@ namespace APPID
             System.Diagnostics.Debug.WriteLine($"[CONSTRUCTOR] Loaded autoCrackEnabled = {autoCrackEnabled} from Settings");
 
             dataTableGeneration = new DataTableGeneration();
-            // Initialize component first so form shows immediately, then load data async
+            Task.Run(async () => await dataTableGeneration.GetDataTableAsync(dataTableGeneration)).Wait();
             InitializeComponent();
-            // Load data table in background - don't block UI
-            _ = Task.Run(async () => await dataTableGeneration.GetDataTableAsync(dataTableGeneration));
 
             // Set auto-crack UI immediately after InitializeComponent so it's ready BEFORE Form_Load
             if (autoCrackEnabled)
@@ -258,14 +263,23 @@ namespace APPID
                 mainPanel.MouseDown += TitleBar_MouseDown;
             }
 
-            // Apply acrylic blur and rounded corners
+            // Apply rounded corners
             this.Load += (s, e) => ApplyAcrylicEffect();
 
-            // Force taskbar registration after form is fully shown
+            // Force taskbar refresh after form is fully loaded
             this.Shown += (s, e) =>
             {
-                // Toggle ShowInTaskbar to force shell to register the window
-                this.ShowInTaskbar = true;
+                var timer = new Timer();
+                timer.Interval = 100;
+                timer.Tick += (ts, te) =>
+                {
+                    timer.Stop();
+                    timer.Dispose();
+                    SetForegroundWindow(GetDesktopWindow());
+                    SetForegroundWindow(this.Handle);
+                    this.Activate();
+                };
+                timer.Start();
             };
 
             // Apply rounded corners to buttons
@@ -371,7 +385,7 @@ namespace APPID
             }
             catch { }
 
-            // Clear tinted glass
+            // 2.3 style - just opacity
             this.Opacity = 0.95;
         }
 
@@ -546,6 +560,7 @@ namespace APPID
                 APPNAME = dataGridView1[0, rowIndex].Value.ToString().Trim();
                 Tat($"{APPNAME} ({CurrentAppId})");
                 searchTextBox.Clear();
+                searchTextBox.Enabled = false;
                 btnManualEntry.Visible = false;
                 mainPanel.Visible = true;
                 startCrackPic.Visible = true;
@@ -639,6 +654,7 @@ namespace APPID
                         activeBatchForm.BringToFront();
                         activeBatchForm.Activate();
                         HideBatchIndicator(); // Hide icon/label when restored
+                        this.Hide(); // Hide Form1 when batch form is restored
                     }
                 };
                 batchProgressIcon.Cursor = Cursors.Hand;
@@ -655,6 +671,7 @@ namespace APPID
                         activeBatchForm.BringToFront();
                         activeBatchForm.Activate();
                         HideBatchIndicator(); // Hide icon/label when restored
+                        this.Hide(); // Hide Form1 when batch form is restored
                     }
                 };
                 batchProgressLabel.Cursor = Cursors.Hand;
@@ -699,7 +716,7 @@ namespace APPID
             }
             Tit("Checking for Internet... ", Color.LightSkyBlue);
             ServicePointManager.ServerCertificateValidationCallback = delegate { return true; };
-            bool check = Updater.CheckForNet();
+            bool check = await Updater.CheckForNetAsync();
             if (check)
             {
                 ServicePointManager.ServerCertificateValidationCallback = delegate { return true; };
@@ -833,6 +850,7 @@ namespace APPID
                 APPNAME = dataGridView1[0, e.RowIndex].Value.ToString().Trim();
                 Tat($"{APPNAME} ({CurrentAppId})");
                 searchTextBox.Clear();
+                searchTextBox.Enabled = false;
                 mainPanel.Visible = true;
                 btnManualEntry.Visible = false;
                 startCrackPic.Visible = true;
@@ -887,8 +905,9 @@ namespace APPID
                 }
                 if (e.KeyCode == Keys.Escape)
                 {
+                    // Go back to main view
                     searchTextBox.Clear();
-                    searchTextBox.Focus();
+                    mainPanel.Visible = true;
                 }
                 else if (e.KeyCode == Keys.Enter)
                 {
@@ -905,6 +924,7 @@ namespace APPID
                     APPNAME = dataGridView1[0, CurrentCell].Value.ToString().Trim();
                     Tat($"{APPNAME} ({CurrentAppId})");
                     searchTextBox.Clear();
+                    searchTextBox.Enabled = false;
                     mainPanel.Visible = true;
                     btnManualEntry.Visible = false;
                     startCrackPic.Visible = true;
@@ -930,32 +950,7 @@ namespace APPID
                     dataGridView1.ClearSelection();
                     searchTextBox.SelectionStart = searchTextBox.Text.Length;
                 }
-                else if (e.KeyCode != Keys.Up && e.KeyCode != Keys.Down && char.IsLetterOrDigit((char)e.KeyCode) && e.KeyCode.ToString().Length == 1 || e.KeyCode == Keys.Space)
-                {
-                    bool isShiftKeyPressed = (e.Modifiers == Keys.Shift);
-                    bool isCapsLockOn = System.Windows.Forms.Control
-                         .IsKeyLocked(System.Windows.Forms.Keys.CapsLock);
-                    if (e.KeyCode == Keys.Space)
-                    {
-                        searchTextBox.Focus();
-                        searchTextBox.Text += " ";
-                        dataGridView1.ClearSelection();
-                        searchTextBox.SelectionStart = searchTextBox.Text.Length;
-                    }
-                    else if (!isShiftKeyPressed && !isCapsLockOn)
-                    {
-                        searchTextBox.Focus();
-                        searchTextBox.Text += e.KeyData.ToString().ToLower();
-                        searchTextBox.SelectionStart = searchTextBox.Text.Length;
-                    }
-                    else
-                    {
-                        searchTextBox.Focus();
-                        searchTextBox.Text += e.KeyData.ToString().Replace(", Shift", "").Replace("Oem", "").Replace("numpad", "");
-                        searchTextBox.SelectionStart = searchTextBox.Text.Length;
-                    }
-
-                }
+                // Removed: type-to-search from dataGridView - was causing issues with held keys
                 else if (e.KeyCode == Keys.F1)
                 {
                     ManAppPanel.Visible = true;
@@ -1036,8 +1031,9 @@ namespace APPID
                 }
                 else if (e.KeyCode == Keys.Escape)
                 {
+                    // Go back to main view
                     searchTextBox.Clear();
-                    searchTextBox.Focus();
+                    mainPanel.Visible = true;
                     e.SuppressKeyPress = true;
                 }
                 else if (e.KeyCode == Keys.Back)
@@ -1319,6 +1315,7 @@ namespace APPID
                                     resinstruccZipTimer.Stop();
                                     resinstruccZipTimer.Start();  // Start 30 second timer
                                     mainPanel.Visible = false;      // Hide main panel so dataGridView is visible
+                                    searchTextBox.Enabled = true;   // Enable search when AppID panel shows
                                     // Don't show any popup - user can click Manual Entry if they want
                                 }
                             }
@@ -1388,6 +1385,7 @@ namespace APPID
             APPNAME = dataGridView1[0, CurrentCell].Value.ToString().Trim();
             Tat($"{APPNAME} ({CurrentAppId})");
             searchTextBox.Clear();
+            searchTextBox.Enabled = false;
             mainPanel.Visible = true;
             btnManualEntry.Visible = false;
             startCrackPic.Visible = true;
@@ -2435,6 +2433,7 @@ oLink3.Save";
 
                     // Skip the search UI entirely - we already have the AppID!
                     // Just show main panel - it will cover all the search UI elements
+                    searchTextBox.Enabled = false;
                     mainPanel.Visible = true;
                     resinstruccZip.Visible = true;
                     resinstruccZipTimer.Stop();
@@ -2467,6 +2466,7 @@ oLink3.Save";
                     resinstruccZipTimer.Stop();
                     resinstruccZipTimer.Start();  // Start 30 second timer
                     mainPanel.Visible = false;  // Hide mainPanel so dataGridView is visible
+                    searchTextBox.Enabled = true;  // Enable search when AppID panel shows
 
                     startCrackPic.Visible = true;
                     Tit("Please select the correct game from the list!! (if list empty do manual search!)", Color.LightSkyBlue);
@@ -2651,6 +2651,7 @@ oLink3.Save";
 
                         // Skip the search UI entirely - we already have the AppID!
                         // Just show main panel - it will cover all the search UI elements
+                        searchTextBox.Enabled = false;
                         mainPanel.Visible = true;
                         resinstruccZip.Visible = true;
                         resinstruccZipTimer.Stop();
@@ -2679,6 +2680,7 @@ oLink3.Save";
                     {
                         // No manifest found, proceed with normal search flow
                         mainPanel.Visible = false;  // Hide mainPanel so dataGridView is visible
+                        searchTextBox.Enabled = true;  // Enable search when AppID panel shows
                         btnManualEntry.Visible = true;
                         resinstruccZip.Visible = true;  // Show this too!
                         resinstruccZipTimer.Stop();
@@ -2729,6 +2731,7 @@ oLink3.Save";
 
         private void pin_Click(object sender, EventArgs e)
         {
+
             this.TopMost = true;
             unPin.BringToFront();
             AppSettings.Default.Pinned = true;
@@ -3771,6 +3774,7 @@ oLink3.Save";
                 searchTextBox.Clear();
                 ManAppBox.Clear();
                 ManAppPanel.Visible = false;
+                searchTextBox.Enabled = false;
                 mainPanel.Visible = true;
                 btnManualEntry.Visible = false;
                 startCrackPic.Visible = true;
@@ -3873,6 +3877,7 @@ oLink3.Save";
                     FetchGameNameFromSteamAPI(CurrentAppId);
 
                     searchTextBox.Clear();
+                    searchTextBox.Enabled = false;
                     ManAppBox.Clear();
                     ManAppPanel.Visible = false;
                     mainPanel.Visible = true;
@@ -4287,6 +4292,7 @@ oLink3.Save";
                     activeBatchForm.BringToFront();
                     activeBatchForm.Activate();
                     batchIndicator.Visible = false;
+                    this.Hide(); // Hide Form1 when batch form is restored
                 }
             };
 
@@ -4364,6 +4370,8 @@ oLink3.Save";
             if (batchProgressIcon != null) batchProgressIcon.Visible = true;
             if (batchProgressLabel != null)
             {
+                if (string.IsNullOrEmpty(batchProgressLabel.Text) || !batchProgressLabel.Text.Contains("%"))
+                    batchProgressLabel.Text = "0%";
                 batchProgressLabel.Visible = true;
                 batchProgressLabel.BringToFront();
             }
@@ -4493,6 +4501,9 @@ oLink3.Save";
                 if (form.WindowState == FormWindowState.Minimized && form.IsProcessing)
                 {
                     form.Hide();
+                    this.Show(); // Show main form so indicator is visible
+                    this.BringToFront();
+                    this.Activate(); // Bring to foreground
                     ShowBatchIndicator();
                 }
             };
@@ -4529,7 +4540,60 @@ oLink3.Save";
         private async Task ProcessBatchGames(List<BatchGameItem> games, string compressionFormat, string compressionLevel, bool usePassword, BatchGameSelectionForm batchForm)
         {
             batchForm.SetProcessingMode(true);
-            await Task.Delay(50); // Let UI update
+            await Task.Delay(50);
+
+            // ========== PHASE 0: CLEAN UP OLD CRACK ARTIFACTS (Always, before any processing) ==========
+            foreach (var game in games)
+            {
+                try
+                {
+                    string installPath = game.Path;
+                    if (string.IsNullOrEmpty(installPath) || !Directory.Exists(installPath))
+                        continue;
+
+                    // Restore .bak files (original Steam DLLs and EXEs)
+                    foreach (var bakFile in Directory.GetFiles(installPath, "*.dll.bak", SearchOption.AllDirectories))
+                    {
+                        try
+                        {
+                            var orig = bakFile.Substring(0, bakFile.Length - 4);
+                            if (File.Exists(orig)) File.Delete(orig);
+                            File.Move(bakFile, orig);
+                        }
+                        catch { }
+                    }
+                    foreach (var bakFile in Directory.GetFiles(installPath, "*.exe.bak", SearchOption.AllDirectories))
+                    {
+                        try
+                        {
+                            var orig = bakFile.Substring(0, bakFile.Length - 4);
+                            if (File.Exists(orig)) File.Delete(orig);
+                            File.Move(bakFile, orig);
+                        }
+                        catch { }
+                    }
+
+                    // Delete steam_settings directories
+                    foreach (var dir in Directory.GetDirectories(installPath, "steam_settings", SearchOption.AllDirectories))
+                    {
+                        try { Directory.Delete(dir, true); } catch { }
+                    }
+
+                    // Delete _[ prefixed files (LAN shortcuts), lobby_connect files, shortcuts - ALL directories
+                    foreach (var f in Directory.GetFiles(installPath, "_[*", SearchOption.AllDirectories)) { try { File.Delete(f); } catch { } }
+                    foreach (var f in Directory.GetFiles(installPath, "_lobby_connect*", SearchOption.AllDirectories)) { try { File.Delete(f); } catch { } }
+                    foreach (var f in Directory.GetFiles(installPath, "lobby_connect*", SearchOption.AllDirectories)) { try { File.Delete(f); } catch { } }
+                    foreach (var f in Directory.GetFiles(installPath, "*.lnk", SearchOption.AllDirectories)) { try { File.Delete(f); } catch { } }
+
+                    // Delete common crack artifacts
+                    string[] artifacts = { "CreamAPI.dll", "cream_api.ini", "CreamLinux", "steam_api_o.dll", "steam_api64_o.dll", "local_save.txt" };
+                    foreach (var artifact in artifacts)
+                    {
+                        foreach (var f in Directory.GetFiles(installPath, artifact, SearchOption.AllDirectories)) { try { File.Delete(f); } catch { } }
+                    }
+                }
+                catch { }
+            }
 
             int success = 0;
             int failed = 0;
@@ -4896,8 +4960,8 @@ oLink3.Save";
                                             // Calculate ETA
                                             long remaining = fileSize - uploadedBytes;
                                             double etaSec = smoothedSpeed > 0 ? remaining / smoothedSpeed : 0;
-                                            string eta = etaSec < 60 ? $"{(int)etaSec}s" : $"{(int)(etaSec/60)}m{(int)(etaSec%60)}s";
-                                            string speed = smoothedSpeed > 1_000_000 ? $"{smoothedSpeed/1_000_000:F1}MB/s" : $"{smoothedSpeed/1_000:F0}KB/s";
+                                            string eta = etaSec < 60 ? $"{(int)etaSec}s" : $"{(int)(etaSec / 60)}m{(int)(etaSec % 60)}s";
+                                            string speed = smoothedSpeed > 1_000_000 ? $"{smoothedSpeed / 1_000_000:F1}MB/s" : $"{smoothedSpeed / 1_000:F0}KB/s";
 
                                             // Update grid status column
                                             batchForm.UpdateStatus(gamePath, $"⬆ {pct}% | {speed} | {eta}", Color.Magenta);
@@ -4913,66 +4977,66 @@ oLink3.Save";
 
                                     var result = await Task.Run(() => uploader.UploadFileAsync(archivePath, progress, null, cancellationToken));
 
-                                if (result != null && !string.IsNullOrEmpty(result.DownloadUrl))
-                                {
-                                    string oneFichierUrl = result.DownloadUrl;
-                                    uploadSuccess = true;
-                                    batchForm.UpdateUploadStatus(game.Path, true, oneFichierUrl, null, attempt - 1);
-                                    try { this.BeginInvoke(new Action(() => { try { Clipboard.SetText(oneFichierUrl); } catch { } })); } catch { }
-
-                                    // Check if PyDrive conversion is disabled
-                                    if (APPID.Properties.Settings.Default.SkipPyDriveConversion)
+                                    if (result != null && !string.IsNullOrEmpty(result.DownloadUrl))
                                     {
-                                        // Skip PyDrive conversion, just use 1fichier link
-                                        lock (uploadResults) uploadResults.Add((game.Name, oneFichierUrl, null));
-                                        batchForm.UpdateStatus(game.Path, "1fichier ✓", Color.LightGreen);
-                                        batchForm.SetFinalUrl(game.Path, oneFichierUrl);
+                                        string oneFichierUrl = result.DownloadUrl;
+                                        uploadSuccess = true;
+                                        batchForm.UpdateUploadStatus(game.Path, true, oneFichierUrl, null, attempt - 1);
+                                        try { this.BeginInvoke(new Action(() => { try { Clipboard.SetText(oneFichierUrl); } catch { } })); } catch { }
+
+                                        // Check if PyDrive conversion is disabled
+                                        if (APPID.Properties.Settings.Default.SkipPyDriveConversion)
+                                        {
+                                            // Skip PyDrive conversion, just use 1fichier link
+                                            lock (uploadResults) uploadResults.Add((game.Name, oneFichierUrl, null));
+                                            batchForm.UpdateStatus(game.Path, "1fichier ✓", Color.LightGreen);
+                                            batchForm.SetFinalUrl(game.Path, oneFichierUrl);
+                                        }
+                                        else
+                                        {
+                                            batchForm.UpdateStatus(game.Path, "Converting...", Color.Yellow);
+                                            batchForm.SetConvertingUrl(game.Path, oneFichierUrl);
+                                            var conversionTask = Task.Run(async () =>
+                                            {
+                                                string pydriveUrl = await ConvertOneFichierToPydrive(oneFichierUrl, fileSize,
+                                                    status => batchForm.UpdateStatus(game.Path, status, Color.Yellow));
+                                                batchForm.ClearConvertingUrl(game.Path);
+
+                                                if (!string.IsNullOrEmpty(pydriveUrl))
+                                                {
+                                                    lock (uploadResults) uploadResults.Add((game.Name, oneFichierUrl, pydriveUrl));
+                                                    batchForm.UpdateStatus(game.Path, "PyDrive ✓", Color.LightGreen);
+                                                    batchForm.SetFinalUrl(game.Path, pydriveUrl);
+                                                    batchForm.UpdatePyDriveUrl(game.Path, pydriveUrl);
+                                                }
+                                                else
+                                                {
+                                                    lock (uploadResults) uploadResults.Add((game.Name, oneFichierUrl, null));
+                                                    batchForm.UpdateStatus(game.Path, "1fichier ✓", Color.LightGreen);
+                                                    batchForm.SetFinalUrl(game.Path, oneFichierUrl);
+                                                }
+                                            });
+                                            lock (conversionTasks) conversionTasks.Add(conversionTask);
+                                        }
                                     }
                                     else
                                     {
-                                        batchForm.UpdateStatus(game.Path, "Converting...", Color.Yellow);
-                                        batchForm.SetConvertingUrl(game.Path, oneFichierUrl);
-                                        var conversionTask = Task.Run(async () =>
-                                        {
-                                            string pydriveUrl = await ConvertOneFichierToPydrive(oneFichierUrl, fileSize,
-                                                status => batchForm.UpdateStatus(game.Path, status, Color.Yellow));
-                                            batchForm.ClearConvertingUrl(game.Path);
-
-                                            if (!string.IsNullOrEmpty(pydriveUrl))
-                                            {
-                                                lock (uploadResults) uploadResults.Add((game.Name, oneFichierUrl, pydriveUrl));
-                                                batchForm.UpdateStatus(game.Path, "PyDrive ✓", Color.LightGreen);
-                                                batchForm.SetFinalUrl(game.Path, pydriveUrl);
-                                                batchForm.UpdatePyDriveUrl(game.Path, pydriveUrl);
-                                            }
-                                            else
-                                            {
-                                                lock (uploadResults) uploadResults.Add((game.Name, oneFichierUrl, null));
-                                                batchForm.UpdateStatus(game.Path, "1fichier ✓", Color.LightGreen);
-                                                batchForm.SetFinalUrl(game.Path, oneFichierUrl);
-                                            }
-                                        });
-                                        lock (conversionTasks) conversionTasks.Add(conversionTask);
+                                        lastError = "No URL returned";
                                     }
                                 }
-                                else
+                            }
+                            catch (Exception ex)
+                            {
+                                lastError = ex.Message;
+                                if (attempt < maxRetries)
                                 {
-                                    lastError = "No URL returned";
+                                    batchForm.UpdateStatus(game.Path, $"Retry in {attempt * 2}s...", Color.Yellow);
+                                    await Task.Delay(attempt * 2000);
                                 }
                             }
                         }
-                        catch (Exception ex)
-                        {
-                            lastError = ex.Message;
-                            if (attempt < maxRetries)
-                            {
-                                batchForm.UpdateStatus(game.Path, $"Retry in {attempt * 2}s...", Color.Yellow);
-                                await Task.Delay(attempt * 2000);
-                            }
-                        }
-                    }
 
-                    // Check if skipped
+                        // Check if skipped
                         if (cancellationToken.IsCancellationRequested && !batchForm.ShouldCancelAll())
                         {
                             batchForm.UpdateStatus(game.Path, "Skipped", Color.Orange);

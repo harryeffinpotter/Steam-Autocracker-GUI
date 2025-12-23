@@ -24,8 +24,11 @@ namespace SteamAutocrackGUI
         public string SelectedLevel { get; set; }
         public bool RememberChoice { get; set; }
         public bool UseRinPassword { get; set; }
+        public static long UploadBandwidthLimitBytesPerSecond { get; private set; } = 0; // 0 = unlimited
         private Panel sliderPanel;
         private int sliderValue = 0;
+        private TextBox bandwidthTextBox;
+        private ComboBox bandwidthUnitCombo;
 
         public CompressionSettingsForm()
         {
@@ -41,9 +44,10 @@ namespace SteamAutocrackGUI
             }
             catch { }
 
-            // Set defaults
-            zipRadioButton.Checked = true;  // ZIP selected by default
-            rememberCheckBox.Checked = false;
+            // Load saved format
+            string savedFormat = APPID.Properties.Settings.Default.CompressionFormat ?? "ZIP";
+            zipRadioButton.Checked = savedFormat == "ZIP";
+            sevenZipRadioButton.Checked = savedFormat == "7Z";
 
             // Load saved password setting and set checkbox state
             UseRinPassword = APPID.AppSettings.Default.UseRinPassword;
@@ -71,8 +75,57 @@ namespace SteamAutocrackGUI
 
             // Hide the default trackbar and create custom slider
             levelTrackBar.Visible = false;
+
+            // Load saved compression level
+            sliderValue = APPID.Properties.Settings.Default.CompressionLevel;
+            if (sliderValue < 0) sliderValue = 0;
+            if (sliderValue > 10) sliderValue = 10;
+
             CreateCustomSlider();
             UpdateLevelDescription();
+
+            // Add bandwidth limiter UI - below checkboxes, above slider
+            var bandwidthLabel = new Label
+            {
+                Location = new Point(89, 118),
+                Size = new Size(90, 21),
+                Text = "Upload Limit:",
+                ForeColor = Color.FromArgb(150, 150, 155),
+                BackColor = Color.Transparent,
+                Font = new Font("Segoe UI", 9)
+            };
+            this.Controls.Add(bandwidthLabel);
+
+            bandwidthTextBox = new TextBox
+            {
+                Location = new Point(180, 115),
+                Size = new Size(55, 23),
+                BackColor = Color.FromArgb(20, 22, 28),
+                ForeColor = Color.FromArgb(220, 255, 255),
+                BorderStyle = BorderStyle.FixedSingle,
+                Font = new Font("Segoe UI", 9),
+                Text = ""
+            };
+            var bwTooltip = new ToolTip();
+            bwTooltip.SetToolTip(bandwidthTextBox, "Enter number or leave empty for unlimited");
+            this.Controls.Add(bandwidthTextBox);
+
+            bandwidthUnitCombo = new ComboBox
+            {
+                Location = new Point(240, 114),
+                Size = new Size(70, 23),
+                BackColor = Color.FromArgb(20, 22, 28),
+                ForeColor = Color.FromArgb(220, 255, 255),
+                FlatStyle = FlatStyle.Flat,
+                Font = new Font("Segoe UI", 9),
+                DropDownStyle = ComboBoxStyle.DropDownList
+            };
+            bandwidthUnitCombo.Items.AddRange(new[] { "Kbps", "Mbps", "Gbps" });
+            bandwidthUnitCombo.SelectedIndex = 1; // Default to Mbps
+            this.Controls.Add(bandwidthUnitCombo);
+
+            // Load saved bandwidth setting
+            LoadBandwidthSetting();
 
             // Apply rounded corners to buttons
             ApplyRoundedCornersToButton(okButton);
@@ -201,7 +254,7 @@ namespace SteamAutocrackGUI
         {
             sliderPanel = new Panel
             {
-                Location = new Point(49, 102),
+                Location = new Point(49, 155),
                 Size = new Size(350, 40),
                 BackColor = Color.Transparent
             };
@@ -396,12 +449,20 @@ namespace SteamAutocrackGUI
         {
             SelectedFormat = zipRadioButton.Checked ? "ZIP" : "7Z";
             SelectedLevel = sliderValue.ToString();
-            RememberChoice = rememberCheckBox.Checked;
+            RememberChoice = true;
             UseRinPassword = rinPasswordCheckBox.Checked;
 
             // Save password preference
             APPID.AppSettings.Default.UseRinPassword = UseRinPassword;
             APPID.AppSettings.Default.Save();
+
+            // Save compression level and format
+            APPID.Properties.Settings.Default.CompressionLevel = sliderValue;
+            APPID.Properties.Settings.Default.CompressionFormat = SelectedFormat;
+            APPID.Properties.Settings.Default.Save();
+
+            // Save bandwidth limit
+            SaveBandwidthSetting();
 
             this.DialogResult = DialogResult.OK;
             this.Close();
@@ -427,6 +488,123 @@ namespace SteamAutocrackGUI
                 ReleaseCapture();
                 SendMessage(this.Handle, WM_NCLBUTTONDOWN, HTCAPTION, 0);
             }
+        }
+
+        private void LoadBandwidthSetting()
+        {
+            try
+            {
+                string saved = APPID.Properties.Settings.Default.UploadBandwidthLimit ?? "";
+                ParseBandwidthLimit(saved); // Initialize the static property
+
+                if (string.IsNullOrWhiteSpace(saved))
+                {
+                    bandwidthTextBox.Text = "";
+                    bandwidthUnitCombo.SelectedIndex = 1; // Mbps default
+                    return;
+                }
+
+                // Parse the saved value to extract number and unit
+                var match = System.Text.RegularExpressions.Regex.Match(saved.Trim().ToLower(), @"^(\d+(?:\.\d+)?)\s*(kb|kbit|kbps|mb|mbit|mbps|gb|gbit|gbps)?$");
+                if (match.Success)
+                {
+                    bandwidthTextBox.Text = match.Groups[1].Value;
+                    string unit = match.Groups[2].Value;
+                    if (unit.StartsWith("k"))
+                        bandwidthUnitCombo.SelectedIndex = 0; // Kbps
+                    else if (unit.StartsWith("g"))
+                        bandwidthUnitCombo.SelectedIndex = 2; // Gbps
+                    else
+                        bandwidthUnitCombo.SelectedIndex = 1; // Mbps (default)
+                }
+            }
+            catch
+            {
+                bandwidthTextBox.Text = "";
+                bandwidthUnitCombo.SelectedIndex = 1;
+            }
+        }
+
+        private void SaveBandwidthSetting()
+        {
+            try
+            {
+                string value = "";
+                if (!string.IsNullOrWhiteSpace(bandwidthTextBox.Text))
+                {
+                    string unit = bandwidthUnitCombo.SelectedItem?.ToString() ?? "Mbps";
+                    value = bandwidthTextBox.Text.Trim() + unit;
+                }
+                APPID.Properties.Settings.Default.UploadBandwidthLimit = value;
+                APPID.Properties.Settings.Default.Save();
+                ParseBandwidthLimit(value);
+            }
+            catch { }
+        }
+
+        /// <summary>
+        /// Parse bandwidth limit string like "100Mb", "5Gb", "500Mbit", "1Gbit" to bytes per second
+        /// </summary>
+        public static long ParseBandwidthLimit(string input)
+        {
+            if (string.IsNullOrWhiteSpace(input))
+            {
+                UploadBandwidthLimitBytesPerSecond = 0;
+                return 0;
+            }
+
+            input = input.Trim().ToLower();
+
+            // Extract number and unit
+            var match = System.Text.RegularExpressions.Regex.Match(input, @"^(\d+(?:\.\d+)?)\s*(mb|mbit|gb|gbit|kb|kbit|mbps|gbps|kbps)?$");
+            if (!match.Success)
+            {
+                UploadBandwidthLimitBytesPerSecond = 0;
+                return 0;
+            }
+
+            double value = double.Parse(match.Groups[1].Value);
+            string unit = match.Groups[2].Value;
+
+            // Convert to bits per second first, then to bytes per second
+            double bitsPerSecond;
+            switch (unit)
+            {
+                case "kb":
+                case "kbit":
+                case "kbps":
+                    bitsPerSecond = value * 1000;
+                    break;
+                case "mb":
+                case "mbit":
+                case "mbps":
+                case "": // Default to Mbit if no unit
+                    bitsPerSecond = value * 1000 * 1000;
+                    break;
+                case "gb":
+                case "gbit":
+                case "gbps":
+                    bitsPerSecond = value * 1000 * 1000 * 1000;
+                    break;
+                default:
+                    bitsPerSecond = value * 1000 * 1000; // Default to Mbit
+                    break;
+            }
+
+            // Convert bits to bytes (divide by 8)
+            UploadBandwidthLimitBytesPerSecond = (long)(bitsPerSecond / 8);
+            return UploadBandwidthLimitBytesPerSecond;
+        }
+
+        /// <summary>
+        /// Get the per-upload limit based on number of concurrent uploads
+        /// </summary>
+        public static long GetPerUploadLimit(int concurrentUploads)
+        {
+            if (UploadBandwidthLimitBytesPerSecond <= 0 || concurrentUploads <= 0)
+                return 0; // Unlimited
+
+            return UploadBandwidthLimitBytesPerSecond / concurrentUploads;
         }
     }
 }

@@ -158,5 +158,41 @@ namespace APPID.Properties {
                 this["SkipPyDriveConversion"] = value;
             }
         }
+
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string UploadBandwidthLimit {
+            get {
+                return ((string)(this["UploadBandwidthLimit"]));
+            }
+            set {
+                this["UploadBandwidthLimit"] = value;
+            }
+        }
+
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("0")]
+        public int CompressionLevel {
+            get {
+                return ((int)(this["CompressionLevel"]));
+            }
+            set {
+                this["CompressionLevel"] = value;
+            }
+        }
+
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("ZIP")]
+        public string CompressionFormat {
+            get {
+                return ((string)(this["CompressionFormat"]));
+            }
+            set {
+                this["CompressionFormat"] = value;
+            }
+        }
     }
 }

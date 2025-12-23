@@ -141,13 +141,13 @@ namespace SteamAutocrackGUI
             };
             this.MouseDown += Form_MouseDown;
 
-            // ESC key closes form and returns to caller
+            // ESC key minimizes form (same as minimize button)
             this.KeyPreview = true;
             this.KeyDown += (s, e) =>
             {
                 if (e.KeyCode == Keys.Escape)
                 {
-                    this.Close();
+                    this.WindowState = FormWindowState.Minimized;
                     e.Handled = true;
                 }
             };
@@ -208,7 +208,10 @@ namespace SteamAutocrackGUI
                 Cursor = Cursors.Hand,
                 BackColor = Color.Transparent
             };
-            minimizeBtn.Click += (s, e) => this.WindowState = FormWindowState.Minimized;
+            minimizeBtn.Click += (s, e) =>
+            {
+                this.WindowState = FormWindowState.Minimized;
+            };
             minimizeBtn.MouseEnter += (s, e) => minimizeBtn.ForeColor = Color.FromArgb(100, 200, 255);
             minimizeBtn.MouseLeave += (s, e) => minimizeBtn.ForeColor = Color.FromArgb(150, 150, 155);
             this.Controls.Add(minimizeBtn);
@@ -229,8 +232,8 @@ namespace SteamAutocrackGUI
             // DataGridView for games - anchored to resize with form
             gameGrid = new DataGridView
             {
-                Location = new Point(15, 75),
-                Size = new Size(725, 300),
+                Location = new Point(10, 75),
+                Size = new Size(735, 300),
                 Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right,
                 BackgroundColor = Color.FromArgb(15, 18, 30),
                 ForeColor = Color.FromArgb(220, 255, 255),
@@ -255,7 +258,7 @@ namespace SteamAutocrackGUI
             gameGrid.ColumnHeadersDefaultCellStyle.Font = new Font("Segoe UI", 9, FontStyle.Bold);
             gameGrid.ColumnHeadersDefaultCellStyle.SelectionBackColor = Color.FromArgb(20, 25, 40);
             gameGrid.ColumnHeadersDefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter;
-            gameGrid.ColumnHeadersHeight = 38;
+            gameGrid.ColumnHeadersHeight = 40;
 
             // Style rows - semi-transparent dark
             gameGrid.DefaultCellStyle.BackColor = Color.FromArgb(12, 15, 28);
@@ -523,9 +526,11 @@ namespace SteamAutocrackGUI
                         {
                             e.PaintBackground(e.ClipBounds, true);
 
-                            // Draw zipper icon on left (taller than wide)
-                            int iconHeight = e.CellBounds.Height - 6;
-                            int iconWidth = (int)(iconHeight * 0.6); // Maintain aspect ratio (taller than wide)
+                            // Draw zipper icon on left - maintain actual aspect ratio
+                            int maxHeight = e.CellBounds.Height - 6;
+                            float aspectRatio = (float)zipperIcon.Width / zipperIcon.Height;
+                            int iconHeight = maxHeight;
+                            int iconWidth = (int)(iconHeight * aspectRatio);
                             int iconX = e.CellBounds.X + 4;
                             int iconY = e.CellBounds.Y + 3;
                             e.Graphics.DrawImage(zipperIcon, iconX, iconY, iconWidth, iconHeight);
@@ -753,18 +758,9 @@ namespace SteamAutocrackGUI
                 string colName = gameGrid.Columns[e.ColumnIndex].Name;
                 if (colName == "Crack" || colName == "Zip" || colName == "Upload")
                 {
-                    // Check if any are currently checked
-                    bool anyChecked = false;
-                    foreach (DataGridViewRow row in gameGrid.Rows)
-                    {
-                        if ((bool)(row.Cells[colName].Value ?? false))
-                        {
-                            anyChecked = true;
-                            break;
-                        }
-                    }
-                    // Toggle: if any checked, uncheck all; otherwise check all
-                    bool newValue = !anyChecked;
+                    // Toggle based on header state: if header checked, uncheck all; if unchecked, check all
+                    bool headerChecked = headerCheckStates.ContainsKey(colName) && headerCheckStates[colName];
+                    bool newValue = !headerChecked;
                     foreach (DataGridViewRow row in gameGrid.Rows)
                     {
                         row.Cells[colName].Value = newValue;
@@ -785,6 +781,42 @@ namespace SteamAutocrackGUI
                     {
                         gameGrid.InvalidateColumn(gameGrid.Columns["Zip"].Index);
                         gameGrid.InvalidateColumn(gameGrid.Columns["Upload"].Index);
+                    }
+                    UpdateCountLabel();
+                }
+            };
+
+            // Commit checkbox edits immediately so CellValueChanged fires right away
+            gameGrid.CurrentCellDirtyStateChanged += (s, e) =>
+            {
+                if (gameGrid.IsCurrentCellDirty && gameGrid.CurrentCell is DataGridViewCheckBoxCell)
+                {
+                    gameGrid.CommitEdit(DataGridViewDataErrorContexts.Commit);
+                }
+            };
+
+            // When individual row checkboxes change, update header checkbox state
+            gameGrid.CellValueChanged += (s, e) =>
+            {
+                if (e.RowIndex < 0) return; // Ignore header row
+                string colName = gameGrid.Columns[e.ColumnIndex].Name;
+                if (colName == "Crack" || colName == "Zip" || colName == "Upload")
+                {
+                    // Check if ALL rows are checked for this column
+                    bool allChecked = true;
+                    foreach (DataGridViewRow row in gameGrid.Rows)
+                    {
+                        if (!(bool)(row.Cells[colName].Value ?? false))
+                        {
+                            allChecked = false;
+                            break;
+                        }
+                    }
+                    // Update header state only if it changed
+                    if (headerCheckStates[colName] != allChecked)
+                    {
+                        headerCheckStates[colName] = allChecked;
+                        gameGrid.InvalidateColumn(e.ColumnIndex);
                     }
                     UpdateCountLabel();
                 }
@@ -897,9 +929,9 @@ namespace SteamAutocrackGUI
 
             this.Controls.Add(uploadSlotsContainer);
 
-            // Cancel All button - top right, same row as subtitle
-            btnCancelAll = CreateStyledButton("Cancel All", new Point(this.ClientSize.Width - 100, 43), new Size(85, 26), Color.FromArgb(80, 35, 35));
-            btnCancelAll.Anchor = AnchorStyles.Top | AnchorStyles.Right;
+            // Cancel All button - above upload slots on right, shown during uploads
+            btnCancelAll = CreateStyledButton("Cancel All", new Point(this.ClientSize.Width - 125, 380), new Size(110, 28), Color.FromArgb(140, 50, 50));
+            btnCancelAll.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
             btnCancelAll.Visible = false;
             batchToolTip.SetToolTip(btnCancelAll, "Cancel all remaining uploads");
             btnCancelAll.Click += (s, e) =>
@@ -910,7 +942,7 @@ namespace SteamAutocrackGUI
                     slot.Cancellation?.Cancel();
                     if (slot.BtnSkip != null) slot.BtnSkip.Enabled = false;
                 }
-                btnCancelAll.Text = "...";
+                btnCancelAll.Text = "Cancelling...";
                 btnCancelAll.Enabled = false;
             };
             this.Controls.Add(btnCancelAll);
@@ -945,6 +977,9 @@ namespace SteamAutocrackGUI
                     if (MessageBox.Show(msg, "Missing AppIDs", MessageBoxButtons.YesNo, MessageBoxIcon.Warning) != DialogResult.Yes)
                         return;
                 }
+
+                // Clear previous selections before adding new ones
+                SelectedGames.Clear();
 
                 for (int i = 0; i < gameGrid.Rows.Count; i++)
                 {
@@ -1240,10 +1275,7 @@ namespace SteamAutocrackGUI
             }
             // Resize container to fit active slots
             int containerHeight = Math.Max(y, 38);
-            uploadSlotsContainer.Size = new Size(725, containerHeight);
-
-            // Position Cancel All button below the slots container
-            btnCancelAll.Location = new Point(15, 378 + containerHeight + 5);
+            uploadSlotsContainer.Size = new Size(735, containerHeight);
         }
 
         /// <summary>
@@ -1260,7 +1292,7 @@ namespace SteamAutocrackGUI
             }
 
             cancelAllRemaining = false;
-            btnCancelAll.Text = "CANCEL\nALL";
+            btnCancelAll.Text = "Cancel All";
             btnCancelAll.Enabled = true;
 
             foreach (var slot in uploadSlots)
@@ -1301,6 +1333,9 @@ namespace SteamAutocrackGUI
 
             uploadSlotsContainer.Visible = false;
             btnCancelAll.Visible = false;
+            btnCancelAll.Text = "Cancel All";
+            btnCancelAll.Enabled = true;
+            cancelAllRemaining = false;
             foreach (var slot in uploadSlots)
             {
                 slot.InUse = false;
@@ -1374,8 +1409,11 @@ namespace SteamAutocrackGUI
             if (string.IsNullOrEmpty(allLinksPhpBB) && string.IsNullOrEmpty(allLinksMarkdown))
                 return;
 
-            // Create Copy for Rin button - anchored to bottom left
-            copyRinBtn = CreateStyledButton("Copy for Rin", new Point(15, 495), new Size(100, 40), Color.FromArgb(50, 80, 120));
+            // Calculate Y position - same row as Cancel All button
+            int buttonY = btnCancelAll.Top;
+
+            // Create Copy for Rin button - same row as Cancel All, anchored bottom-left
+            copyRinBtn = CreateStyledButton("Copy for Rin", new Point(10, buttonY), new Size(100, 28), Color.FromArgb(50, 80, 120));
             copyRinBtn.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
             copyRinBtn.Click += (s, e) =>
             {
@@ -1394,8 +1432,8 @@ namespace SteamAutocrackGUI
             };
             this.Controls.Add(copyRinBtn);
 
-            // Create Copy for Discord button - anchored to bottom left
-            copyDiscordBtn = CreateStyledButton("Copy for Discord", new Point(125, 495), new Size(120, 40), Color.FromArgb(88, 101, 242));
+            // Create Copy for Discord button - same row as Cancel All, anchored bottom-left
+            copyDiscordBtn = CreateStyledButton("Copy for Discord", new Point(118, buttonY), new Size(120, 28), Color.FromArgb(88, 101, 242));
             copyDiscordBtn.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
             copyDiscordBtn.Click += (s, e) =>
             {
@@ -1414,8 +1452,8 @@ namespace SteamAutocrackGUI
             };
             this.Controls.Add(copyDiscordBtn);
 
-            // Create Copy Plaintext button - anchored to bottom left
-            copyPlaintextBtn = CreateStyledButton("Copy Plaintext", new Point(255, 495), new Size(110, 40), Color.FromArgb(60, 60, 70));
+            // Create Copy Plaintext button - same row as Cancel All, anchored bottom-left
+            copyPlaintextBtn = CreateStyledButton("Copy Plaintext", new Point(246, buttonY), new Size(110, 28), Color.FromArgb(60, 60, 70));
             copyPlaintextBtn.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
             copyPlaintextBtn.Click += (s, e) =>
             {
@@ -1486,6 +1524,16 @@ namespace SteamAutocrackGUI
             var titleLabel = this.Controls["titleLabel"] as Label;
             if (titleLabel != null)
                 titleLabel.Text = text;
+
+            // Update Form1's batch indicator if it exists and form is minimized
+            try
+            {
+                if (this.Owner is APPID.SteamAppId mainForm && !mainForm.IsDisposed)
+                {
+                    mainForm.UpdateBatchIndicator(percent);
+                }
+            }
+            catch { }
         }
 
         private string FormatEtaLong(double seconds)

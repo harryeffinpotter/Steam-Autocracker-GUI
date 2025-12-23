@@ -87,6 +87,17 @@ namespace SteamAppIdIdentifier
 
     public partial class EnhancedShareWindow : Form
     {
+        // Force Windows to composite the entire form before displaying (prevents white flash)
+        protected override CreateParams CreateParams
+        {
+            get
+            {
+                CreateParams cp = base.CreateParams;
+                cp.ExStyle |= 0x02000000; // WS_EX_COMPOSITED
+                return cp;
+            }
+        }
+
         private Form parentForm;
         private bool gameSizeColumnSortedOnce = false;
 
@@ -111,7 +122,56 @@ namespace SteamAppIdIdentifier
         public EnhancedShareWindow(Form parent)
         {
             parentForm = parent;
+
+            // Set dark background BEFORE InitializeComponent to prevent white flash
+            this.BackColor = Color.FromArgb(5, 8, 20);
+
+            // Enable double buffering to prevent white flash during load
+            this.DoubleBuffered = true;
+            this.SetStyle(ControlStyles.OptimizedDoubleBuffer | ControlStyles.AllPaintingInWmPaint, true);
+
             InitializeComponent();  // Use the Designer.cs file instead!
+
+            // Setup custom painting for settings button with proper icon scaling
+            Image settingsIcon = null;
+            try { settingsIcon = APPID.Properties.Resources.settings_icon; } catch { }
+            btnSettings.Paint += (s, e) =>
+            {
+                e.Graphics.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
+                var btn = (Button)s;
+                var rect = new Rectangle(0, 0, btn.Width - 1, btn.Height - 1);
+
+                // Background
+                Color bgColor = btn.ClientRectangle.Contains(btn.PointToClient(Cursor.Position))
+                    ? Color.FromArgb(50, 50, 55) : Color.FromArgb(38, 38, 42);
+                using (var brush = new SolidBrush(bgColor))
+                    e.Graphics.FillRectangle(brush, rect);
+
+                // Draw icon centered with proper aspect ratio
+                if (settingsIcon != null)
+                {
+                    int padding = 6;
+                    int availableW = btn.Width - padding * 2;
+                    int availableH = btn.Height - padding * 2;
+
+                    float scale = Math.Min((float)availableW / settingsIcon.Width, (float)availableH / settingsIcon.Height);
+                    int drawW = (int)(settingsIcon.Width * scale);
+                    int drawH = (int)(settingsIcon.Height * scale);
+
+                    int drawX = padding + (availableW - drawW) / 2;
+                    int drawY = padding + (availableH - drawH) / 2;
+
+                    e.Graphics.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.HighQualityBicubic;
+                    e.Graphics.DrawImage(settingsIcon, drawX, drawY, drawW, drawH);
+                }
+            };
+            btnSettings.MouseEnter += (s, e) => btnSettings.Invalidate();
+            btnSettings.MouseLeave += (s, e) => btnSettings.Invalidate();
+
+            // Enable double buffering on the grid to prevent flicker
+            typeof(DataGridView).InvokeMember("DoubleBuffered",
+                System.Reflection.BindingFlags.SetProperty | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic,
+                null, gamesGrid, new object[] { true });
 
             // Setup modern progress bar style
             SetupModernProgressBar();
@@ -126,12 +186,21 @@ namespace SteamAppIdIdentifier
             // Make data grid draggable but exclude column resizing
             gamesGrid.MouseDown += DataGrid_MouseDown;
 
+            // Start invisible to prevent white flash
+            this.Opacity = 0;
+
             // Apply acrylic blur and rounded corners
             this.Load += (s, e) =>
             {
                 ApplyAcrylicEffect();
                 // Center over parent when loaded
                 CenterOverParent();
+            };
+
+            // Show window after everything is rendered - use BeginInvoke to ensure paint is complete
+            this.Shown += (s, e) =>
+            {
+                this.BeginInvoke(new Action(() => this.Opacity = 0.95));
             };
 
             // ESC key closes form and returns to caller
@@ -679,6 +748,57 @@ namespace SteamAppIdIdentifier
                 {
                     MessageBox.Show("Game installation path not found!", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     return;
+                }
+
+                // Clean up any existing crack artifacts first (uncrack before recracking)
+                try
+                {
+                    System.Diagnostics.Debug.WriteLine($"[SINGLE CRACK] Cleaning up {gameName} before cracking");
+
+                    // Restore .bak files
+                    foreach (var bakFile in Directory.GetFiles(installPath, "*.dll.bak", SearchOption.AllDirectories))
+                    {
+                        try
+                        {
+                            var orig = bakFile.Substring(0, bakFile.Length - 4);
+                            if (File.Exists(orig)) File.Delete(orig);
+                            File.Move(bakFile, orig);
+                        }
+                        catch { }
+                    }
+                    foreach (var bakFile in Directory.GetFiles(installPath, "*.exe.bak", SearchOption.AllDirectories))
+                    {
+                        try
+                        {
+                            var orig = bakFile.Substring(0, bakFile.Length - 4);
+                            if (File.Exists(orig)) File.Delete(orig);
+                            File.Move(bakFile, orig);
+                        }
+                        catch { }
+                    }
+
+                    // Delete steam_settings directories
+                    foreach (var dir in Directory.GetDirectories(installPath, "steam_settings", SearchOption.AllDirectories))
+                    {
+                        try { Directory.Delete(dir, true); } catch { }
+                    }
+
+                    // Delete _[ prefixed files, lobby_connect files, shortcuts
+                    foreach (var f in Directory.GetFiles(installPath, "_[*", SearchOption.TopDirectoryOnly)) { try { File.Delete(f); } catch { } }
+                    foreach (var f in Directory.GetFiles(installPath, "_lobby_connect*", SearchOption.AllDirectories)) { try { File.Delete(f); } catch { } }
+                    foreach (var f in Directory.GetFiles(installPath, "lobby_connect*", SearchOption.AllDirectories)) { try { File.Delete(f); } catch { } }
+                    foreach (var f in Directory.GetFiles(installPath, "*.lnk", SearchOption.TopDirectoryOnly)) { try { File.Delete(f); } catch { } }
+
+                    // Delete common crack artifacts
+                    string[] artifacts = { "CreamAPI.dll", "cream_api.ini", "CreamLinux", "steam_api_o.dll", "steam_api64_o.dll", "local_save.txt" };
+                    foreach (var artifact in artifacts)
+                    {
+                        foreach (var f in Directory.GetFiles(installPath, artifact, SearchOption.AllDirectories)) { try { File.Delete(f); } catch { } }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[SINGLE CRACK] Cleanup error: {ex.Message}");
                 }
 
                 // Verify this is the main form
@@ -2266,6 +2386,117 @@ namespace SteamAppIdIdentifier
             var crackResults = new Dictionary<string, bool>();
             var archivePaths = new Dictionary<string, string>();
             var uploadResults = new List<(string name, string url, long fileSize)>();
+
+            // ========== PHASE 0: CLEAN UP OLD CRACK ARTIFACTS (Always) ==========
+            System.Diagnostics.Debug.WriteLine($"[BATCH PHASE 0] Starting cleanup for {gamesToProcess.Count} games");
+            foreach (var game in gamesToProcess)
+            {
+                try
+                {
+                    string installPath = game.path;
+                    System.Diagnostics.Debug.WriteLine($"[BATCH] Cleaning up {game.name} at {installPath}");
+
+                    if (string.IsNullOrEmpty(installPath) || !Directory.Exists(installPath))
+                    {
+                        System.Diagnostics.Debug.WriteLine($"[BATCH] SKIP - Invalid path: {installPath}");
+                        continue;
+                    }
+
+                    // Restore .bak files (original Steam files - DLLs and EXEs)
+                    try
+                    {
+                        // First handle *.dll.bak files (steam_api backups)
+                        var dllBakFiles = Directory.GetFiles(installPath, "*.dll.bak", SearchOption.AllDirectories);
+                        foreach (var bakFile in dllBakFiles)
+                        {
+                            try
+                            {
+                                var originalFile = bakFile.Substring(0, bakFile.Length - 4);
+                                if (File.Exists(originalFile))
+                                    File.Delete(originalFile);
+                                File.Move(bakFile, originalFile);
+                                System.Diagnostics.Debug.WriteLine($"[BATCH] Restored: {Path.GetFileName(originalFile)}");
+                            }
+                            catch { }
+                        }
+
+                        // Then handle *.exe.bak files (steamless backups)
+                        var exeBakFiles = Directory.GetFiles(installPath, "*.exe.bak", SearchOption.AllDirectories);
+                        foreach (var bakFile in exeBakFiles)
+                        {
+                            try
+                            {
+                                var originalFile = bakFile.Substring(0, bakFile.Length - 4);
+                                if (File.Exists(originalFile))
+                                    File.Delete(originalFile);
+                                File.Move(bakFile, originalFile);
+                                System.Diagnostics.Debug.WriteLine($"[BATCH] Restored: {Path.GetFileName(originalFile)}");
+                            }
+                            catch { }
+                        }
+                    }
+                    catch { }
+
+                    // Delete steam_settings directories
+                    try
+                    {
+                        var steamSettingsDirs = Directory.GetDirectories(installPath, "steam_settings", SearchOption.AllDirectories);
+                        foreach (var dir in steamSettingsDirs)
+                        {
+                            try { Directory.Delete(dir, true); } catch { }
+                        }
+                    }
+                    catch { }
+
+                    // Delete _[ prefixed files (LAN shortcuts)
+                    try
+                    {
+                        var lanFiles = Directory.GetFiles(installPath, "_[*", SearchOption.TopDirectoryOnly);
+                        foreach (var f in lanFiles) { try { File.Delete(f); } catch { } }
+                    }
+                    catch { }
+
+                    // Delete _lobby_connect* files
+                    try
+                    {
+                        var files = Directory.GetFiles(installPath, "_lobby_connect*", SearchOption.AllDirectories);
+                        foreach (var f in files) { try { File.Delete(f); } catch { } }
+                    }
+                    catch { }
+
+                    // Delete lobby_connect* files
+                    try
+                    {
+                        var files = Directory.GetFiles(installPath, "lobby_connect*", SearchOption.AllDirectories);
+                        foreach (var f in files) { try { File.Delete(f); } catch { } }
+                    }
+                    catch { }
+
+                    // Delete .lnk shortcuts
+                    try
+                    {
+                        var files = Directory.GetFiles(installPath, "*.lnk", SearchOption.TopDirectoryOnly);
+                        foreach (var f in files) { try { File.Delete(f); } catch { } }
+                    }
+                    catch { }
+
+                    // Delete common crack artifacts
+                    string[] artifacts = { "CreamAPI.dll", "cream_api.ini", "CreamLinux", "steam_api_o.dll", "steam_api64_o.dll", "local_save.txt" };
+                    foreach (var artifact in artifacts)
+                    {
+                        try
+                        {
+                            var files = Directory.GetFiles(installPath, artifact, SearchOption.AllDirectories);
+                            foreach (var f in files) { try { File.Delete(f); } catch { } }
+                        }
+                        catch { }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[BATCH] Cleanup error for {game.name}: {ex.Message}");
+                }
+            }
 
             // ========== PHASE 1: CRACK (Sequential due to shared state) ==========
             if (toggleCrackOn)

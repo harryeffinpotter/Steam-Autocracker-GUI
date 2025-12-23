@@ -23,5 +23,14 @@
     <Setting Name="SkipPyDriveConversion" Type="System.Boolean" Scope="User">
       <Value Profile="(Default)">False</Value>
     </Setting>
+    <Setting Name="UploadBandwidthLimit" Type="System.String" Scope="User">
+      <Value Profile="(Default)" />
+    </Setting>
+    <Setting Name="CompressionLevel" Type="System.Int32" Scope="User">
+      <Value Profile="(Default)">0</Value>
+    </Setting>
+    <Setting Name="CompressionFormat" Type="System.String" Scope="User">
+      <Value Profile="(Default)">ZIP</Value>
+    </Setting>
   </Settings>
 </SettingsFile>

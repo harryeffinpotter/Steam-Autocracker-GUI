@@ -342,8 +342,6 @@ namespace SteamAppIdIdentifier
             this.btnSettings.Size = new System.Drawing.Size(40, 33);
             this.btnSettings.TabIndex = 14;
             this.btnSettings.Text = "";
-            this.btnSettings.Image = APPID.Properties.Resources.settings_icon;
-            this.btnSettings.ImageAlign = System.Drawing.ContentAlignment.MiddleCenter;
             this.toolTip.SetToolTip(this.btnSettings, "Compression settings");
             this.btnSettings.UseVisualStyleBackColor = false;
             this.btnSettings.Click += new System.EventHandler(this.BtnSettings_Click);

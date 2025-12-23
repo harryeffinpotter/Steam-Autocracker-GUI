@@ -52,6 +52,14 @@ namespace SteamAppIdIdentifier
                 // Application.EnableVisualStyles();
                 Application.EnableVisualStyles();
                 Application.SetCompatibleTextRenderingDefault(false);
+                // Initialize bandwidth limit from settings
+                try
+                {
+                    string bwLimit = APPID.Properties.Settings.Default.UploadBandwidthLimit ?? "";
+                    SteamAutocrackGUI.CompressionSettingsForm.ParseBandwidthLimit(bwLimit);
+                }
+                catch { }
+
                 form = new SteamAppId();
                 args2 = args;
                 Application.Run(form);
