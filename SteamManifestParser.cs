@@ -172,6 +172,108 @@ namespace SteamAppIdIdentifier
         }
 
         /// <summary>
+        /// Parses InstalledDepots section from ACF content
+        /// Returns dictionary of depotId -> (manifest, size)
+        /// </summary>
+        public static Dictionary<string, (string manifest, long size)> ParseInstalledDepots(string content)
+        {
+            var depots = new Dictionary<string, (string, long)>();
+
+            // Find InstalledDepots section
+            int depotsStart = content.IndexOf("\"InstalledDepots\"", StringComparison.OrdinalIgnoreCase);
+            if (depotsStart < 0) return depots;
+
+            // Find the opening brace after InstalledDepots
+            int braceStart = content.IndexOf('{', depotsStart);
+            if (braceStart < 0) return depots;
+
+            // Find matching closing brace
+            int braceCount = 1;
+            int pos = braceStart + 1;
+            int braceEnd = -1;
+
+            while (pos < content.Length && braceCount > 0)
+            {
+                if (content[pos] == '{') braceCount++;
+                else if (content[pos] == '}') braceCount--;
+                if (braceCount == 0) braceEnd = pos;
+                pos++;
+            }
+
+            if (braceEnd < 0) return depots;
+
+            string depotsSection = content.Substring(braceStart + 1, braceEnd - braceStart - 1);
+
+            // Parse each depot entry: "depotId" { "manifest" "value" "size" "value" }
+            var depotPattern = @"""(\d+)""\s*\{([^}]*)\}";
+            var depotMatches = Regex.Matches(depotsSection, depotPattern, RegexOptions.Singleline);
+
+            foreach (Match match in depotMatches)
+            {
+                string depotId = match.Groups[1].Value;
+                string depotContent = match.Groups[2].Value;
+
+                string manifest = "";
+                long size = 0;
+
+                var manifestMatch = Regex.Match(depotContent, @"""manifest""\s+""(\d+)""");
+                if (manifestMatch.Success)
+                    manifest = manifestMatch.Groups[1].Value;
+
+                var sizeMatch = Regex.Match(depotContent, @"""size""\s+""(\d+)""");
+                if (sizeMatch.Success)
+                    long.TryParse(sizeMatch.Groups[1].Value, out size);
+
+                if (!string.IsNullOrEmpty(manifest))
+                    depots[depotId] = (manifest, size);
+            }
+
+            return depots;
+        }
+
+        /// <summary>
+        /// Gets full manifest info for a game including depots
+        /// </summary>
+        public static (string appId, string gameName, string buildId, long lastUpdated, Dictionary<string, (string manifest, long size)> depots)? GetFullManifestInfo(string gamePath)
+        {
+            if (gamePath.IndexOf("steamapps", StringComparison.OrdinalIgnoreCase) < 0)
+                return null;
+
+            string gameFolderName = System.IO.Path.GetFileName(gamePath.TrimEnd('\\', '/'));
+            string steamappsPath = GetSteamappsPath(gamePath);
+            if (string.IsNullOrEmpty(steamappsPath)) return null;
+
+            var acfFiles = Directory.GetFiles(steamappsPath, "appmanifest_*.acf");
+
+            foreach (var acfFile in acfFiles)
+            {
+                try
+                {
+                    string content = File.ReadAllText(acfFile);
+                    var manifest = ParseAcfFile(content);
+
+                    if (manifest.ContainsKey("installdir") &&
+                        string.Equals(manifest["installdir"], gameFolderName, StringComparison.OrdinalIgnoreCase))
+                    {
+                        string appId = manifest.ContainsKey("appid") ? manifest["appid"] : null;
+                        string gameName = manifest.ContainsKey("name") ? manifest["name"] : gameFolderName;
+                        string buildId = manifest.ContainsKey("buildid") ? manifest["buildid"] : "";
+                        long lastUpdated = 0;
+                        if (manifest.ContainsKey("LastUpdated"))
+                            long.TryParse(manifest["LastUpdated"], out lastUpdated);
+
+                        var depots = ParseInstalledDepots(content);
+
+                        return (appId, gameName, buildId, lastUpdated, depots);
+                    }
+                }
+                catch { }
+            }
+
+            return null;
+        }
+
+        /// <summary>
         /// Gets the total size of a directory in bytes
         /// </summary>
         private static long GetDirectorySize(string path)

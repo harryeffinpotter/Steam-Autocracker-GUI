@@ -4370,7 +4370,10 @@ oLink3.Save";
             if (batchProgressIcon != null) batchProgressIcon.Visible = true;
             if (batchProgressLabel != null)
             {
-                if (string.IsNullOrEmpty(batchProgressLabel.Text) || !batchProgressLabel.Text.Contains("%"))
+                // Show 100% if batch has completed results, otherwise default to current or 0%
+                if (activeBatchForm != null && activeBatchForm.HasCompletedResults && !activeBatchForm.IsProcessing)
+                    batchProgressLabel.Text = "100%";
+                else if (string.IsNullOrEmpty(batchProgressLabel.Text) || !batchProgressLabel.Text.Contains("%"))
                     batchProgressLabel.Text = "0%";
                 batchProgressLabel.Visible = true;
                 batchProgressLabel.BringToFront();
@@ -4498,7 +4501,8 @@ oLink3.Save";
             // Set up minimize-to-indicator behavior
             form.Resize += (s, e) =>
             {
-                if (form.WindowState == FormWindowState.Minimized && form.IsProcessing)
+                // Allow minimize-to-indicator during processing OR after completion (to copy links)
+                if (form.WindowState == FormWindowState.Minimized && (form.IsProcessing || form.HasCompletedResults))
                 {
                     form.Hide();
                     this.Show(); // Show main form so indicator is visible
@@ -4603,7 +4607,7 @@ oLink3.Save";
             int uploadFailed = 0;
 
             var failureReasons = new List<(string gameName, string reason)>();
-            var uploadResults = new List<(string gameName, string oneFichierUrl, string pydriveUrl)>();
+            var uploadResults = new List<(BatchGameItem game, string oneFichierUrl, string pydriveUrl)>();
             var crackResults = new Dictionary<string, bool>(); // Track which games cracked successfully
             var archivePaths = new Dictionary<string, string>(); // Track archive paths for upload
 
@@ -4793,7 +4797,10 @@ oLink3.Save";
                 {
                     string ext = compressionFormat == "7Z" ? ".7z" : ".zip";
                     string parent = Directory.GetParent(game.Path).FullName;
-                    string archivePath = Path.Combine(parent, game.Name + ext);
+                    // Format: [SACGUI] GameName - Clean/Cracked (Build 12345).7z
+                    string crackStatus = game.Crack ? "Cracked" : "Clean";
+                    string buildSuffix = !string.IsNullOrEmpty(game.BuildId) ? $" (Build {game.BuildId})" : "";
+                    string archivePath = Path.Combine(parent, $"[SACGUI] {game.Name} - {crackStatus}{buildSuffix}{ext}");
                     archivePaths[game.Path] = archivePath;
 
                     string zipError = null;
@@ -4988,7 +4995,7 @@ oLink3.Save";
                                         if (APPID.Properties.Settings.Default.SkipPyDriveConversion)
                                         {
                                             // Skip PyDrive conversion, just use 1fichier link
-                                            lock (uploadResults) uploadResults.Add((game.Name, oneFichierUrl, null));
+                                            lock (uploadResults) uploadResults.Add((game, oneFichierUrl, null));
                                             batchForm.UpdateStatus(game.Path, "1fichier ✓", Color.LightGreen);
                                             batchForm.SetFinalUrl(game.Path, oneFichierUrl);
                                         }
@@ -5004,14 +5011,14 @@ oLink3.Save";
 
                                                 if (!string.IsNullOrEmpty(pydriveUrl))
                                                 {
-                                                    lock (uploadResults) uploadResults.Add((game.Name, oneFichierUrl, pydriveUrl));
+                                                    lock (uploadResults) uploadResults.Add((game, oneFichierUrl, pydriveUrl));
                                                     batchForm.UpdateStatus(game.Path, "PyDrive ✓", Color.LightGreen);
                                                     batchForm.SetFinalUrl(game.Path, pydriveUrl);
                                                     batchForm.UpdatePyDriveUrl(game.Path, pydriveUrl);
                                                 }
                                                 else
                                                 {
-                                                    lock (uploadResults) uploadResults.Add((game.Name, oneFichierUrl, null));
+                                                    lock (uploadResults) uploadResults.Add((game, oneFichierUrl, null));
                                                     batchForm.UpdateStatus(game.Path, "1fichier ✓", Color.LightGreen);
                                                     batchForm.SetFinalUrl(game.Path, oneFichierUrl);
                                                 }
@@ -5172,14 +5179,36 @@ oLink3.Save";
 
             Tit($"Batch complete! {summary}", Color.LightGreen);
 
-            // Build all links in phpBB format for cs.rin.ru: [url=link]Game Name[/url]
+            // Build all links in phpBB format for cs.rin.ru with full manifest info
             string allLinksText = "";
             if (uploadResults.Count > 0)
             {
-                allLinksText = string.Join("\n", uploadResults.Select(r =>
+                allLinksText = string.Join("\n\n", uploadResults.Select(r =>
                 {
                     string url = string.IsNullOrEmpty(r.pydriveUrl) ? r.oneFichierUrl : r.pydriveUrl;
-                    return $"[url={url}]{r.gameName}[/url]";
+                    var game = r.game;
+
+                    // Format version date from Unix timestamp
+                    string versionDate = "Unknown";
+                    if (game.LastUpdated > 0)
+                    {
+                        var dt = DateTimeOffset.FromUnixTimeSeconds(game.LastUpdated).UtcDateTime;
+                        versionDate = $"{dt:MMM dd, yyyy - HH:mm:ss} UTC [Build {game.BuildId}]";
+                    }
+
+                    // Build depot list
+                    var depotLines = new List<string>();
+                    foreach (var depot in game.InstalledDepots)
+                    {
+                        depotLines.Add($"{depot.Key} [Manifest {depot.Value.manifest}]");
+                    }
+                    string depotsText = depotLines.Count > 0 ? string.Join("\n", depotLines) : "No depot info";
+
+                    // Full phpBB format for cs.rin.ru
+                    return $"[url={url}][color=white][b]{game.Name} [Win64] [Branch: {game.Branch}] (Clean Steam Files)[/b][/color][/url]\n" +
+                           $"[size=85][color=white][b]Version:[/b] [i]{versionDate}[/i][/color][/size]\n\n" +
+                           $"[spoiler=\"[color=white]Depots & Manifests[/color]\"][code=text]{depotsText}[/code][/spoiler]" +
+                           $"[color=white][b]Uploaded version:[/b] [i]{versionDate}[/i][/color]";
                 }));
             }
 

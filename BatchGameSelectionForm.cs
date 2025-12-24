@@ -19,6 +19,13 @@ namespace SteamAutocrackGUI
         public bool Crack { get; set; } = true;
         public bool Zip { get; set; } = false;
         public bool Upload { get; set; } = false;
+
+        // Manifest info for clean files sharing
+        public string BuildId { get; set; }
+        public long LastUpdated { get; set; } // Unix timestamp
+        public string Branch { get; set; } = "Public";
+        public string Platform { get; set; } // Win64, Win32, etc.
+        public Dictionary<string, (string manifest, long size)> InstalledDepots { get; set; } = new Dictionary<string, (string, long)>();
     }
 
     /// <summary>
@@ -992,7 +999,7 @@ namespace SteamAutocrackGUI
 
                     if (crack || zip || upload)
                     {
-                        SelectedGames.Add(new BatchGameItem
+                        var item = new BatchGameItem
                         {
                             Path = gamePaths[i],
                             Name = Path.GetFileName(gamePaths[i]),
@@ -1000,7 +1007,22 @@ namespace SteamAutocrackGUI
                             Crack = crack,
                             Zip = zip,
                             Upload = upload
-                        });
+                        };
+
+                        // Try to get full manifest info (buildid, depots, etc.)
+                        var manifestInfo = SteamManifestParser.GetFullManifestInfo(gamePaths[i]);
+                        if (manifestInfo.HasValue)
+                        {
+                            item.Name = manifestInfo.Value.gameName; // Use proper game name from manifest
+                            item.BuildId = manifestInfo.Value.buildId;
+                            item.LastUpdated = manifestInfo.Value.lastUpdated;
+                            item.InstalledDepots = manifestInfo.Value.depots;
+                        }
+
+                        // Detect platform from game files
+                        item.Platform = DetectGamePlatform(gamePaths[i]);
+
+                        SelectedGames.Add(item);
                     }
                 }
 
@@ -1484,6 +1506,11 @@ namespace SteamAutocrackGUI
         public bool IsProcessing { get; private set; }
 
         /// <summary>
+        /// Track if batch has completed results available (links to copy)
+        /// </summary>
+        public bool HasCompletedResults { get; private set; }
+
+        /// <summary>
         /// Update the form title with progress percentage
         /// </summary>
         public void UpdateTitleProgress(int percent, string phase = null)
@@ -1581,6 +1608,13 @@ namespace SteamAutocrackGUI
             }
 
             IsProcessing = processing;
+
+            // When processing starts, reset completed results flag
+            // When processing ends, set it to true so minimize-to-indicator still works
+            if (processing)
+                HasCompletedResults = false;
+            else
+                HasCompletedResults = true;
 
             // Disable/enable grid interactions
             gameGrid.ReadOnly = processing;
@@ -1999,6 +2033,47 @@ namespace SteamAutocrackGUI
                 }
             }
             return null; // User cancelled
+        }
+
+        /// <summary>
+        /// Detect if game is 64-bit or 32-bit based on executable files
+        /// </summary>
+        private string DetectGamePlatform(string gamePath)
+        {
+            try
+            {
+                // Look for exe files
+                var exeFiles = Directory.GetFiles(gamePath, "*.exe", SearchOption.AllDirectories);
+                foreach (var exeFile in exeFiles)
+                {
+                    try
+                    {
+                        // Read PE header to determine architecture
+                        using (var fs = new FileStream(exeFile, FileMode.Open, FileAccess.Read))
+                        using (var br = new BinaryReader(fs))
+                        {
+                            // Check for MZ header
+                            if (br.ReadUInt16() != 0x5A4D) continue; // "MZ"
+
+                            fs.Seek(0x3C, SeekOrigin.Begin);
+                            int peOffset = br.ReadInt32();
+                            fs.Seek(peOffset, SeekOrigin.Begin);
+
+                            // Check PE signature
+                            if (br.ReadUInt32() != 0x00004550) continue; // "PE\0\0"
+
+                            // Read machine type
+                            ushort machineType = br.ReadUInt16();
+                            if (machineType == 0x8664) return "Win64"; // AMD64
+                            if (machineType == 0x014C) return "Win32"; // i386
+                        }
+                    }
+                    catch { }
+                }
+            }
+            catch { }
+
+            return "Win64"; // Default to Win64
         }
 
         private Button CreateStyledButton(string text, Point location, Size size, Color? customColor = null)
