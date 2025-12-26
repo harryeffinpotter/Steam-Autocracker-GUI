@@ -28,6 +28,9 @@ namespace SteamAppIdIdentifier
 
             ServicePointManager.SecurityProtocol = (SecurityProtocolType)3072;
 
+            // Clean up old .NET temp extraction folders (can accumulate GBs)
+            CleanupDotNetTempFolders();
+
             // Bootstrap _bin folder if missing
             BootstrapBinFolder();
 
@@ -55,7 +58,7 @@ namespace SteamAppIdIdentifier
                 // Initialize bandwidth limit from settings
                 try
                 {
-                    string bwLimit = APPID.Properties.Settings.Default.UploadBandwidthLimit ?? "";
+                    string bwLimit = APPID.AppSettings.Default.UploadBandwidthLimit ?? "";
                     SteamAutocrackGUI.CompressionSettingsForm.ParseBandwidthLimit(bwLimit);
                 }
                 catch { }
@@ -69,6 +72,64 @@ namespace SteamAppIdIdentifier
             {
                 WriteCrashLog(ex);
             }
+        }
+
+        /// <summary>
+        /// Cleans up old .NET single-file extraction temp folders to prevent GB accumulation
+        /// </summary>
+        private static void CleanupDotNetTempFolders()
+        {
+            try
+            {
+                string tempPath = Path.GetTempPath();
+                string dotNetTempPath = Path.Combine(tempPath, ".net", "SACGUI");
+
+                if (!Directory.Exists(dotNetTempPath))
+                    return;
+
+                // Get current process's extraction folder (we don't want to delete this one)
+                string currentExePath = Environment.ProcessPath;
+                string currentFolder = null;
+
+                // The extraction folder contains a copy of the exe
+                foreach (var dir in Directory.GetDirectories(dotNetTempPath))
+                {
+                    string possibleExe = Path.Combine(dir, "SACGUI.exe");
+                    if (File.Exists(possibleExe))
+                    {
+                        try
+                        {
+                            // Check if this is our currently running exe
+                            var fi = new FileInfo(possibleExe);
+                            var currentFi = new FileInfo(currentExePath);
+                            if (fi.Length == currentFi.Length && fi.LastWriteTime == currentFi.LastWriteTime)
+                            {
+                                currentFolder = dir;
+                            }
+                        }
+                        catch { }
+                    }
+                }
+
+                // Delete all folders except the current one
+                foreach (var dir in Directory.GetDirectories(dotNetTempPath))
+                {
+                    if (dir.Equals(currentFolder, StringComparison.OrdinalIgnoreCase))
+                        continue;
+
+                    try
+                    {
+                        // Only delete if folder is older than 1 hour (avoid race conditions)
+                        var dirInfo = new DirectoryInfo(dir);
+                        if (dirInfo.CreationTime < DateTime.Now.AddHours(-1))
+                        {
+                            Directory.Delete(dir, true);
+                        }
+                    }
+                    catch { } // Ignore locked/in-use folders
+                }
+            }
+            catch { } // Silently fail - this is just cleanup
         }
 
         private static void BootstrapBinFolder()

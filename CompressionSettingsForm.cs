@@ -1,6 +1,7 @@
 using System;
 using System.Drawing;
 using System.Drawing.Drawing2D;
+using System.IO;
 using System.Windows.Forms;
 using System.Runtime.InteropServices;
 
@@ -29,6 +30,30 @@ namespace SteamAutocrackGUI
         private int sliderValue = 0;
         private TextBox bandwidthTextBox;
         private ComboBox bandwidthUnitCombo;
+        private TextBox zipOutputFolderTextBox;
+        private static string _zipOutputFolder = null;
+        private static bool? _deleteZipsAfterUpload = null;
+        public static bool DeleteZipsAfterUpload
+        {
+            get
+            {
+                if (_deleteZipsAfterUpload == null)
+                    _deleteZipsAfterUpload = APPID.AppSettings.Default.DeleteZipsAfterUpload;
+                return _deleteZipsAfterUpload.Value;
+            }
+            private set { _deleteZipsAfterUpload = value; }
+        }
+        public static string ZipOutputFolder
+        {
+            get
+            {
+                // Lazy load from settings if not yet initialized
+                if (_zipOutputFolder == null)
+                    _zipOutputFolder = APPID.AppSettings.Default.ZipOutputFolder ?? "";
+                return _zipOutputFolder;
+            }
+            private set { _zipOutputFolder = value; }
+        }
 
         public CompressionSettingsForm()
         {
@@ -45,7 +70,7 @@ namespace SteamAutocrackGUI
             catch { }
 
             // Load saved format
-            string savedFormat = APPID.Properties.Settings.Default.CompressionFormat ?? "ZIP";
+            string savedFormat = APPID.AppSettings.Default.CompressionFormat ?? "ZIP";
             zipRadioButton.Checked = savedFormat == "ZIP";
             sevenZipRadioButton.Checked = savedFormat == "7Z";
 
@@ -56,28 +81,49 @@ namespace SteamAutocrackGUI
             // Add Convert to DDL checkbox
             var convertToDdlCheckBox = new CheckBox
             {
-                Location = new Point(89, 92),
+                Location = new Point(102, 92),
                 Size = new Size(265, 21),
                 Text = "Convert to DDL (debrid backend)",
                 ForeColor = Color.FromArgb(150, 150, 155),
                 BackColor = Color.Transparent,
                 Font = new Font("Segoe UI", 9),
-                Checked = !APPID.Properties.Settings.Default.SkipPyDriveConversion
+                Checked = !APPID.AppSettings.Default.SkipPyDriveConversion
             };
             convertToDdlCheckBox.CheckedChanged += (s, e) =>
             {
-                APPID.Properties.Settings.Default.SkipPyDriveConversion = !convertToDdlCheckBox.Checked;
-                APPID.Properties.Settings.Default.Save();
+                APPID.AppSettings.Default.SkipPyDriveConversion = !convertToDdlCheckBox.Checked;
+                APPID.AppSettings.Default.Save();
             };
             var tooltip = new ToolTip();
             tooltip.SetToolTip(convertToDdlCheckBox, "Convert 1fichier links to direct download links via debrid proxy");
             this.Controls.Add(convertToDdlCheckBox);
 
+            // Add Delete zips after upload checkbox
+            var deleteZipsCheckBox = new CheckBox
+            {
+                Location = new Point(102, 113),
+                Size = new Size(200, 21),
+                Text = "Delete zips after upload",
+                ForeColor = Color.FromArgb(150, 150, 155),
+                BackColor = Color.Transparent,
+                Font = new Font("Segoe UI", 9),
+                Checked = APPID.AppSettings.Default.DeleteZipsAfterUpload
+            };
+            deleteZipsCheckBox.CheckedChanged += (s, e) =>
+            {
+                APPID.AppSettings.Default.DeleteZipsAfterUpload = deleteZipsCheckBox.Checked;
+                APPID.AppSettings.Default.Save();
+                DeleteZipsAfterUpload = deleteZipsCheckBox.Checked;
+            };
+            var deleteZipTooltip = new ToolTip();
+            deleteZipTooltip.SetToolTip(deleteZipsCheckBox, "Automatically delete local zip files after successful upload");
+            this.Controls.Add(deleteZipsCheckBox);
+
             // Hide the default trackbar and create custom slider
             levelTrackBar.Visible = false;
 
             // Load saved compression level
-            sliderValue = APPID.Properties.Settings.Default.CompressionLevel;
+            sliderValue = APPID.AppSettings.Default.CompressionLevel;
             if (sliderValue < 0) sliderValue = 0;
             if (sliderValue > 10) sliderValue = 10;
 
@@ -87,8 +133,8 @@ namespace SteamAutocrackGUI
             // Add bandwidth limiter UI - below checkboxes, above slider
             var bandwidthLabel = new Label
             {
-                Location = new Point(89, 118),
-                Size = new Size(90, 21),
+                Location = new Point(102, 143),
+                Size = new Size(82, 21),
                 Text = "Upload Limit:",
                 ForeColor = Color.FromArgb(150, 150, 155),
                 BackColor = Color.Transparent,
@@ -98,7 +144,7 @@ namespace SteamAutocrackGUI
 
             bandwidthTextBox = new TextBox
             {
-                Location = new Point(180, 115),
+                Location = new Point(189, 140),
                 Size = new Size(55, 23),
                 BackColor = Color.FromArgb(20, 22, 28),
                 ForeColor = Color.FromArgb(220, 255, 255),
@@ -112,7 +158,7 @@ namespace SteamAutocrackGUI
 
             bandwidthUnitCombo = new ComboBox
             {
-                Location = new Point(240, 114),
+                Location = new Point(249, 139),
                 Size = new Size(70, 23),
                 BackColor = Color.FromArgb(20, 22, 28),
                 ForeColor = Color.FromArgb(220, 255, 255),
@@ -126,6 +172,107 @@ namespace SteamAutocrackGUI
 
             // Load saved bandwidth setting
             LoadBandwidthSetting();
+
+            // Add zip output folder UI
+            var zipFolderLabel = new Label
+            {
+                Location = new Point(54, 170),
+                Size = new Size(47, 21),
+                Text = "Zip Dir:",
+                ForeColor = Color.FromArgb(150, 150, 155),
+                BackColor = Color.Transparent,
+                Font = new Font("Segoe UI", 9)
+            };
+            this.Controls.Add(zipFolderLabel);
+
+            zipOutputFolderTextBox = new TextBox
+            {
+                Location = new Point(103, 167),
+                Size = new Size(226, 23),
+                BackColor = Color.FromArgb(20, 22, 28),
+                ForeColor = Color.FromArgb(180, 180, 185),
+                BorderStyle = BorderStyle.FixedSingle,
+                Font = new Font("Segoe UI", 8),
+                ReadOnly = true,
+                Text = string.IsNullOrEmpty(APPID.AppSettings.Default.ZipOutputFolder) ? "(Same as game folder)" : APPID.AppSettings.Default.ZipOutputFolder
+            };
+            var zipFolderTooltip = new ToolTip();
+            zipFolderTooltip.SetToolTip(zipOutputFolderTextBox, "Folder where zip archives will be saved");
+            this.Controls.Add(zipOutputFolderTextBox);
+
+            var browseBtn = new Button
+            {
+                Location = new Point(335, 166),
+                Size = new Size(30, 25),
+                Text = "...",
+                FlatStyle = FlatStyle.Flat,
+                BackColor = Color.FromArgb(38, 38, 42),
+                ForeColor = Color.FromArgb(200, 200, 205),
+                Font = new Font("Segoe UI", 8)
+            };
+            browseBtn.FlatAppearance.BorderColor = Color.FromArgb(55, 55, 60);
+            browseBtn.Click += (s, e) =>
+            {
+                using (var fbd = new FolderBrowserDialog())
+                {
+                    fbd.Description = "Select folder for zip archives";
+                    if (!string.IsNullOrEmpty(APPID.AppSettings.Default.ZipOutputFolder) && Directory.Exists(APPID.AppSettings.Default.ZipOutputFolder))
+                        fbd.SelectedPath = APPID.AppSettings.Default.ZipOutputFolder;
+
+                    if (fbd.ShowDialog() == DialogResult.OK)
+                    {
+                        string selectedPath = fbd.SelectedPath;
+
+                        // Check if user selected root of a drive (e.g., G:\, C:\)
+                        if (Path.GetPathRoot(selectedPath) == selectedPath)
+                        {
+                            MessageBox.Show(
+                                "Cannot use root of a drive as zip folder.\n\n" +
+                                "Windows often blocks writing directly to drive roots.\n" +
+                                "Please create a folder (e.g., " + selectedPath + "Zips) and select that instead.",
+                                "Invalid Folder",
+                                MessageBoxButtons.OK,
+                                MessageBoxIcon.Warning);
+                            return;
+                        }
+
+                        zipOutputFolderTextBox.Text = selectedPath;
+                        APPID.AppSettings.Default.ZipOutputFolder = selectedPath;
+                        APPID.AppSettings.Default.Save();
+                        ZipOutputFolder = selectedPath;
+                    }
+                }
+            };
+            this.Controls.Add(browseBtn);
+
+            // Add reset button to clear the folder
+            var resetBtn = new Button
+            {
+                Location = new Point(368, 166),
+                Size = new Size(20, 25),
+                Text = "×",
+                FlatStyle = FlatStyle.Flat,
+                BackColor = Color.FromArgb(38, 38, 42),
+                ForeColor = Color.FromArgb(200, 100, 100),
+                Font = new Font("Segoe UI", 9, FontStyle.Bold)
+            };
+            resetBtn.FlatAppearance.BorderColor = Color.FromArgb(55, 55, 60);
+            resetBtn.Click += (s, e) =>
+            {
+                zipOutputFolderTextBox.Text = "(Same as game folder)";
+                APPID.AppSettings.Default.ZipOutputFolder = "";
+                APPID.AppSettings.Default.Save();
+                ZipOutputFolder = "";
+            };
+            var resetTooltip = new ToolTip();
+            resetTooltip.SetToolTip(resetBtn, "Reset to default (same folder as game)");
+            this.Controls.Add(resetBtn);
+
+            // Load saved zip output folder
+            ZipOutputFolder = APPID.AppSettings.Default.ZipOutputFolder ?? "";
+
+            // Move description label to proper position
+            levelDescriptionLabel.Location = new Point(levelDescriptionLabel.Location.X, 225);
 
             // Apply rounded corners to buttons
             ApplyRoundedCornersToButton(okButton);
@@ -254,7 +401,7 @@ namespace SteamAutocrackGUI
         {
             sliderPanel = new Panel
             {
-                Location = new Point(49, 155),
+                Location = new Point(46, 190),
                 Size = new Size(350, 40),
                 BackColor = Color.Transparent
             };
@@ -457,9 +604,9 @@ namespace SteamAutocrackGUI
             APPID.AppSettings.Default.Save();
 
             // Save compression level and format
-            APPID.Properties.Settings.Default.CompressionLevel = sliderValue;
-            APPID.Properties.Settings.Default.CompressionFormat = SelectedFormat;
-            APPID.Properties.Settings.Default.Save();
+            APPID.AppSettings.Default.CompressionLevel = sliderValue;
+            APPID.AppSettings.Default.CompressionFormat = SelectedFormat;
+            APPID.AppSettings.Default.Save();
 
             // Save bandwidth limit
             SaveBandwidthSetting();
@@ -494,7 +641,7 @@ namespace SteamAutocrackGUI
         {
             try
             {
-                string saved = APPID.Properties.Settings.Default.UploadBandwidthLimit ?? "";
+                string saved = APPID.AppSettings.Default.UploadBandwidthLimit ?? "";
                 ParseBandwidthLimit(saved); // Initialize the static property
 
                 if (string.IsNullOrWhiteSpace(saved))
@@ -535,8 +682,8 @@ namespace SteamAutocrackGUI
                     string unit = bandwidthUnitCombo.SelectedItem?.ToString() ?? "Mbps";
                     value = bandwidthTextBox.Text.Trim() + unit;
                 }
-                APPID.Properties.Settings.Default.UploadBandwidthLimit = value;
-                APPID.Properties.Settings.Default.Save();
+                APPID.AppSettings.Default.UploadBandwidthLimit = value;
+                APPID.AppSettings.Default.Save();
                 ParseBandwidthLimit(value);
             }
             catch { }

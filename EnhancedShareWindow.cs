@@ -100,6 +100,7 @@ namespace SteamAppIdIdentifier
 
         private Form parentForm;
         private bool gameSizeColumnSortedOnce = false;
+        private bool lastUpdatedColumnSortedOnce = false;
 
         // Upload details panel controls
         private Panel uploadDetailsPanel;
@@ -344,6 +345,13 @@ namespace SteamAppIdIdentifier
             if (gamesGrid.Columns[e.ColumnIndex].Name == "GameSize" && !gameSizeColumnSortedOnce)
             {
                 gameSizeColumnSortedOnce = true;
+                gamesGrid.Sort(gamesGrid.Columns[e.ColumnIndex], System.ComponentModel.ListSortDirection.Descending);
+            }
+
+            // On first click of LastUpdated column, sort descending (newest to oldest)
+            if (gamesGrid.Columns[e.ColumnIndex].Name == "LastUpdated" && !lastUpdatedColumnSortedOnce)
+            {
+                lastUpdatedColumnSortedOnce = true;
                 gamesGrid.Sort(gamesGrid.Columns[e.ColumnIndex], System.ComponentModel.ListSortDirection.Descending);
             }
         }
@@ -653,8 +661,8 @@ namespace SteamAppIdIdentifier
             {
                 if (selectedCount == 0)
                 {
-                    // No games checked - share clean this single game immediately
-                    await ShareGame(gameName, installPath, appId, false, row);
+                    // No games checked - open batch processor for this single game with Clean presets
+                    OpenBatchProcessorForGame(installPath, crackPreset: false, zipPreset: true, uploadPreset: true);
                 }
                 else
                 {
@@ -676,8 +684,8 @@ namespace SteamAppIdIdentifier
             {
                 if (selectedCount == 0)
                 {
-                    // No games checked - share cracked this single game immediately
-                    await ShareGame(gameName, installPath, appId, true, row);
+                    // No games checked - open batch processor for this single game with Cracked presets
+                    OpenBatchProcessorForGame(installPath, crackPreset: true, zipPreset: true, uploadPreset: true);
                 }
                 else
                 {
@@ -1616,8 +1624,10 @@ namespace SteamAppIdIdentifier
                         }
                     }
 
-                    // Add password if provided
-                    string passwordSwitch = !string.IsNullOrEmpty(password) ? $"-p\"{password}\"" : "";
+                    // Add password if provided (no quotes around password for 7z)
+                    // -mhe=on (header encryption) only works with 7z format, not zip
+                    bool is7z = format.ToLower() == "7z";
+                    string passwordSwitch = !string.IsNullOrEmpty(password) ? (is7z ? $"-p{password} -mhe=on" : $"-p{password}") : "";
 
                     // For clean structure, we need to include the parent folder in the archive
                     string arguments;
@@ -2297,6 +2307,48 @@ namespace SteamAppIdIdentifier
             }
         }
 
+        private void OpenBatchProcessorForGame(string gamePath, bool crackPreset, bool zipPreset, bool uploadPreset)
+        {
+            if (string.IsNullOrEmpty(gamePath)) return;
+
+            // Open batch processor with single game and presets
+            var mainForm = parentForm as SteamAppId;
+            if (mainForm != null)
+            {
+                // Create batch form with presets
+                var batchForm = new SteamAutocrackGUI.BatchGameSelectionForm(
+                    new List<string> { gamePath },
+                    crackPreset,
+                    zipPreset,
+                    uploadPreset
+                );
+                batchForm.Owner = mainForm;
+                batchForm.StartPosition = FormStartPosition.Manual;
+
+                // Position centered on this window
+                int x = this.Left + (this.Width - batchForm.Width) / 2;
+                int y = this.Top + (this.Height - batchForm.Height) / 2;
+                var screen = Screen.FromControl(this).WorkingArea;
+                x = Math.Max(screen.Left, Math.Min(x, screen.Right - batchForm.Width));
+                y = Math.Max(screen.Top, Math.Min(y, screen.Bottom - batchForm.Height));
+                batchForm.Location = new Point(x, y);
+
+                // Wire up the ProcessRequested event to Form1's handler
+                batchForm.ProcessRequested += async (games, format, level, usePassword, deleteZips) =>
+                {
+                    // Use reflection or direct call to invoke Form1's batch processing
+                    var processMethod = mainForm.GetType().GetMethod("ProcessBatchGames",
+                        System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                    if (processMethod != null)
+                    {
+                        await (Task)processMethod.Invoke(mainForm, new object[] { games, format, level, usePassword, deleteZips, batchForm });
+                    }
+                };
+
+                batchForm.Show();
+            }
+        }
+
         private void BtnProcessSelected_Click(object sender, EventArgs e)
         {
             // Collect selected game paths
@@ -2577,7 +2629,7 @@ namespace SteamAppIdIdentifier
                     }
 
                     string sevenZipPath = ResourceExtractor.GetBinFilePath(Path.Combine("7z", "7za.exe"));
-                    string password = batchUsePassword ? "rin" : null;
+                    string password = batchUsePassword ? "cs.rin.ru" : null;
 
                     var zipTasks = gamesToZip.Select(async game =>
                     {

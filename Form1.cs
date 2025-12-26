@@ -254,6 +254,17 @@ namespace APPID
 
             InitializeTimers();
 
+            // Load saved bandwidth limit at startup
+            try
+            {
+                string savedBandwidth = APPID.AppSettings.Default.UploadBandwidthLimit;
+                if (!string.IsNullOrEmpty(savedBandwidth))
+                {
+                    CompressionSettingsForm.ParseBandwidthLimit(savedBandwidth);
+                }
+            }
+            catch { }
+
             // Make form background draggable (click empty space to drag)
             this.MouseDown += TitleBar_MouseDown;
 
@@ -265,6 +276,60 @@ namespace APPID
 
             // Apply rounded corners
             this.Load += (s, e) => ApplyAcrylicEffect();
+
+            // Wire up Upload button click handler
+            if (UploadZipButton != null)
+            {
+                UploadZipButton.Click += async (s, e) =>
+                {
+                    if (ZipToShare.Tag == null) return;
+                    string zipFilePath = ZipToShare.Tag.ToString();
+                    if (!File.Exists(zipFilePath)) return;
+
+                    UploadZipButton.Enabled = false;
+                    UploadZipButton.Text = "Uploading...";
+
+                    try
+                    {
+                        Tit("Uploading to 1fichier...", Color.Magenta);
+                        string oneFichierUrl = await UploadToBackend(zipFilePath, this);
+
+                        if (!string.IsNullOrEmpty(oneFichierUrl))
+                        {
+                            // Show success modal immediately with 1fichier link
+                            Tit("Upload complete!", Color.LightGreen);
+                            UploadZipButton.Text = "Uploaded ✓";
+
+                            // Check if PyDrive conversion is enabled
+                            if (!APPID.AppSettings.Default.SkipPyDriveConversion)
+                            {
+                                // Get file size for ETA calculation
+                                long fileSize = new FileInfo(zipFilePath).Length;
+
+                                // Show modal with 1fichier, conversion happens in background
+                                ShowUploadSuccessWithConversion(oneFichierUrl, fileSize, gameDirName, CurrentCrackDetails?.Success == true, this);
+                            }
+                            else
+                            {
+                                // No conversion, just show 1fichier link
+                                ShowUploadSuccessWithBothLinks(oneFichierUrl, oneFichierUrl, null, gameDirName, CurrentCrackDetails?.Success == true, this);
+                            }
+                        }
+                        else
+                        {
+                            Tit("Upload failed", Color.Red);
+                            UploadZipButton.Text = "Upload";
+                            UploadZipButton.Enabled = true;
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Tit($"Upload error: {ex.Message}", Color.Red);
+                        UploadZipButton.Text = "Upload";
+                        UploadZipButton.Enabled = true;
+                    }
+                };
+            }
 
             // Force taskbar refresh after form is fully loaded
             this.Shown += (s, e) =>
@@ -286,6 +351,7 @@ namespace APPID
             ApplyRoundedCornersToButton(OpenDir);
             ApplyRoundedCornersToButton(ZipToShare);
             ApplyRoundedCornersToButton(btnManualEntry);
+            ApplyRoundedCornersToButton(UploadZipButton);
 
             // Initialize batch progress indicator (hidden by default)
             InitializeBatchIndicator();
@@ -445,15 +511,6 @@ namespace APPID
 
         private void InitializeTimers()
         {
-            // Timer for label5 - visible for 10 seconds
-            label5Timer = new Timer();
-            label5Timer.Interval = 10000; // 10 seconds
-            label5Timer.Tick += (s, e) =>
-            {
-                label5.Visible = false;
-                label5Timer.Stop();
-            };
-
             // Timer for resinstruccZip - disappear after 30 seconds
             resinstruccZipTimer = new Timer();
             resinstruccZipTimer.Interval = 30000; // 30 seconds
@@ -462,10 +519,6 @@ namespace APPID
                 resinstruccZip.Visible = false;
                 resinstruccZipTimer.Stop();
             };
-
-            // Start label5 timer on form load
-            label5.Visible = true;
-            label5Timer.Start();
         }
         public static void Tit(string Message, Color color)
         {
@@ -724,7 +777,7 @@ namespace APPID
                 await Updater.CheckGitHubNewerVersion("atom0s", "Steamless", "https://api.github.com/repos");
                 await Updater.UpdateGoldBergAsync();
                 await Task.Delay(1500);
-                Tit("Click folder && select game's parent directory.", Color.Cyan);
+                Tit("Waiting...", Color.Cyan);
             }
 
             t1 = new Timer();
@@ -1073,7 +1126,6 @@ namespace APPID
             t1.Stop();
         }
         public static Timer t1;
-        private Timer label5Timer;
         private Timer resinstruccZipTimer;
         async Task PutTaskDelay()
         {
@@ -2477,15 +2529,12 @@ oLink3.Save";
                     searchTextBox.Text = gameDirName;
                 }
 
-                // Stop label5 timer when game dir is selected
-                label5Timer.Stop();
-                label5.Visible = false;
                 AppSettings.Default.lastDir = parentOfSelection;
                 AppSettings.Default.Save();
             }
             else
             {
-                MessageBox.Show("You must select a folder to continue...");
+                Tit("Waiting...", Color.LightSkyBlue);
             }
         }
         public bool cracking;
@@ -2508,6 +2557,9 @@ oLink3.Save";
                     // Set the permanent success message
                     Tit("Crack complete!\nSelect another game directory to keep the party going!", Color.LightSkyBlue);
 
+                    // Show game name and AppID beneath status
+                    currDIrText.Text = $"{gameDirName} ({CurrentAppId})";
+
                     // Show both buttons centered below game name
                     ShowCrackButtons(showZip: true);
                 }
@@ -2515,7 +2567,7 @@ oLink3.Save";
                 {
                     Tit("No files to crack found!", Color.Red);
                     await Task.Delay(3000);
-                    Tit("Click folder & select game's parent directory.", Color.Cyan);
+                    Tit("Waiting...", Color.Cyan);
 
                     // Show only Open Dir button centered
                     ShowCrackButtons(showZip: false);
@@ -2559,15 +2611,18 @@ oLink3.Save";
         private void selectDir_MouseEnter(object sender, EventArgs e)
         {
             selectDir.Image = Properties.Resources.hoveradd;
+            selectDirMini.Image = Properties.Resources.hoveradd;
         }
         private void selectDir_MouseHover(object sender, EventArgs e)
         {
             selectDir.Image = Properties.Resources.hoveradd;
+            selectDirMini.Image = Properties.Resources.hoveradd;
         }
 
         private void selectDir_MouseDown(object sender, MouseEventArgs e)
         {
             selectDir.Image = Properties.Resources.clickadd;
+            selectDirMini.Image = Properties.Resources.clickadd;
         }
 
         private void startCrackPic_MouseDown(object sender, MouseEventArgs e)
@@ -2588,6 +2643,7 @@ oLink3.Save";
         private void selectDir_MouseLeave(object sender, EventArgs e)
         {
             selectDir.Image = Properties.Resources.add;
+            selectDirMini.Image = Properties.Resources.add;
         }
 
         private void startCrackPic_MouseLeave(object sender, EventArgs e)
@@ -2628,6 +2684,22 @@ oLink3.Save";
 
                     //DIR
                     gameDir = d;
+
+                    // Check if this is a folder containing multiple games (batch mode)
+                    var gamesInFolder = DetectGamesInFolder(gameDir);
+                    if (gamesInFolder.Count > 1)
+                    {
+                        // Multiple games detected - batch folder
+                        AppSettings.Default.lastDir = gameDir;
+                        AppSettings.Default.Save();
+                        ShowBatchGameSelection(gamesInFolder);
+                        return;
+                    }
+                    else if (gamesInFolder.Count == 1)
+                    {
+                        // Contains exactly one game subfolder - use that
+                        gameDir = gamesInFolder[0];
+                    }
 
                     // Hide OpenDir and ZipToShare when new directory selected
                     OpenDir.Visible = false;
@@ -2693,10 +2765,6 @@ oLink3.Save";
                         searchTextBox.Text = gameDirName;
                         isFirstClickAfterSelection = true;  // Set AFTER changing text to avoid race condition
                     }
-
-                    // Stop label5 timer when game dir is selected
-                    label5Timer.Stop();
-                    label5.Visible = false;
 
                     isInitialFolderSearch = true;  // This is the initial search
                     searchTextBox.Text = gameDirName;
@@ -2775,25 +2843,16 @@ oLink3.Save";
         {
             if (keyData == (Keys.Control | Keys.S))
             {
-                // Force show compression settings dialog
-                AppSettings.Default.ZipDontAsk = false;
-                AppSettings.Default.Save();
-
-                if (ZipToShare.Visible && ZipToShare.Enabled)
+                // Always show compression settings dialog
+                using (var compressionForm = new CompressionSettingsForm())
                 {
-                    ZipToShare_Click(null, null);
-                }
-                else
-                {
-                    // Show compression dialog even without a completed crack for testing
-                    using (var compressionForm = new CompressionSettingsForm())
-                    {
-                        compressionForm.Owner = this;
-                        compressionForm.StartPosition = FormStartPosition.CenterParent;
-                        compressionForm.TopMost = true;
-                        compressionForm.BringToFront();
-                        compressionForm.ShowDialog(this);
-                    }
+                    compressionForm.Owner = this;
+                    compressionForm.StartPosition = FormStartPosition.CenterParent;
+                    compressionForm.TopMost = true;
+                    compressionForm.BringToFront();
+                    this.Hide();
+                    compressionForm.ShowDialog(this);
+                    this.Show();
                 }
                 return true;
             }
@@ -2902,7 +2961,7 @@ oLink3.Save";
                     {
                         parentForm.Invoke(new Action(() =>
                         {
-                            Tit($"Uploading to YSG/HFP backend (6 month expiry)...", Color.Magenta);
+                            Tit($"Uploading to YSG/HFP backend (1 month expiry)...", Color.Magenta);
                         }));
                     }
 
@@ -2920,10 +2979,11 @@ oLink3.Save";
                     {
                         parentForm.Invoke(new Action(() =>
                         {
-                            Tit($"Saved to Desktop: {zipName}", Color.Green);
+                            Tit($"Saved: {zipName}", Color.Green);
                         }));
                     }
-                    Process.Start("explorer.exe", desktopPath);
+                    string outputFolder = Path.GetDirectoryName(zipPath);
+                    Process.Start("explorer.exe", outputFolder);
                 }
             }
             catch (Exception ex)
@@ -2984,7 +3044,8 @@ oLink3.Save";
 
                 // Build command arguments
                 string archiveType = format.ToLower() == "7z" ? "7z" : "zip";
-                string passwordArg = encryptForRIN ? "-p\"cs.rin.ru\" -mhe=on" : "";
+                // -mhe=on (header encryption) only works with 7z format, not zip
+                string passwordArg = encryptForRIN ? (archiveType == "7z" ? "-pcs.rin.ru -mhe=on" : "-pcs.rin.ru") : "";
 
                 // Add -bsp1 to get progress percentage output
                 string arguments = $"a -t{archiveType} {compressionSwitch} {passwordArg} -bsp1 \"{outputPath}\" \"{sourcePath}\\*\" -r";
@@ -3086,28 +3147,13 @@ oLink3.Save";
                             var fileSizeMB = uploadFileInfo.Length / (1024.0 * 1024.0);
                             System.Diagnostics.Debug.WriteLine($"[UPLOAD] File size: {fileSizeMB:F2} MB");
 
-                            if (fileSizeMB > 500)
-                            {
-                                System.Diagnostics.Debug.WriteLine($"[UPLOAD] WARNING: File is larger than 500MB, may exceed server limits!");
-
-                                // Show warning to user
-                                if (parentForm.IsHandleCreated)
-                                {
-                                    parentForm.Invoke(new Action(() =>
-                                    {
-                                        MessageBox.Show($"File is {fileSizeMB:F0}MB. The server may reject files over 500MB.\n\nConsider using higher compression settings.",
-                                            "Large File Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                                    }));
-                                }
-                            }
-
                             var fileContent = new StreamContent(fileStream);
                             fileContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/octet-stream");
                             content.Add(fileContent, "file", Path.GetFileName(filePath));
 
                             // Add required form fields for SACGUI
                             content.Add(new StringContent("anonymous"), "hwid"); // Anonymous sharing
-                            content.Add(new StringContent("SACGUI-2.3"), "version");
+                            content.Add(new StringContent("SACGUI-2.4"), "version");
 
                             // Extract game name from filename (remove prefix and extension)
                             string fileName = Path.GetFileNameWithoutExtension(filePath);
@@ -3128,7 +3174,7 @@ oLink3.Save";
                             }
                             catch { }
                             content.Add(new StringContent(clientIp), "client_ip");
-                            System.Diagnostics.Debug.WriteLine($"[UPLOAD] Added Version: SACGUI-2.3");
+                            System.Diagnostics.Debug.WriteLine($"[UPLOAD] Added Version: SACGUI-2.4");
                             System.Diagnostics.Debug.WriteLine($"[UPLOAD] Added Game Name: {gameName}");
                             System.Diagnostics.Debug.WriteLine($"[UPLOAD] Added Client IP: {clientIp}");
 
@@ -3150,7 +3196,7 @@ oLink3.Save";
                             {
                                 // Set timeout and user agent
                                 progressClient.Timeout = TimeSpan.FromHours(2);
-                                progressClient.DefaultRequestHeaders.Add("User-Agent", "SACGUI-Uploader/2.3");
+                                progressClient.DefaultRequestHeaders.Add("User-Agent", "SACGUI-Uploader/2.4");
 
                                 // Use 1fichier upload
                                 System.Diagnostics.Debug.WriteLine("[UPLOAD] Using 1fichier for file upload");
@@ -3169,14 +3215,14 @@ oLink3.Save";
                                     }
                                 });
 
-                                // Use 1fichier uploader
-                                using (var uploader = new OneFichierUploader())
+                                // Use 1fichier uploader (same approach as batch processor)
+                                using (var uploader = new SAC_GUI.OneFichierUploader())
                                 {
-                                    var uploadResult = await uploader.UploadFileAsync(filePath, progress);
+                                    var uploadResult = await Task.Run(() => uploader.UploadFileAsync(filePath, progress, null, CancellationToken.None));
 
                                     System.Diagnostics.Debug.WriteLine($"[UPLOAD] 1fichier upload successful!");
 
-                                    if (!string.IsNullOrEmpty(uploadResult.DownloadUrl))
+                                    if (uploadResult != null && !string.IsNullOrEmpty(uploadResult.DownloadUrl))
                                     {
                                         string shareUrl = uploadResult.DownloadUrl;
                                         System.Diagnostics.Debug.WriteLine($"[UPLOAD] Download URL: {shareUrl}");
@@ -3278,11 +3324,11 @@ oLink3.Save";
             successForm.Text = "Upload Complete!";
             successForm.Size = new Size(600, 200);
             successForm.StartPosition = FormStartPosition.CenterParent;
-            successForm.BackColor = Color.FromArgb(0, 20, 50);
+            successForm.BackColor = Color.FromArgb(5, 8, 20);
             successForm.Owner = parentForm;
 
             var label = new Label();
-            label.Text = $"{(isCracked ? "CRACKED" : "CLEAN")} {gameName}\nUploaded Successfully!\nLink valid for 6 months";
+            label.Text = $"{(isCracked ? "CRACKED" : "CLEAN")} {gameName}\nUploaded Successfully!\nLink valid for 1 months";
             label.AutoSize = false;
             label.Size = new Size(580, 60);
             label.Location = new Point(10, 20);
@@ -3320,6 +3366,306 @@ oLink3.Save";
             successForm.Controls.Add(urlTextBox);
             successForm.Controls.Add(copyButton);
             successForm.ShowDialog();
+        }
+
+        private void ShowUploadSuccessWithConversion(string oneFichierUrl, long fileSize, string gameName, bool isCracked, Form parentForm)
+        {
+            // Hide main form
+            parentForm.Hide();
+
+            var successForm = new Form();
+            successForm.Text = "Upload Complete!";
+            successForm.FormBorderStyle = FormBorderStyle.None;
+            successForm.BackColor = Color.FromArgb(5, 8, 20);
+            successForm.Size = new Size(500, 280);
+            successForm.KeyPreview = true;
+            successForm.Opacity = 0.95;
+            try { successForm.Icon = APPID.Properties.Resources.sac_icon; } catch { }
+
+            // Position centered on parent
+            successForm.StartPosition = FormStartPosition.Manual;
+            int centerX = parentForm.Location.X + (parentForm.Width - successForm.Width) / 2;
+            int centerY = parentForm.Location.Y + (parentForm.Height - successForm.Height) / 2;
+            successForm.Location = new Point(Math.Max(0, centerX), Math.Max(0, centerY));
+
+            // Apply rounded corners
+            successForm.Load += (s, e) =>
+            {
+                int preference = 2; // DWMWCP_ROUND
+                DwmSetWindowAttribute(successForm.Handle, DWMWA_WINDOW_CORNER_PREFERENCE, ref preference, sizeof(int));
+            };
+
+            // Restore main form centered on where modal was
+            successForm.FormClosed += (s, e) =>
+            {
+                int newX = successForm.Location.X + (successForm.Width - parentForm.Width) / 2;
+                int newY = successForm.Location.Y + (successForm.Height - parentForm.Height) / 2;
+                parentForm.Location = new Point(Math.Max(0, newX), Math.Max(0, newY));
+                parentForm.Show();
+            };
+
+            // Title
+            var titleLabel = new Label
+            {
+                Text = "Upload Complete!",
+                Font = new Font("Segoe UI", 16, FontStyle.Bold),
+                ForeColor = Color.FromArgb(100, 200, 255),
+                Location = new Point(20, 15),
+                AutoSize = true
+            };
+            successForm.Controls.Add(titleLabel);
+
+            // Game info
+            var gameLabel = new Label
+            {
+                Text = $"{(isCracked ? "CRACKED" : "CLEAN")} {gameName}",
+                Font = new Font("Segoe UI", 10),
+                ForeColor = Color.FromArgb(180, 180, 185),
+                Location = new Point(20, 50),
+                AutoSize = true
+            };
+            successForm.Controls.Add(gameLabel);
+
+            int yPos = 85;
+
+            // PyDrive status (converting...)
+            var pydriveLabel = new Label { Text = "PyDrive:", ForeColor = Color.Yellow, Location = new Point(20, yPos), AutoSize = true };
+            var pydriveStatusLabel = new Label { Text = "Converting...", ForeColor = Color.Yellow, Location = new Point(90, yPos), AutoSize = true, Name = "pydriveStatus" };
+            var pydriveBox = new TextBox { Text = "", ReadOnly = true, Location = new Point(90, yPos - 2), Size = new Size(300, 22), BackColor = Color.FromArgb(30, 35, 45), ForeColor = Color.White, BorderStyle = BorderStyle.FixedSingle, Visible = false, Name = "pydriveBox" };
+            var pyCopyBtn = new Button { Text = "Copy", Location = new Point(400, yPos - 3), Size = new Size(70, 24), FlatStyle = FlatStyle.Flat, ForeColor = Color.LightGreen, Visible = false, Name = "pyCopyBtn" };
+            successForm.Controls.Add(pydriveLabel);
+            successForm.Controls.Add(pydriveStatusLabel);
+            successForm.Controls.Add(pydriveBox);
+            successForm.Controls.Add(pyCopyBtn);
+            yPos += 35;
+
+            // 1fichier link
+            var fichierLabel = new Label { Text = "1fichier:", ForeColor = Color.LightGreen, Location = new Point(20, yPos), AutoSize = true };
+            var fichierBox = new TextBox { Text = oneFichierUrl, ReadOnly = true, Location = new Point(90, yPos - 2), Size = new Size(300, 22), BackColor = Color.FromArgb(30, 35, 45), ForeColor = Color.White, BorderStyle = BorderStyle.FixedSingle };
+            var fichierCopyBtn = new Button { Text = "Copy", Location = new Point(400, yPos - 3), Size = new Size(70, 24), FlatStyle = FlatStyle.Flat, ForeColor = Color.LightGreen };
+            fichierCopyBtn.Click += (s, e) => { Clipboard.SetText(oneFichierUrl); fichierCopyBtn.Text = "✓"; };
+            successForm.Controls.Add(fichierLabel);
+            successForm.Controls.Add(fichierBox);
+            successForm.Controls.Add(fichierCopyBtn);
+            yPos += 35;
+
+            // Expiry note
+            var expiryLabel = new Label
+            {
+                Text = "Links valid for 1 month.",
+                Font = new Font("Segoe UI", 8),
+                ForeColor = Color.FromArgb(100, 100, 105),
+                Location = new Point(20, yPos + 5),
+                AutoSize = true
+            };
+            successForm.Controls.Add(expiryLabel);
+
+            // X button
+            var closeX = new Label
+            {
+                Text = "×",
+                Font = new Font("Segoe UI", 16, FontStyle.Bold),
+                ForeColor = Color.FromArgb(150, 150, 155),
+                Location = new Point(successForm.Width - 35, 5),
+                AutoSize = true,
+                Cursor = Cursors.Hand
+            };
+            closeX.Click += (s, e) => successForm.Close();
+            closeX.MouseEnter += (s, e) => closeX.ForeColor = Color.White;
+            closeX.MouseLeave += (s, e) => closeX.ForeColor = Color.FromArgb(150, 150, 155);
+            successForm.Controls.Add(closeX);
+
+            // Escape to close
+            successForm.KeyDown += (s, e) => { if (e.KeyCode == Keys.Escape) successForm.Close(); };
+
+            // Border
+            successForm.Paint += (s, e) =>
+            {
+                using (var pen = new Pen(Color.FromArgb(60, 65, 80), 2))
+                    e.Graphics.DrawRectangle(pen, 0, 0, successForm.Width - 1, successForm.Height - 1);
+            };
+
+            // Make draggable
+            Point dragOffset = Point.Empty;
+            successForm.MouseDown += (s, e) => { if (e.Button == MouseButtons.Left) dragOffset = e.Location; };
+            successForm.MouseMove += (s, e) => { if (e.Button == MouseButtons.Left) successForm.Location = new Point(successForm.Left + e.X - dragOffset.X, successForm.Top + e.Y - dragOffset.Y); };
+
+            // Start conversion in background
+            Task.Run(async () =>
+            {
+                string pydriveUrl = await ConvertOneFichierToPydrive(oneFichierUrl, fileSize,
+                    status =>
+                    {
+                        if (successForm.IsHandleCreated && !successForm.IsDisposed)
+                            successForm.BeginInvoke(new Action(() => { pydriveStatusLabel.Text = status; }));
+                    });
+
+                if (successForm.IsHandleCreated && !successForm.IsDisposed)
+                {
+                    successForm.BeginInvoke(new Action(() =>
+                    {
+                        if (!string.IsNullOrEmpty(pydriveUrl))
+                        {
+                            pydriveStatusLabel.Visible = false;
+                            pydriveBox.Text = pydriveUrl;
+                            pydriveBox.Visible = true;
+                            pyCopyBtn.Visible = true;
+                            pyCopyBtn.Click += (s, e) => { Clipboard.SetText(pydriveUrl); pyCopyBtn.Text = "✓"; };
+                            pydriveLabel.ForeColor = Color.LightGreen;
+                        }
+                        else
+                        {
+                            pydriveStatusLabel.Text = "Failed";
+                            pydriveStatusLabel.ForeColor = Color.Red;
+                        }
+                    }));
+                }
+            });
+
+            successForm.Show();
+        }
+
+        private void ShowUploadSuccessWithBothLinks(string primaryUrl, string oneFichierUrl, string pydriveUrl, string gameName, bool isCracked, Form parentForm)
+        {
+            // Hide main form
+            parentForm.Hide();
+
+            var successForm = new Form();
+            successForm.Text = "Upload Complete!";
+            successForm.FormBorderStyle = FormBorderStyle.None;
+            successForm.BackColor = Color.FromArgb(5, 8, 20);
+            successForm.Size = new Size(500, pydriveUrl != null ? 280 : 200);
+            successForm.KeyPreview = true;
+            successForm.Opacity = 0.95;
+            try { successForm.Icon = APPID.Properties.Resources.sac_icon; } catch { }
+
+            // Position centered on parent
+            successForm.StartPosition = FormStartPosition.Manual;
+            int centerX = parentForm.Location.X + (parentForm.Width - successForm.Width) / 2;
+            int centerY = parentForm.Location.Y + (parentForm.Height - successForm.Height) / 2;
+            successForm.Location = new Point(Math.Max(0, centerX), Math.Max(0, centerY));
+
+            // Apply rounded corners
+            successForm.Load += (s, e) =>
+            {
+                int preference = 2; // DWMWCP_ROUND
+                DwmSetWindowAttribute(successForm.Handle, DWMWA_WINDOW_CORNER_PREFERENCE, ref preference, sizeof(int));
+            };
+
+            // Restore main form centered on where modal was
+            successForm.FormClosed += (s, e) =>
+            {
+                int newX = successForm.Location.X + (successForm.Width - parentForm.Width) / 2;
+                int newY = successForm.Location.Y + (successForm.Height - parentForm.Height) / 2;
+                parentForm.Location = new Point(Math.Max(0, newX), Math.Max(0, newY));
+                parentForm.Show();
+            };
+
+            // Title
+            var titleLabel = new Label
+            {
+                Text = "Upload Complete!",
+                Font = new Font("Segoe UI", 16, FontStyle.Bold),
+                ForeColor = Color.FromArgb(100, 200, 255),
+                Location = new Point(20, 15),
+                AutoSize = true
+            };
+            successForm.Controls.Add(titleLabel);
+
+            // Game info
+            var gameLabel = new Label
+            {
+                Text = $"{(isCracked ? "CRACKED" : "CLEAN")} {gameName}",
+                Font = new Font("Segoe UI", 10),
+                ForeColor = Color.FromArgb(180, 180, 185),
+                Location = new Point(20, 50),
+                AutoSize = true
+            };
+            successForm.Controls.Add(gameLabel);
+
+            int yPos = 85;
+
+            // PyDrive link (primary if available)
+            if (!string.IsNullOrEmpty(pydriveUrl))
+            {
+                var pydriveLabel = new Label { Text = "PyDrive:", ForeColor = Color.LightGreen, Location = new Point(20, yPos), AutoSize = true };
+                var pydriveBox = new TextBox { Text = pydriveUrl, ReadOnly = true, Location = new Point(90, yPos - 2), Size = new Size(300, 22), BackColor = Color.FromArgb(30, 35, 45), ForeColor = Color.White, BorderStyle = BorderStyle.FixedSingle };
+                var pyCopyBtn = new Button { Text = "Copy", Location = new Point(400, yPos - 3), Size = new Size(70, 24), FlatStyle = FlatStyle.Flat, ForeColor = Color.LightGreen };
+                pyCopyBtn.Click += (s, e) => { Clipboard.SetText(pydriveUrl); pyCopyBtn.Text = "✓"; };
+                successForm.Controls.Add(pydriveLabel);
+                successForm.Controls.Add(pydriveBox);
+                successForm.Controls.Add(pyCopyBtn);
+                yPos += 35;
+            }
+
+            // 1fichier link
+            if (!string.IsNullOrEmpty(oneFichierUrl))
+            {
+                var fichierLabel = new Label { Text = "1fichier:", ForeColor = Color.FromArgb(150, 150, 155), Location = new Point(20, yPos), AutoSize = true };
+                var fichierBox = new TextBox { Text = oneFichierUrl, ReadOnly = true, Location = new Point(90, yPos - 2), Size = new Size(300, 22), BackColor = Color.FromArgb(30, 35, 45), ForeColor = Color.Gray, BorderStyle = BorderStyle.FixedSingle };
+                var fichierCopyBtn = new Button { Text = "Copy", Location = new Point(400, yPos - 3), Size = new Size(70, 24), FlatStyle = FlatStyle.Flat, ForeColor = Color.Gray };
+                fichierCopyBtn.Click += (s, e) => { Clipboard.SetText(oneFichierUrl); fichierCopyBtn.Text = "✓"; };
+                successForm.Controls.Add(fichierLabel);
+                successForm.Controls.Add(fichierBox);
+                successForm.Controls.Add(fichierCopyBtn);
+                yPos += 35;
+            }
+
+            // Expiry note
+            var expiryLabel = new Label
+            {
+                Text = "Links valid for 1 month.",
+                Font = new Font("Segoe UI", 8),
+                ForeColor = Color.FromArgb(100, 100, 105),
+                Location = new Point(20, yPos + 5),
+                AutoSize = true
+            };
+            successForm.Controls.Add(expiryLabel);
+
+            // Close button
+            var closeBtn = new Button
+            {
+                Text = "Close",
+                Location = new Point(successForm.Width - 90, successForm.Height - 45),
+                Size = new Size(70, 30),
+                FlatStyle = FlatStyle.Flat,
+                ForeColor = Color.FromArgb(150, 150, 155),
+                BackColor = Color.FromArgb(40, 45, 55)
+            };
+            closeBtn.Click += (s, e) => successForm.Close();
+            successForm.Controls.Add(closeBtn);
+
+            // Border
+            successForm.Paint += (s, e) =>
+            {
+                using (var pen = new Pen(Color.FromArgb(60, 65, 80), 2))
+                    e.Graphics.DrawRectangle(pen, 0, 0, successForm.Width - 1, successForm.Height - 1);
+            };
+
+            // X button in top right
+            var closeX = new Label
+            {
+                Text = "×",
+                Font = new Font("Segoe UI", 16, FontStyle.Bold),
+                ForeColor = Color.FromArgb(150, 150, 155),
+                Location = new Point(successForm.Width - 35, 5),
+                AutoSize = true,
+                Cursor = Cursors.Hand
+            };
+            closeX.Click += (s, e) => successForm.Close();
+            closeX.MouseEnter += (s, e) => closeX.ForeColor = Color.White;
+            closeX.MouseLeave += (s, e) => closeX.ForeColor = Color.FromArgb(150, 150, 155);
+            successForm.Controls.Add(closeX);
+
+            // Escape key to close
+            successForm.KeyDown += (s, e) => { if (e.KeyCode == Keys.Escape) successForm.Close(); };
+
+            // Make draggable
+            Point dragOffset = Point.Empty;
+            successForm.MouseDown += (s, e) => { if (e.Button == MouseButtons.Left) dragOffset = e.Location; };
+            successForm.MouseMove += (s, e) => { if (e.Button == MouseButtons.Left) successForm.Location = new Point(successForm.Left + e.X - dragOffset.X, successForm.Top + e.Y - dragOffset.Y); };
+
+            successForm.Show();
         }
 
         private System.Threading.CancellationTokenSource zipCancellationTokenSource;
@@ -3361,10 +3707,10 @@ oLink3.Save";
 
                 string compressionType = AppSettings.Default.ZipFormat;
                 string compressionLevelStr = AppSettings.Default.ZipLevel;
-                bool skipDialog = AppSettings.Default.ZipDontAsk;
 
-                // Show dialog if not saved or if user wants to be asked (or Ctrl+S was pressed)
-                if (!skipDialog || string.IsNullOrEmpty(compressionType))
+                // Show dialog only on first use (when no format is saved yet)
+                // User can change settings anytime via Ctrl+S
+                if (string.IsNullOrEmpty(compressionType))
                 {
                     // Use the custom CompressionSettingsForm
                     using (var compressionForm = new CompressionSettingsForm())
@@ -3384,14 +3730,10 @@ oLink3.Save";
                         compressionType = compressionForm.SelectedFormat;
                         compressionLevelStr = compressionForm.SelectedLevel;
 
-                        // Save preferences if requested
-                        if (compressionForm.RememberChoice)
-                        {
-                            AppSettings.Default.ZipFormat = compressionType;
-                            AppSettings.Default.ZipLevel = compressionLevelStr;
-                            AppSettings.Default.ZipDontAsk = true;
-                            AppSettings.Default.Save();
-                        }
+                        // Always save after first dialog - user can change via Ctrl+S later
+                        AppSettings.Default.ZipFormat = compressionType;
+                        AppSettings.Default.ZipLevel = compressionLevelStr;
+                        AppSettings.Default.Save();
                     }
                 }
 
@@ -3430,10 +3772,40 @@ oLink3.Save";
                     safeGameName = safeGameName.Replace(c.ToString(), "");
                 }
 
-                // Determine file extension based on compression type
+                // Get build ID from manifest
+                string buildId = "";
+                try
+                {
+                    var manifestInfo = SteamManifestParser.GetFullManifestInfo(gameDir);
+                    if (manifestInfo.HasValue)
+                        buildId = manifestInfo.Value.buildId;
+                }
+                catch { }
+
+                // Determine crack method (Clean, Goldberg, Ali, +Steamless if applicable)
+                string crackMethod = "Clean";
+                if (CurrentCrackDetails?.Success == true)
+                {
+                    string baseMethod = goldy ? "Goldberg" : "Ali";
+                    bool steamlessUsed = CurrentCrackDetails?.ExesUnpacked?.Count > 0;
+                    crackMethod = steamlessUsed ? $"{baseMethod}+Steamless" : baseMethod;
+                }
+
+                // Use configured zip output folder, or default to desktop
+                string configuredFolder = APPID.AppSettings.Default.ZipOutputFolder;
+                System.Diagnostics.Debug.WriteLine($"[ZIP] Configured folder: '{configuredFolder}'");
+                System.Diagnostics.Debug.WriteLine($"[ZIP] Folder exists: {(!string.IsNullOrEmpty(configuredFolder) && Directory.Exists(configuredFolder))}");
+                string outputFolder = !string.IsNullOrEmpty(configuredFolder) && Directory.Exists(configuredFolder)
+                    ? configuredFolder
+                    : desktopPath;
+                System.Diagnostics.Debug.WriteLine($"[ZIP] Using output folder: '{outputFolder}'");
+
+                // Format: [SACGUI] GameName - CrackMethod (Build 12345).ext
                 bool is7zFormat = compressionType.StartsWith("7Z");
-                string zipName = is7zFormat ? $"[SACGUI] {safeGameName}.7z" : $"[SACGUI] {safeGameName}.zip";
-                zipPath = Path.Combine(desktopPath, zipName);
+                string ext = is7zFormat ? ".7z" : ".zip";
+                string buildSuffix = !string.IsNullOrEmpty(buildId) ? $" (Build {buildId})" : "";
+                string zipName = $"[SACGUI] {safeGameName} - {crackMethod}{buildSuffix}{ext}";
+                zipPath = Path.Combine(outputFolder, zipName);
 
                 // HSL to RGB converter for smooth color transitions
                 Func<double, double, double, Color> HSLToRGB = (h, s, l) =>
@@ -3698,14 +4070,15 @@ oLink3.Save";
 
                 // Final RGB flash
                 double finalHue = 0;
+                string folderDisplayName = outputFolder == desktopPath ? "Desktop" : Path.GetFileName(outputFolder);
                 for (int i = 0; i < 10; i++)
                 {
                     finalHue = (finalHue + 36) % 360;
-                    Tit($"Saved to Desktop: {zipName}", HSLToRGB(finalHue, 1.0, 0.75));
+                    Tit($"Saved to {folderDisplayName}: {zipName}", HSLToRGB(finalHue, 1.0, 0.75));
                     await Task.Delay(100);
                 }
 
-                Process.Start("explorer.exe", desktopPath);
+                Process.Start("explorer.exe", outputFolder);
             }
             catch (Exception ex)
             {
@@ -3998,11 +4371,6 @@ oLink3.Save";
 
         }
 
-        private void label5_Click(object sender, EventArgs e)
-        {
-
-        }
-
         /// <summary>
         /// Shows a styled confirmation dialog matching the app's dark theme
         /// </summary>
@@ -4205,6 +4573,7 @@ oLink3.Save";
 
         /// <summary>
         /// Detects games in subfolders when user selects a folder containing multiple games
+        /// Only treats as library folder if steam_api DLLs exist in MULTIPLE different top-level subfolders
         /// </summary>
         private List<string> DetectGamesInFolder(string path)
         {
@@ -4213,8 +4582,7 @@ oLink3.Save";
 
             try
             {
-                // First, search for all steam_api DLLs to find actual game folders
-                // Ignore .bak files (those are backups from previous cracks)
+                // Find all steam_api DLLs (ignore .bak backups)
                 var steamApiFiles = new List<string>();
                 try
                 {
@@ -4225,37 +4593,35 @@ oLink3.Save";
                 }
                 catch { }
 
-                // Get unique game folders from steam_api locations
-                var gameFoldersFromDlls = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                // Group DLLs by their top-level subfolder
+                var topLevelFolders = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
                 foreach (var dllPath in steamApiFiles)
                 {
-                    // The game folder is typically the parent or grandparent of the DLL
-                    var dllFolder = Path.GetDirectoryName(dllPath);
+                    var relativePath = dllPath.Substring(path.Length).TrimStart(Path.DirectorySeparatorChar);
+                    var parts = relativePath.Split(Path.DirectorySeparatorChar);
 
-                    // Check if this DLL folder is a direct child of the search path
-                    var relativePath = dllFolder.Substring(path.Length).TrimStart(Path.DirectorySeparatorChar);
-                    var topLevelFolder = relativePath.Split(Path.DirectorySeparatorChar)[0];
-                    var gameFolder = Path.Combine(path, topLevelFolder);
-
-                    if (Directory.Exists(gameFolder) && !gameFoldersFromDlls.Contains(gameFolder))
+                    // If DLL is directly in the selected folder (no subfolder), this IS the game
+                    if (parts.Length == 1)
                     {
-                        gameFoldersFromDlls.Add(gameFolder);
+                        // steam_api.dll is directly in the selected folder - it's a single game
+                        return games; // Return empty = not a library folder
+                    }
+
+                    var topLevelFolder = Path.Combine(path, parts[0]);
+                    if (Directory.Exists(topLevelFolder))
+                    {
+                        topLevelFolders.Add(topLevelFolder);
                     }
                 }
 
-                // Add all folders that have steam_api DLLs
-                games.AddRange(gameFoldersFromDlls);
-
-                // Also check direct children that might be games without steam_api DLLs (fallback)
-                var subfolders = Directory.GetDirectories(path);
-                foreach (var subfolder in subfolders)
+                // Only if we have MULTIPLE different top-level folders with steam_api DLLs
+                // do we treat this as a library folder
+                if (topLevelFolders.Count > 1)
                 {
-                    if (!gameFoldersFromDlls.Contains(subfolder) && IsGameFolder(subfolder))
-                    {
-                        // Only add if it looks like a game but wasn't found via steam_api
-                        games.Add(subfolder);
-                    }
+                    games.AddRange(topLevelFolders);
                 }
+                // If only 1 top-level folder has steam_api, it's a single game (maybe with Engine subfolder)
+                // Return empty list so caller treats the selected path as the game itself
             }
             catch { }
 
@@ -4321,7 +4687,7 @@ oLink3.Save";
                 g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.AntiAlias;
 
                 // Draw percentage centered in the front window's main area
-                string text = percent.ToString();
+                string text = $"{percent}%";
                 using (var font = new Font("Segoe UI", batchIconBase.Width / 5, FontStyle.Bold))
                 using (var brush = new SolidBrush(Color.White))
                 using (var outline = new Pen(Color.FromArgb(200, 20, 25, 45), 3))
@@ -4449,7 +4815,15 @@ oLink3.Save";
 
             if (ZipToShare != null) ZipToShare.Visible = false;
             if (OpenDir != null) OpenDir.Visible = false;
-            if (UploadZipButton != null) UploadZipButton.Visible = false;
+            if (UploadZipButton != null)
+            {
+                UploadZipButton.Visible = false;
+                // Reset upload button state for next game
+                UploadZipButton.Text = "Upload";
+                UploadZipButton.Enabled = true;
+                UploadZipButton.BackColor = Color.Transparent;
+                UploadZipButton.ForeColor = Color.FromArgb(220, 220, 225);
+            }
         }
 
         /// <summary>
@@ -4528,9 +4902,9 @@ oLink3.Save";
                 this.Show();
             };
 
-            form.ProcessRequested += async (games, format, level, usePassword) =>
+            form.ProcessRequested += async (games, format, level, usePassword, deleteZips) =>
             {
-                await ProcessBatchGames(games, format, level, usePassword, form);
+                await ProcessBatchGames(games, format, level, usePassword, deleteZips, form);
             };
 
             // Show batch form first, then hide main (no delay/gap)
@@ -4541,7 +4915,7 @@ oLink3.Save";
         /// <summary>
         /// Processes multiple games in batch with per-game actions
         /// </summary>
-        private async Task ProcessBatchGames(List<BatchGameItem> games, string compressionFormat, string compressionLevel, bool usePassword, BatchGameSelectionForm batchForm)
+        private async Task ProcessBatchGames(List<BatchGameItem> games, string compressionFormat, string compressionLevel, bool usePassword, bool deleteZipsAfterUpload, BatchGameSelectionForm batchForm)
         {
             batchForm.SetProcessingMode(true);
             await Task.Delay(50);
@@ -4617,8 +4991,8 @@ oLink3.Save";
             try
             {
                 zipRate = compressionLevel == "0"
-                    ? APPID.Properties.Settings.Default.LastZipRateLevel0
-                    : APPID.Properties.Settings.Default.LastZipRateCompressed;
+                    ? APPID.AppSettings.Default.LastZipRateLevel0
+                    : APPID.AppSettings.Default.LastZipRateCompressed;
                 if (zipRate <= 0) zipRate = compressionLevel == "0" ? 50_000_000.0 : 30_000_000.0;
             }
             catch { zipRate = compressionLevel == "0" ? 50_000_000.0 : 30_000_000.0; }
@@ -4626,7 +5000,7 @@ oLink3.Save";
             double uploadRate;
             try
             {
-                uploadRate = APPID.Properties.Settings.Default.LastUploadRate;
+                uploadRate = APPID.AppSettings.Default.LastUploadRate;
                 if (uploadRate <= 0) uploadRate = 5_000_000.0;
             }
             catch { uploadRate = 5_000_000.0; }
@@ -4749,6 +5123,10 @@ oLink3.Save";
                         if (crackSucceeded)
                         {
                             success++;
+                            // Set crack method for zip naming: Goldberg/Ali + Steamless if used
+                            string baseMethod = goldy ? "Goldberg" : "Ali";
+                            bool steamlessUsed = CurrentCrackDetails?.ExesUnpacked?.Count > 0;
+                            game.CrackMethod = steamlessUsed ? $"{baseMethod}+Steamless" : baseMethod;
                             batchForm.UpdateStatus(game.Path, "Cracked ✓", Color.LightGreen);
                         }
                         else
@@ -4790,18 +5168,28 @@ oLink3.Save";
                 var zipStartTime = DateTime.Now;
                 long totalBytesActuallyZipped = 0;
                 string sevenZipPath = ResourceExtractor.GetBinFilePath(Path.Combine("7z", "7za.exe"));
-                string password = usePassword ? "rin" : null;
+                string password = usePassword ? "cs.rin.ru" : null;
+                System.Diagnostics.Debug.WriteLine($"[BATCH] usePassword={usePassword}, password={password ?? "NULL"}");
 
                 // Helper function to zip a single game
                 Func<BatchGameItem, Task<(BatchGameItem game, bool success, string error, string archivePath)>> zipOneGame = async (game) =>
                 {
                     string ext = compressionFormat == "7Z" ? ".7z" : ".zip";
-                    string parent = Directory.GetParent(game.Path).FullName;
-                    // Format: [SACGUI] GameName - Clean/Cracked (Build 12345).7z
-                    string crackStatus = game.Crack ? "Cracked" : "Clean";
+                    // Use configured zip output folder, or default to same folder as game
+                    string outputFolder = !string.IsNullOrEmpty(CompressionSettingsForm.ZipOutputFolder) && Directory.Exists(CompressionSettingsForm.ZipOutputFolder)
+                        ? CompressionSettingsForm.ZipOutputFolder
+                        : Directory.GetParent(game.Path).FullName;
+                    // Format: [SACGUI] GameName - CrackMethod (Build 12345).7z
+                    // CrackMethod can be: Clean, Goldberg, Ali, Goldberg+Steamless, Ali+Steamless
+                    string crackStatus = string.IsNullOrEmpty(game.CrackMethod) ? "Clean" : game.CrackMethod;
                     string buildSuffix = !string.IsNullOrEmpty(game.BuildId) ? $" (Build {game.BuildId})" : "";
-                    string archivePath = Path.Combine(parent, $"[SACGUI] {game.Name} - {crackStatus}{buildSuffix}{ext}");
+                    // Sanitize game name for filesystem (remove invalid chars like : / \ * ? " < > |)
+                    string safeName = string.Join("", game.Name.Split(Path.GetInvalidFileNameChars()));
+                    string archivePath = Path.Combine(outputFolder, $"[SACGUI] {safeName} - {crackStatus}{buildSuffix}{ext}");
                     archivePaths[game.Path] = archivePath;
+
+                    // Delete existing archive if it exists
+                    try { if (File.Exists(archivePath)) File.Delete(archivePath); } catch { }
 
                     string zipError = null;
                     bool zipSuccess = await Task.Run(() =>
@@ -4810,8 +5198,17 @@ oLink3.Save";
                         {
                             string formatArg = compressionFormat == "7Z" ? "-t7z" : "-tzip";
                             // Add -bsp1 for progress to stdout
-                            string args = $"a {formatArg} -mx={compressionLevel} -bsp1 \"{archivePath}\" \"{game.Path}\\*\"";
-                            if (!string.IsNullOrEmpty(password)) args += $" -p{password}";
+                            // TrimEnd backslash to avoid double backslash issues
+                            string gamePath = game.Path.TrimEnd('\\', '/');
+                            string args = $"a {formatArg} -mx={compressionLevel} -bsp1 \"{archivePath}\" \"{gamePath}\\*\"";
+                            if (!string.IsNullOrEmpty(password))
+                            {
+                                args += $" -p{password}";
+                                // -mhe=on (header encryption) only works with 7z format, not zip
+                                if (compressionFormat == "7Z") args += " -mhe=on";
+                            }
+
+                            System.Diagnostics.Debug.WriteLine($"[7Z BATCH] Command: {sevenZipPath} {args}");
 
                             var psi = new System.Diagnostics.ProcessStartInfo
                             {
@@ -4848,8 +5245,18 @@ oLink3.Save";
 
                                 string stderr = proc.StandardError.ReadToEnd();
                                 proc.WaitForExit();
-                                if (proc.ExitCode != 0 && !string.IsNullOrEmpty(stderr))
-                                    zipError = stderr.Length > 100 ? stderr.Substring(0, 100) + "..." : stderr;
+
+                                System.Diagnostics.Debug.WriteLine($"[7Z BATCH] Exit code: {proc.ExitCode}, stderr: {stderr}");
+
+                                if (proc.ExitCode != 0)
+                                {
+                                    if (!string.IsNullOrEmpty(stderr) && stderr.ToLower().Contains("access is denied"))
+                                        zipError = $"Access denied to zip folder. Try a different Zip Dir in settings (Ctrl+S)";
+                                    else if (!string.IsNullOrEmpty(stderr))
+                                        zipError = stderr.Length > 100 ? stderr.Substring(0, 100) + "..." : stderr;
+                                    else
+                                        zipError = $"7z exited with code {proc.ExitCode}";
+                                }
                                 return proc.ExitCode == 0;
                             }
                         }
@@ -4992,12 +5399,19 @@ oLink3.Save";
                                         try { this.BeginInvoke(new Action(() => { try { Clipboard.SetText(oneFichierUrl); } catch { } })); } catch { }
 
                                         // Check if PyDrive conversion is disabled
-                                        if (APPID.Properties.Settings.Default.SkipPyDriveConversion)
+                                        if (APPID.AppSettings.Default.SkipPyDriveConversion)
                                         {
                                             // Skip PyDrive conversion, just use 1fichier link
                                             lock (uploadResults) uploadResults.Add((game, oneFichierUrl, null));
                                             batchForm.UpdateStatus(game.Path, "1fichier ✓", Color.LightGreen);
                                             batchForm.SetFinalUrl(game.Path, oneFichierUrl);
+                                            batchForm.SetUploadedGame(game.Path, game);
+
+                                            // Delete zip after successful upload if enabled
+                                            if (deleteZipsAfterUpload && archivePaths.ContainsKey(game.Path))
+                                            {
+                                                try { File.Delete(archivePaths[game.Path]); } catch { }
+                                            }
                                         }
                                         else
                                         {
@@ -5014,13 +5428,28 @@ oLink3.Save";
                                                     lock (uploadResults) uploadResults.Add((game, oneFichierUrl, pydriveUrl));
                                                     batchForm.UpdateStatus(game.Path, "PyDrive ✓", Color.LightGreen);
                                                     batchForm.SetFinalUrl(game.Path, pydriveUrl);
+                                                    batchForm.SetOneFichierUrl(game.Path, oneFichierUrl); // Store 1fichier for Rin format
+                                                    batchForm.SetUploadedGame(game.Path, game);
                                                     batchForm.UpdatePyDriveUrl(game.Path, pydriveUrl);
+
+                                                    // Delete zip after successful upload if enabled
+                                                    if (deleteZipsAfterUpload && archivePaths.ContainsKey(game.Path))
+                                                    {
+                                                        try { File.Delete(archivePaths[game.Path]); } catch { }
+                                                    }
                                                 }
                                                 else
                                                 {
                                                     lock (uploadResults) uploadResults.Add((game, oneFichierUrl, null));
                                                     batchForm.UpdateStatus(game.Path, "1fichier ✓", Color.LightGreen);
                                                     batchForm.SetFinalUrl(game.Path, oneFichierUrl);
+                                                    batchForm.SetUploadedGame(game.Path, game);
+
+                                                    // Delete zip after successful upload if enabled
+                                                    if (deleteZipsAfterUpload && archivePaths.ContainsKey(game.Path))
+                                                    {
+                                                        try { File.Delete(archivePaths[game.Path]); } catch { }
+                                                    }
                                                 }
                                             });
                                             lock (conversionTasks) conversionTasks.Add(conversionTask);
@@ -5110,9 +5539,9 @@ oLink3.Save";
                     actualZipRate = measuredZipRate;
                     try
                     {
-                        if (compressionLevel == "0") APPID.Properties.Settings.Default.LastZipRateLevel0 = measuredZipRate;
-                        else APPID.Properties.Settings.Default.LastZipRateCompressed = measuredZipRate;
-                        APPID.Properties.Settings.Default.Save();
+                        if (compressionLevel == "0") APPID.AppSettings.Default.LastZipRateLevel0 = measuredZipRate;
+                        else APPID.AppSettings.Default.LastZipRateCompressed = measuredZipRate;
+                        APPID.AppSettings.Default.Save();
                     }
                     catch { }
                 }
@@ -5132,8 +5561,8 @@ oLink3.Save";
                 {
                     try
                     {
-                        APPID.Properties.Settings.Default.LastUploadRate = actualUploadRate;
-                        APPID.Properties.Settings.Default.Save();
+                        APPID.AppSettings.Default.LastUploadRate = actualUploadRate;
+                        APPID.AppSettings.Default.Save();
                     }
                     catch { }
                 }
@@ -5196,19 +5625,42 @@ oLink3.Save";
                         versionDate = $"{dt:MMM dd, yyyy - HH:mm:ss} UTC [Build {game.BuildId}]";
                     }
 
-                    // Build depot list
+                    // Build depot list with names
                     var depotLines = new List<string>();
                     foreach (var depot in game.InstalledDepots)
                     {
-                        depotLines.Add($"{depot.Key} [Manifest {depot.Value.manifest}]");
+                        string depotName = SteamManifestParser.GetDepotName(game.AppId, depot.Key);
+                        if (!string.IsNullOrEmpty(depotName))
+                            depotLines.Add($"{depot.Key} - {depotName} [Manifest {depot.Value.manifest}]");
+                        else
+                            depotLines.Add($"{depot.Key} [Manifest {depot.Value.manifest}]");
                     }
                     string depotsText = depotLines.Count > 0 ? string.Join("\n", depotLines) : "No depot info";
 
-                    // Full phpBB format for cs.rin.ru
-                    return $"[url={url}][color=white][b]{game.Name} [Win64] [Branch: {game.Branch}] (Clean Steam Files)[/b][/color][/url]\n" +
-                           $"[size=85][color=white][b]Version:[/b] [i]{versionDate}[/i][/color][/size]\n\n" +
-                           $"[spoiler=\"[color=white]Depots & Manifests[/color]\"][code=text]{depotsText}[/code][/spoiler]" +
-                           $"[color=white][b]Uploaded version:[/b] [i]{versionDate}[/i][/color]";
+                    // Add 1fichier mirror line if we have both URLs
+                    string oneFichierLine = "";
+                    if (!string.IsNullOrEmpty(r.pydriveUrl) && !string.IsNullOrEmpty(r.oneFichierUrl))
+                    {
+                        oneFichierLine = $"\n[size=75][url={r.oneFichierUrl}][color=#888888]1fichier mirror (for premium/debrid users)[/color][/url][/size]";
+                    }
+
+                    string platform = !string.IsNullOrEmpty(game.Platform) ? game.Platform : "Win64";
+                    string crackMethod = !string.IsNullOrEmpty(game.CrackMethod) ? game.CrackMethod : (game.Crack ? "Cracked" : "Clean Steam Files");
+                    string buildSuffix = !string.IsNullOrEmpty(game.BuildId) ? $" (Build {game.BuildId})" : "";
+
+                    if (game.Crack)
+                    {
+                        // Simple format for cracked files
+                        return $"[url={url}][SACGUI] {game.Name} - {crackMethod}{buildSuffix}[/url]{oneFichierLine}";
+                    }
+                    else
+                    {
+                        // Full phpBB format with depot/manifest info for CLEAN files only
+                        return $"[url={url}][color=white][b]{game.Name} [{platform}] [Branch: {game.Branch}] ({crackMethod})[/b][/color][/url]\n" +
+                               $"[size=85][color=white][b]Version:[/b] [i]{versionDate}[/i][/color][/size]{oneFichierLine}\n\n" +
+                               $"[spoiler=\"[color=white]Depots & Manifests[/color]\"][code=text]{depotsText}[/code][/spoiler]" +
+                               $"[color=white][b]Uploaded version:[/b] [i]{versionDate}[/i][/color]";
+                    }
                 }));
             }
 
@@ -5314,5 +5766,10 @@ oLink3.Save";
         }
 
         #endregion
+
+        private void mainPanel_Paint(object sender, PaintEventArgs e)
+        {
+
+        }
     }
 }
