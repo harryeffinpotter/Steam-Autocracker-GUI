@@ -23,6 +23,15 @@ namespace APPID
         public string ZipFormat { get; set; } = "zip";
         public string ZipLevel { get; set; } = "Normal";
         public bool ZipDontAsk { get; set; } = false;
+        public bool DeleteZipsAfterUpload { get; set; } = true;
+        public string ZipOutputFolder { get; set; } = "";  // Empty = same folder as game
+        public int CompressionLevel { get; set; } = 5;  // 0-10 slider value
+        public string CompressionFormat { get; set; } = "ZIP";  // ZIP or 7Z
+        public bool SkipPyDriveConversion { get; set; } = false;
+        public string UploadBandwidthLimit { get; set; } = "";
+        public double LastZipRateLevel0 { get; set; } = 0;
+        public double LastZipRateCompressed { get; set; } = 0;
+        public double LastUploadRate { get; set; } = 0;
 
         public static AppSettings Default
         {

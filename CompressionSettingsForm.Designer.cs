@@ -60,7 +60,7 @@ namespace SteamAutocrackGUI
             this.zipRadioButton.Checked = true;
             this.zipRadioButton.FlatAppearance.CheckedBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(20)))));
             this.zipRadioButton.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(220)))), ((int)(((byte)(255)))), ((int)(((byte)(255)))));
-            this.zipRadioButton.Location = new System.Drawing.Point(89, 82);
+            this.zipRadioButton.Location = new System.Drawing.Point(102, 82);
             this.zipRadioButton.Margin = new System.Windows.Forms.Padding(4);
             this.zipRadioButton.Name = "zipRadioButton";
             this.zipRadioButton.Size = new System.Drawing.Size(109, 21);
@@ -75,7 +75,7 @@ namespace SteamAutocrackGUI
             this.sevenZipRadioButton.BackColor = System.Drawing.Color.Transparent;
             this.sevenZipRadioButton.FlatAppearance.CheckedBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(20)))));
             this.sevenZipRadioButton.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(220)))), ((int)(((byte)(255)))), ((int)(((byte)(255)))));
-            this.sevenZipRadioButton.Location = new System.Drawing.Point(239, 82);
+            this.sevenZipRadioButton.Location = new System.Drawing.Point(252, 82);
             this.sevenZipRadioButton.Margin = new System.Windows.Forms.Padding(4);
             this.sevenZipRadioButton.Name = "sevenZipRadioButton";
             this.sevenZipRadioButton.Size = new System.Drawing.Size(61, 21);
@@ -111,7 +111,7 @@ namespace SteamAutocrackGUI
             this.rinPasswordCheckBox.BackColor = System.Drawing.Color.Transparent;
             this.rinPasswordCheckBox.FlatAppearance.CheckedBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(20)))));
             this.rinPasswordCheckBox.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(220)))), ((int)(((byte)(255)))), ((int)(((byte)(255)))));
-            this.rinPasswordCheckBox.Location = new System.Drawing.Point(89, 60);
+            this.rinPasswordCheckBox.Location = new System.Drawing.Point(102, 60);
             this.rinPasswordCheckBox.Margin = new System.Windows.Forms.Padding(4);
             this.rinPasswordCheckBox.Name = "rinPasswordCheckBox";
             this.rinPasswordCheckBox.Size = new System.Drawing.Size(144, 21);

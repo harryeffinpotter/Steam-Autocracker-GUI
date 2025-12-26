@@ -103,7 +103,7 @@ namespace SteamAutocrackGUI
 
             // Upload checkbox
             uploadCheckBox = new CheckBox();
-            uploadCheckBox.Text = "📤 Upload to YSG/HFP Backend (6 month expiry)";
+            uploadCheckBox.Text = "📤 Upload to YSG/HFP Backend (1 month expiry)";
             uploadCheckBox.Location = new Point(20, 175);
             uploadCheckBox.Size = new Size(350, 25);
             uploadCheckBox.ForeColor = Color.FromArgb(255, 200, 100);

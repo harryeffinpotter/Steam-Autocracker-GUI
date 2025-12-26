@@ -2,7 +2,10 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Net.Http;
 using System.Text.RegularExpressions;
+using System.Threading.Tasks;
+using Newtonsoft.Json.Linq;
 
 namespace SteamAppIdIdentifier
 {
@@ -11,6 +14,10 @@ namespace SteamAppIdIdentifier
     /// </summary>
     public static class SteamManifestParser
     {
+        // Cache for depot names fetched from Steam API
+        private static readonly Dictionary<string, Dictionary<string, string>> DepotNameCache = new Dictionary<string, Dictionary<string, string>>();
+        private static readonly HttpClient httpClient = new HttpClient { Timeout = TimeSpan.FromSeconds(10) };
+
         /// <summary>
         /// Attempts to find AppID from Steam manifest files when a folder is dropped
         /// </summary>
@@ -172,6 +179,276 @@ namespace SteamAppIdIdentifier
         }
 
         /// <summary>
+        /// Fetches depot names for an app from Steam API and caches them
+        /// </summary>
+        public static async Task<Dictionary<string, string>> FetchDepotNamesAsync(string appId)
+        {
+            if (string.IsNullOrEmpty(appId)) return new Dictionary<string, string>();
+
+            // Check cache first
+            lock (DepotNameCache)
+            {
+                if (DepotNameCache.TryGetValue(appId, out var cached))
+                    return cached;
+            }
+
+            var depotNames = new Dictionary<string, string>();
+
+            try
+            {
+                // Try Steam Store API first
+                string url = $"https://store.steampowered.com/api/appdetails?appids={appId}";
+                var response = await httpClient.GetStringAsync(url);
+                var json = JObject.Parse(response);
+
+                if (json[appId]?["success"]?.Value<bool>() == true)
+                {
+                    var data = json[appId]["data"];
+                    string gameName = data["name"]?.Value<string>() ?? "";
+
+                    // Check for depots in the response
+                    var depots = data["depots"];
+                    if (depots != null)
+                    {
+                        foreach (var depot in depots.Children<JProperty>())
+                        {
+                            string depotId = depot.Name;
+                            if (long.TryParse(depotId, out _)) // Only numeric depot IDs
+                            {
+                                var depotInfo = depot.Value;
+                                string name = depotInfo["name"]?.Value<string>();
+                                if (!string.IsNullOrEmpty(name))
+                                    depotNames[depotId] = name;
+                            }
+                        }
+                    }
+
+                    // If no depot names found, try SteamDB
+                    if (depotNames.Count == 0)
+                    {
+                        depotNames = await FetchDepotNamesFromSteamDBAsync(appId, gameName);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[DEPOT] Error fetching depot names for {appId}: {ex.Message}");
+            }
+
+            // Cache the result
+            lock (DepotNameCache)
+            {
+                DepotNameCache[appId] = depotNames;
+            }
+
+            return depotNames;
+        }
+
+        /// <summary>
+        /// Fetches depot names from SteamDB as fallback
+        /// </summary>
+        private static async Task<Dictionary<string, string>> FetchDepotNamesFromSteamDBAsync(string appId, string gameName)
+        {
+            var depotNames = new Dictionary<string, string>();
+
+            try
+            {
+                string url = $"https://steamdb.info/app/{appId}/depots/";
+                var request = new HttpRequestMessage(HttpMethod.Get, url);
+                request.Headers.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36");
+
+                var response = await httpClient.SendAsync(request);
+                if (!response.IsSuccessStatusCode) return depotNames;
+
+                string html = await response.Content.ReadAsStringAsync();
+
+                // Parse depot entries: <td><a href="/depot/XXXXX/">XXXXX</a></td><td>Depot Name</td>
+                var depotPattern = @"<a href=""/depot/(\d+)/"">\d+</a></td>\s*<td[^>]*>([^<]+)</td>";
+                var matches = Regex.Matches(html, depotPattern);
+
+                foreach (Match match in matches)
+                {
+                    string depotId = match.Groups[1].Value;
+                    string name = System.Net.WebUtility.HtmlDecode(match.Groups[2].Value.Trim());
+                    if (!string.IsNullOrEmpty(name))
+                        depotNames[depotId] = name;
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[DEPOT] SteamDB fallback failed for {appId}: {ex.Message}");
+            }
+
+            return depotNames;
+        }
+
+        /// <summary>
+        /// Gets depot names synchronously from cache
+        /// Checks game-specific cache first, then shared redistributables (228980)
+        /// </summary>
+        public static string GetDepotName(string appId, string depotId)
+        {
+            lock (DepotNameCache)
+            {
+                // First check game-specific depot names
+                if (!string.IsNullOrEmpty(appId) && DepotNameCache.TryGetValue(appId, out var gameDepots))
+                {
+                    if (gameDepots.TryGetValue(depotId, out string name))
+                        return name;
+                }
+
+                // Then check shared redistributables (228980)
+                if (DepotNameCache.TryGetValue("228980", out var sharedDepots))
+                {
+                    if (sharedDepots.TryGetValue(depotId, out string name))
+                        return name;
+                }
+            }
+            return null;
+        }
+
+        /// <summary>
+        /// Parses InstallScripts section from ACF content and derives depot names from paths
+        /// Returns dictionary of depotId -> derived name
+        /// </summary>
+        public static Dictionary<string, string> ParseInstallScripts(string content)
+        {
+            var depotNames = new Dictionary<string, string>();
+
+            // Find InstallScripts section
+            int scriptsStart = content.IndexOf("\"InstallScripts\"", StringComparison.OrdinalIgnoreCase);
+            if (scriptsStart < 0) return depotNames;
+
+            // Find the section content
+            int braceStart = content.IndexOf('{', scriptsStart);
+            if (braceStart < 0) return depotNames;
+
+            int braceCount = 1;
+            int pos = braceStart + 1;
+            int braceEnd = -1;
+
+            while (pos < content.Length && braceCount > 0)
+            {
+                if (content[pos] == '{') braceCount++;
+                else if (content[pos] == '}') braceCount--;
+                if (braceCount == 0) braceEnd = pos;
+                pos++;
+            }
+
+            if (braceEnd < 0) return depotNames;
+
+            string scriptsSection = content.Substring(braceStart + 1, braceEnd - braceStart - 1);
+
+            // Parse each entry: "depotId" "path\to\installscript.vdf"
+            var scriptPattern = @"""(\d+)""\s+""([^""]+)""";
+            var matches = Regex.Matches(scriptsSection, scriptPattern);
+
+            foreach (Match match in matches)
+            {
+                string depotId = match.Groups[1].Value;
+                string scriptPath = match.Groups[2].Value;
+
+                string derivedName = DeriveDepotNameFromPath(scriptPath);
+                if (!string.IsNullOrEmpty(derivedName))
+                    depotNames[depotId] = derivedName;
+            }
+
+            return depotNames;
+        }
+
+        /// <summary>
+        /// Derives a human-readable depot name from an install script path
+        /// e.g., "_CommonRedist\vcredist\2019\installscript.vdf" -> "VC 2019 Redist"
+        /// </summary>
+        private static string DeriveDepotNameFromPath(string scriptPath)
+        {
+            if (string.IsNullOrEmpty(scriptPath)) return null;
+
+            scriptPath = scriptPath.Replace("\\\\", "\\").ToLowerInvariant();
+
+            // Visual C++ Redistributables
+            if (scriptPath.Contains("vcredist"))
+            {
+                var yearMatch = Regex.Match(scriptPath, @"vcredist[\\\/](\d{4})");
+                if (yearMatch.Success)
+                    return $"VC {yearMatch.Groups[1].Value} Redist";
+            }
+
+            // .NET Framework
+            if (scriptPath.Contains("dotnet"))
+            {
+                var versionMatch = Regex.Match(scriptPath, @"dotnet[\\\/]([0-9.]+)");
+                if (versionMatch.Success)
+                    return $".NET {versionMatch.Groups[1].Value} Redist";
+            }
+
+            // XNA
+            if (scriptPath.Contains("xna"))
+            {
+                var versionMatch = Regex.Match(scriptPath, @"xna[\\\/]([0-9.]+)");
+                if (versionMatch.Success)
+                    return $"XNA {versionMatch.Groups[1].Value} Redist";
+            }
+
+            // DirectX
+            if (scriptPath.Contains("directx"))
+            {
+                if (scriptPath.Contains("jun2010"))
+                    return "DirectX Jun2010 Redist";
+                return "DirectX Redist";
+            }
+
+            // OpenAL
+            if (scriptPath.Contains("openal"))
+                return "OpenAL Redist";
+
+            // PhysX
+            if (scriptPath.Contains("physx"))
+                return "PhysX Redist";
+
+            return null;
+        }
+
+        /// <summary>
+        /// Loads depot names from Steamworks Common Redistributables (228980) manifest
+        /// These are shared across all games (VC++, .NET, XNA, DirectX, etc.)
+        /// </summary>
+        private static void LoadSharedDepotNames(string steamappsPath)
+        {
+            const string SHARED_DEPOTS_APPID = "228980";
+
+            // Check if already loaded
+            lock (DepotNameCache)
+            {
+                if (DepotNameCache.ContainsKey(SHARED_DEPOTS_APPID))
+                    return;
+            }
+
+            try
+            {
+                string sharedManifestPath = Path.Combine(steamappsPath, $"appmanifest_{SHARED_DEPOTS_APPID}.acf");
+                if (File.Exists(sharedManifestPath))
+                {
+                    string content = File.ReadAllText(sharedManifestPath);
+                    var depotNames = ParseInstallScripts(content);
+
+                    if (depotNames.Count > 0)
+                    {
+                        lock (DepotNameCache)
+                        {
+                            DepotNameCache[SHARED_DEPOTS_APPID] = depotNames;
+                        }
+                        System.Diagnostics.Debug.WriteLine($"[DEPOT] Loaded {depotNames.Count} shared depot names from 228980");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[DEPOT] Error loading shared depot names: {ex.Message}");
+            }
+        }
+
+        /// <summary>
         /// Parses InstalledDepots section from ACF content
         /// Returns dictionary of depotId -> (manifest, size)
         /// </summary>
@@ -233,6 +510,7 @@ namespace SteamAppIdIdentifier
 
         /// <summary>
         /// Gets full manifest info for a game including depots
+        /// Also parses shared redistributables manifest for depot names
         /// </summary>
         public static (string appId, string gameName, string buildId, long lastUpdated, Dictionary<string, (string manifest, long size)> depots)? GetFullManifestInfo(string gamePath)
         {
@@ -242,6 +520,9 @@ namespace SteamAppIdIdentifier
             string gameFolderName = System.IO.Path.GetFileName(gamePath.TrimEnd('\\', '/'));
             string steamappsPath = GetSteamappsPath(gamePath);
             if (string.IsNullOrEmpty(steamappsPath)) return null;
+
+            // First, try to load depot names from Steamworks Common Redistributables (228980)
+            LoadSharedDepotNames(steamappsPath);
 
             var acfFiles = Directory.GetFiles(steamappsPath, "appmanifest_*.acf");
 
@@ -263,6 +544,19 @@ namespace SteamAppIdIdentifier
                             long.TryParse(manifest["LastUpdated"], out lastUpdated);
 
                         var depots = ParseInstalledDepots(content);
+
+                        // Parse game's own InstallScripts and cache depot names
+                        var gameDepotNames = ParseInstallScripts(content);
+                        if (gameDepotNames.Count > 0 && !string.IsNullOrEmpty(appId))
+                        {
+                            lock (DepotNameCache)
+                            {
+                                if (!DepotNameCache.ContainsKey(appId))
+                                    DepotNameCache[appId] = new Dictionary<string, string>();
+                                foreach (var kvp in gameDepotNames)
+                                    DepotNameCache[appId][kvp.Key] = kvp.Value;
+                            }
+                        }
 
                         return (appId, gameName, buildId, lastUpdated, depots);
                     }

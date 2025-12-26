@@ -20,6 +20,9 @@ namespace SteamAutocrackGUI
         public bool Zip { get; set; } = false;
         public bool Upload { get; set; } = false;
 
+        // Crack method tracking (set after cracking): "Goldberg", "Ali", "Goldberg+Steamless", "Ali+Steamless", or empty for clean
+        public string CrackMethod { get; set; } = "";
+
         // Manifest info for clean files sharing
         public string BuildId { get; set; }
         public long LastUpdated { get; set; } // Unix timestamp
@@ -95,7 +98,9 @@ namespace SteamAutocrackGUI
         private Dictionary<int, string> detectedAppIds = new Dictionary<int, string>();
         private Dictionary<string, string> convertingUrls = new Dictionary<string, string>(); // gamePath -> 1fichier URL during conversion
         private Dictionary<string, string> finalUrls = new Dictionary<string, string>(); // gamePath -> final URL (pydrive or 1fichier)
+        private Dictionary<string, string> oneFichierUrls = new Dictionary<string, string>(); // gamePath -> 1fichier URL (for Rin format with both links)
         private Dictionary<string, APPID.SteamAppId.CrackDetails> crackDetailsMap = new Dictionary<string, APPID.SteamAppId.CrackDetails>(); // gamePath -> crack details
+        private Dictionary<string, BatchGameItem> uploadedGames = new Dictionary<string, BatchGameItem>(); // gamePath -> BatchGameItem for copy formatting
 
         // Upload slots (3 concurrent uploads max)
         private const int MAX_UPLOAD_SLOTS = 3;
@@ -126,13 +131,34 @@ namespace SteamAutocrackGUI
         public string CompressionFormat { get; private set; } = "ZIP";
         public string CompressionLevel { get; private set; } = "0";
         public bool UseRinPassword { get; private set; } = false;
+        public bool DeleteZipsAfterUpload => SteamAutocrackGUI.CompressionSettingsForm.DeleteZipsAfterUpload;
 
         // Event for when Process is clicked
-        public event Action<List<BatchGameItem>, string, string, bool> ProcessRequested;
+        public event Action<List<BatchGameItem>, string, string, bool, bool> ProcessRequested;
 
-        public BatchGameSelectionForm(List<string> paths)
+        // Preset values for single-game mode
+        private bool? presetCrack = null;
+        private bool? presetZip = null;
+        private bool? presetUpload = null;
+
+        public BatchGameSelectionForm(List<string> paths) : this(paths, null, null, null) { }
+
+        public BatchGameSelectionForm(List<string> paths, bool? crackPreset, bool? zipPreset, bool? uploadPreset)
         {
             gamePaths = paths;
+            presetCrack = crackPreset;
+            presetZip = zipPreset;
+            presetUpload = uploadPreset;
+
+            // Load saved settings on startup
+            try
+            {
+                CompressionFormat = APPID.AppSettings.Default.CompressionFormat ?? "ZIP";
+                CompressionLevel = APPID.AppSettings.Default.CompressionLevel.ToString();
+                UseRinPassword = APPID.AppSettings.Default.UseRinPassword;
+            }
+            catch { }
+
             InitializeForm();
 
             this.Load += (s, e) =>
@@ -179,7 +205,7 @@ namespace SteamAutocrackGUI
 
         private void InitializeForm()
         {
-            this.Text = "Batch Process - Select Games";
+            this.Text = "Share Processor - Select Games";
             this.Size = new Size(760, 580);
             this.MinimumSize = new Size(760, 300);
             this.StartPosition = FormStartPosition.Manual;
@@ -194,7 +220,7 @@ namespace SteamAutocrackGUI
             var titleLabel = new Label
             {
                 Name = "titleLabel",
-                Text = "Batch Process",
+                Text = "Share Processor",
                 Font = new Font("Segoe UI", 14, FontStyle.Bold),
                 ForeColor = Color.FromArgb(100, 200, 255),
                 Location = new Point(15, 15),
@@ -203,11 +229,12 @@ namespace SteamAutocrackGUI
             };
             this.Controls.Add(titleLabel);
 
-            // Minimize button (custom, top right)
+            // Close-style button that minimizes (custom, top right)
             var minimizeBtn = new Label
             {
+                Name = "minimizeBtn",
                 Text = "─",
-                Font = new Font("Segoe UI", 14, FontStyle.Bold),
+                Font = new Font("Segoe UI", 16, FontStyle.Bold),
                 ForeColor = Color.FromArgb(150, 150, 155),
                 Location = new Point(this.ClientSize.Width - 35, 10),
                 Size = new Size(30, 30),
@@ -354,6 +381,34 @@ namespace SteamAutocrackGUI
             };
             gameGrid.Columns.Add(statusCol);
 
+            // Copy icon columns (visible only after upload completes for each row)
+            var rinCopyCol = new DataGridViewTextBoxColumn
+            {
+                Name = "RinCopy",
+                HeaderText = "",
+                Width = 26,
+                ReadOnly = true
+            };
+            gameGrid.Columns.Add(rinCopyCol);
+
+            var discordCopyCol = new DataGridViewTextBoxColumn
+            {
+                Name = "DiscordCopy",
+                HeaderText = "",
+                Width = 26,
+                ReadOnly = true
+            };
+            gameGrid.Columns.Add(discordCopyCol);
+
+            var plainCopyCol = new DataGridViewTextBoxColumn
+            {
+                Name = "PlainCopy",
+                HeaderText = "",
+                Width = 26,
+                ReadOnly = true
+            };
+            gameGrid.Columns.Add(plainCopyCol);
+
             var detailsCol = new DataGridViewTextBoxColumn
             {
                 Name = "Details",
@@ -369,8 +424,14 @@ namespace SteamAutocrackGUI
             // Custom paint for cells and headers
             Image infoIcon = null;
             Image zipperIcon = null;
+            Image rinIcon = null;
+            Image discordIcon = null;
+            Image notepadIcon = null;
             try { infoIcon = APPID.Properties.Resources.info_icon; } catch { }
             try { zipperIcon = APPID.Properties.Resources.zipper_icon; } catch { }
+            try { rinIcon = APPID.Properties.Resources.rin_icon?.ToBitmap(); } catch { }
+            try { discordIcon = APPID.Properties.Resources.discord_icon; } catch { }
+            try { notepadIcon = APPID.Properties.Resources.notepad_icon; } catch { }
 
             gameGrid.CellPainting += (s, e) =>
             {
@@ -557,6 +618,33 @@ namespace SteamAutocrackGUI
                             e.Handled = true;
                         }
                     }
+                    // Copy icon columns - only show if row has uploaded URL
+                    else if (colName == "RinCopy" || colName == "DiscordCopy" || colName == "PlainCopy")
+                    {
+                        e.PaintBackground(e.ClipBounds, true);
+                        string gamePath = gameGrid.Rows[e.RowIndex].Tag?.ToString();
+                        bool hasUrl = !string.IsNullOrEmpty(gamePath) && finalUrls.ContainsKey(gamePath);
+
+                        if (hasUrl)
+                        {
+                            Image icon = null;
+                            string tooltip = "";
+                            if (colName == "RinCopy") { icon = rinIcon; tooltip = "Copy for cs.rin.ru (phpBB format)"; }
+                            else if (colName == "DiscordCopy") { icon = discordIcon; tooltip = "Copy for Discord"; }
+                            else if (colName == "PlainCopy") { icon = notepadIcon; tooltip = "Copy plain URL"; }
+
+                            if (icon != null)
+                            {
+                                int iconSize = Math.Min(e.CellBounds.Width - 4, e.CellBounds.Height - 6);
+                                iconSize = Math.Min(iconSize, 18);
+                                int iconX = e.CellBounds.X + (e.CellBounds.Width - iconSize) / 2;
+                                int iconY = e.CellBounds.Y + (e.CellBounds.Height - iconSize) / 2;
+                                e.Graphics.InterpolationMode = InterpolationMode.HighQualityBicubic;
+                                e.Graphics.DrawImage(icon, iconX, iconY, iconSize, iconSize);
+                            }
+                        }
+                        e.Handled = true;
+                    }
                 }
             };
 
@@ -686,6 +774,114 @@ namespace SteamAutocrackGUI
                             "No Details", MessageBoxButtons.OK, MessageBoxIcon.Information);
                     }
                 }
+
+                // Handle copy icon clicks
+                if (colName == "RinCopy" || colName == "DiscordCopy" || colName == "PlainCopy")
+                {
+                    string gamePath = gameGrid.Rows[e.RowIndex].Tag?.ToString();
+                    if (!string.IsNullOrEmpty(gamePath) && finalUrls.ContainsKey(gamePath) && uploadedGames.ContainsKey(gamePath))
+                    {
+                        string url = finalUrls[gamePath];
+                        var game = uploadedGames[gamePath];
+                        string textToCopy = "";
+
+                        if (colName == "PlainCopy")
+                        {
+                            // Plain text: matches zip filename + URL
+                            string crackStatus = !string.IsNullOrEmpty(game.CrackMethod) ? game.CrackMethod : (game.Crack ? "Cracked" : "Clean");
+                            string buildSuffix = !string.IsNullOrEmpty(game.BuildId) ? $" (Build {game.BuildId})" : "";
+                            textToCopy = $"[SACGUI] {game.Name} - {crackStatus}{buildSuffix}\n{url}";
+                        }
+                        else if (colName == "DiscordCopy")
+                        {
+                            // Discord format: matches zip filename as markdown link
+                            string crackStatus = !string.IsNullOrEmpty(game.CrackMethod) ? game.CrackMethod : (game.Crack ? "Cracked" : "Clean");
+                            string buildSuffix = !string.IsNullOrEmpty(game.BuildId) ? $" (Build {game.BuildId})" : "";
+                            textToCopy = $"[[SACGUI] {game.Name} - {crackStatus}{buildSuffix}]({url})";
+                        }
+                        else if (colName == "RinCopy")
+                        {
+                            string platform = !string.IsNullOrEmpty(game.Platform) ? game.Platform : "Win64";
+                            // Use specific crack method if available, otherwise generic
+                            string crackStatus = !string.IsNullOrEmpty(game.CrackMethod) ? game.CrackMethod : (game.Crack ? "Cracked" : "Clean Steam Files");
+
+                            // Check if we have a 1fichier URL to include as mirror
+                            string oneFichierLine = "";
+                            if (oneFichierUrls.ContainsKey(gamePath))
+                            {
+                                string fichierUrl = oneFichierUrls[gamePath];
+                                // Only add if it's different from the main URL (i.e., main is pydrive)
+                                if (fichierUrl != url)
+                                {
+                                    oneFichierLine = $"\n[size=75][url={fichierUrl}][color=#888888]Mirror: 1fichier[/color][/url][/size]";
+                                }
+                            }
+
+                            if (game.Crack)
+                            {
+                                // Simple format for cracked files - matches zip filename
+                                string buildSuffix = !string.IsNullOrEmpty(game.BuildId) ? $" (Build {game.BuildId})" : "";
+                                textToCopy = $"[url={url}][SACGUI] {game.Name} - {crackStatus}{buildSuffix}[/url]{oneFichierLine}";
+                            }
+                            else
+                            {
+                                // Full phpBB format with depot/manifest info for CLEAN files only
+                                string versionDate = "Unknown";
+                                if (game.LastUpdated > 0)
+                                {
+                                    var dt = DateTimeOffset.FromUnixTimeSeconds(game.LastUpdated).UtcDateTime;
+                                    versionDate = $"{dt:MMM dd, yyyy - HH:mm:ss} UTC [Build {game.BuildId}]";
+                                }
+
+                                var depotLines = new List<string>();
+                                foreach (var depot in game.InstalledDepots)
+                                {
+                                    // Try to get depot name from cache
+                                    string depotName = SteamManifestParser.GetDepotName(game.AppId, depot.Key);
+                                    if (!string.IsNullOrEmpty(depotName))
+                                        depotLines.Add($"{depot.Key} - {depotName} [Manifest {depot.Value.manifest}]");
+                                    else
+                                        depotLines.Add($"{depot.Key} [Manifest {depot.Value.manifest}]");
+                                }
+                                string depotsText = depotLines.Count > 0 ? string.Join("\n", depotLines) : "No depot info";
+
+                                textToCopy = $"[url={url}][color=white][b]{game.Name} [{platform}] [Branch: {game.Branch}] ({crackStatus})[/b][/color][/url]\n" +
+                                           $"[size=85][color=white][b]Version:[/b] [i]{versionDate}[/i][/color][/size]{oneFichierLine}\n\n" +
+                                           $"[spoiler=\"[color=white]Depots & Manifests[/color]\"][code=text]{depotsText}[/code][/spoiler]" +
+                                           $"[color=white][b]Uploaded version:[/b] [i]{versionDate}[/i][/color]";
+                            }
+                        }
+
+                        if (!string.IsNullOrEmpty(textToCopy))
+                        {
+                            try
+                            {
+                                Clipboard.SetText(textToCopy);
+                                // Visual feedback
+                                string originalStatus = gameGrid.Rows[e.RowIndex].Cells["Status"].Value?.ToString() ?? "";
+                                Color originalColor = gameGrid.Rows[e.RowIndex].Cells["Status"].Style.ForeColor;
+                                string formatName = colName == "RinCopy" ? "Rin" : (colName == "DiscordCopy" ? "Discord" : "URL");
+                                gameGrid.Rows[e.RowIndex].Cells["Status"].Value = $"{formatName} copied!";
+                                gameGrid.Rows[e.RowIndex].Cells["Status"].Style.ForeColor = Color.Cyan;
+
+                                var timer = new Timer { Interval = 2000 };
+                                int rowIdx = e.RowIndex;
+                                timer.Tick += (ts, te) =>
+                                {
+                                    timer.Stop();
+                                    timer.Dispose();
+                                    if (!this.IsDisposed && rowIdx < gameGrid.Rows.Count)
+                                    {
+                                        gameGrid.Rows[rowIdx].Cells["Status"].Value = originalStatus;
+                                        gameGrid.Rows[rowIdx].Cells["Status"].Style.ForeColor = originalColor;
+                                    }
+                                };
+                                timer.Start();
+                            }
+                            catch { }
+                        }
+                    }
+                }
             };
 
             this.Controls.Add(gameGrid);
@@ -696,6 +892,41 @@ namespace SteamAutocrackGUI
                 AutoPopDelay = 5000,
                 InitialDelay = 300,
                 ReshowDelay = 200
+            };
+
+            // Add tooltip for copy icon columns
+            int lastTooltipRow = -1;
+            int lastTooltipCol = -1;
+            gameGrid.CellMouseEnter += (s, e) =>
+            {
+                if (e.RowIndex < 0 || e.ColumnIndex < 0) return;
+
+                string colName = gameGrid.Columns[e.ColumnIndex].Name;
+                if (colName == "RinCopy" || colName == "DiscordCopy" || colName == "PlainCopy")
+                {
+                    string gamePath = gameGrid.Rows[e.RowIndex].Tag?.ToString();
+                    bool hasUrl = !string.IsNullOrEmpty(gamePath) && finalUrls.ContainsKey(gamePath);
+
+                    if (hasUrl && (e.RowIndex != lastTooltipRow || e.ColumnIndex != lastTooltipCol))
+                    {
+                        lastTooltipRow = e.RowIndex;
+                        lastTooltipCol = e.ColumnIndex;
+
+                        string tip = colName == "RinCopy" ? "Copy for cs.rin.ru (phpBB format)" :
+                                    colName == "DiscordCopy" ? "Copy for Discord" :
+                                    "Copy plain URL";
+                        batchToolTip.SetToolTip(gameGrid, tip);
+                    }
+                }
+                else
+                {
+                    if (lastTooltipRow >= 0)
+                    {
+                        batchToolTip.SetToolTip(gameGrid, "");
+                        lastTooltipRow = -1;
+                        lastTooltipCol = -1;
+                    }
+                }
             };
 
             // Compression settings button - bottom left, anchored (custom painted with image)
@@ -1034,7 +1265,8 @@ namespace SteamAutocrackGUI
                 }
 
                 // Fire the event - form stays open
-                ProcessRequested?.Invoke(SelectedGames, CompressionFormat, CompressionLevel, UseRinPassword);
+                System.Diagnostics.Debug.WriteLine($"[BATCH] Invoking ProcessRequested: UseRinPassword={UseRinPassword}, CompressionLevel={CompressionLevel}");
+                ProcessRequested?.Invoke(SelectedGames, CompressionFormat, CompressionLevel, UseRinPassword, DeleteZipsAfterUpload);
             };
             batchToolTip.SetToolTip(processBtn, "Start processing selected games (crack, zip, upload)");
             this.Controls.Add(processBtn);
@@ -1155,6 +1387,53 @@ namespace SteamAutocrackGUI
             if (!string.IsNullOrEmpty(gamePath) && !string.IsNullOrEmpty(finalUrl))
             {
                 finalUrls[gamePath] = finalUrl;
+                // Refresh the row to show/hide copy icons
+                for (int i = 0; i < gameGrid.Rows.Count; i++)
+                {
+                    if (gameGrid.Rows[i].Tag?.ToString() == gamePath)
+                    {
+                        gameGrid.InvalidateRow(i);
+                        break;
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// Stores the uploaded game data for copy formatting
+        /// </summary>
+        public void SetUploadedGame(string gamePath, BatchGameItem game)
+        {
+            if (this.IsDisposed) return;
+
+            if (this.InvokeRequired)
+            {
+                try { this.BeginInvoke(new Action(() => SetUploadedGame(gamePath, game))); } catch { }
+                return;
+            }
+
+            if (!string.IsNullOrEmpty(gamePath) && game != null)
+            {
+                uploadedGames[gamePath] = game;
+            }
+        }
+
+        /// <summary>
+        /// Stores the 1fichier URL for a game (used in Rin format alongside pydrive)
+        /// </summary>
+        public void SetOneFichierUrl(string gamePath, string url)
+        {
+            if (this.IsDisposed) return;
+
+            if (this.InvokeRequired)
+            {
+                try { this.BeginInvoke(new Action(() => SetOneFichierUrl(gamePath, url))); } catch { }
+                return;
+            }
+
+            if (!string.IsNullOrEmpty(gamePath) && !string.IsNullOrEmpty(url))
+            {
+                oneFichierUrls[gamePath] = url;
             }
         }
 
@@ -1407,26 +1686,38 @@ namespace SteamAutocrackGUI
 
             allLinksPhpBB = phpBBLinks;
 
-            // Build markdown version from finalUrls
+            // Build markdown and plaintext versions from finalUrls using same format as zip filename
             var mdLinks = new List<string>();
             var plainLinks = new List<string>();
             foreach (var kvp in finalUrls)
             {
-                string gameName = Path.GetFileName(kvp.Key);
-                mdLinks.Add($"[{gameName}]({kvp.Value})");
+                string gamePath = kvp.Key;
+                string url = kvp.Value;
 
-                // Determine if cracked or clean based on details
-                string suffix = "(Cracked)";
-                if (crackDetailsMap.ContainsKey(kvp.Key))
+                // Get game info for proper formatting
+                if (uploadedGames.ContainsKey(gamePath))
                 {
-                    var details = crackDetailsMap[kvp.Key];
-                    if (details.DllsReplaced.Count == 0 && details.ExesUnpacked.Count == 0)
-                        suffix = "(Clean)";
+                    var game = uploadedGames[gamePath];
+                    string crackStatus = !string.IsNullOrEmpty(game.CrackMethod) ? game.CrackMethod : (game.Crack ? "Cracked" : "Clean");
+                    string buildSuffix = !string.IsNullOrEmpty(game.BuildId) ? $" (Build {game.BuildId})" : "";
+
+                    // Discord format: [[SACGUI] GameName - CrackMethod (Build X)](url)
+                    mdLinks.Add($"[[SACGUI] {game.Name} - {crackStatus}{buildSuffix}]({url})");
+
+                    // Plain format: [SACGUI] GameName - CrackMethod (Build X)\nurl
+                    plainLinks.Add($"[SACGUI] {game.Name} - {crackStatus}{buildSuffix}\n{url}");
                 }
-                plainLinks.Add($"{gameName} {suffix}: {kvp.Value}");
+                else
+                {
+                    // Fallback if game info not found
+                    string gameName = Path.GetFileName(gamePath);
+                    mdLinks.Add($"[{gameName}]({url})");
+                    plainLinks.Add($"{gameName}\n{url}");
+                }
             }
             allLinksMarkdown = string.Join("\n", mdLinks);
-            allLinksPlaintext = string.Join("\n", plainLinks);
+            // Plain text gets clear separators between entries
+            allLinksPlaintext = string.Join("\n\n---\n\n", plainLinks);
 
             if (string.IsNullOrEmpty(allLinksPhpBB) && string.IsNullOrEmpty(allLinksMarkdown))
                 return;
@@ -1579,7 +1870,7 @@ namespace SteamAutocrackGUI
         /// <summary>
         /// Reset title to default or show completion message
         /// </summary>
-        public void ResetTitle(string text = "Batch Process")
+        public void ResetTitle(string text = "Share Processor")
         {
             if (this.IsDisposed) return;
 
@@ -1615,6 +1906,11 @@ namespace SteamAutocrackGUI
                 HasCompletedResults = false;
             else
                 HasCompletedResults = true;
+
+            // Update minimize button: dash while processing, X when complete
+            var minimizeBtn = this.Controls["minimizeBtn"] as Label;
+            if (minimizeBtn != null)
+                minimizeBtn.Text = processing ? "─" : "×";
 
             // Disable/enable grid interactions
             gameGrid.ReadOnly = processing;
@@ -1736,9 +2032,10 @@ namespace SteamAutocrackGUI
                 }
 
                 gameGrid.Rows[rowIndex].Cells["Size"].Value = game.size;
-                gameGrid.Rows[rowIndex].Cells["Crack"].Value = true;
-                gameGrid.Rows[rowIndex].Cells["Zip"].Value = false;
-                gameGrid.Rows[rowIndex].Cells["Upload"].Value = false;
+                // Use preset values if provided, otherwise use defaults
+                gameGrid.Rows[rowIndex].Cells["Crack"].Value = presetCrack ?? true;
+                gameGrid.Rows[rowIndex].Cells["Zip"].Value = presetZip ?? false;
+                gameGrid.Rows[rowIndex].Cells["Upload"].Value = presetUpload ?? false;
                 gameGrid.Rows[rowIndex].Cells["Status"].Value = game.steamApiCount > 2 ? "⚠️ Check structure" : "Pending";
                 gameGrid.Rows[rowIndex].Tag = game.path;
             }
