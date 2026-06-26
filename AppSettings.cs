@@ -55,15 +55,17 @@ namespace APPID
                     string json = File.ReadAllText(SettingsPath);
                     _instance = JsonConvert.DeserializeObject<AppSettings>(json);
                 }
-                else
-                {
-                    _instance = new AppSettings();
-                }
             }
             catch
             {
-                _instance = new AppSettings();
+                _instance = null;
             }
+
+            // A missing, empty, or corrupt settings file deserializes to null
+            // (DeserializeObject returns null without throwing for empty/"null"
+            // content). Fall back to defaults so Default never hands back null.
+            if (_instance == null)
+                _instance = new AppSettings();
         }
 
         public void Save()

@@ -46,6 +46,8 @@ namespace APPID
                     {
                         foreach (var item in cachedGames.Apps)
                         {
+                            if (item == null || string.IsNullOrEmpty(item.Name))
+                                continue;
                             if (item.Name.ToLower().Contains("demo") || item.Name.ToLower().Contains("soundtrack"))
                                 continue;
                             string ItemWithoutTroubles = RemoveSpecialCharacters(item.Name);
@@ -93,8 +95,10 @@ namespace APPID
                 File.WriteAllText(cacheFile, content);
 
                 SteamGames steamGames = JsonConvert.DeserializeObject<SteamGames>(content);
-                foreach (var item in steamGames.Apps)
+                foreach (var item in steamGames?.Apps ?? Array.Empty<App>())
                 {
+                    if (item == null || string.IsNullOrEmpty(item.Name))
+                        continue;
                     if (item.Name.ToLower().Contains("demo") || item.Name.ToLower().Contains("soundtrack"))
                         continue;
                     string ItemWithoutTroubles = RemoveSpecialCharacters(item.Name);

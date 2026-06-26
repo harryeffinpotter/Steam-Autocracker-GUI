@@ -286,6 +286,9 @@ namespace APPID
                 this.TopMost = true;
                 this.TopMost = false;
                 this.Activate();
+                // The toggle above leaves TopMost off; restore the pinned state
+                // so a pinned window actually stays on top after first show.
+                this.TopMost = AppSettings.Default.Pinned;
             };
 
             // Wire up Upload button click handler
@@ -4879,6 +4882,7 @@ oLink3.Save";
         {
             var form = new BatchGameSelectionForm(gamePaths);
             form.Owner = this;  // Set owner so icon can be copied
+            form.TopMost = AppSettings.Default.Pinned;  // Sit above the main window when pinned
             activeBatchForm = form;  // Track the active batch form
 
             // Position batch form centered on where main form was
@@ -5209,13 +5213,32 @@ oLink3.Save";
                     string zipError = null;
                     bool zipSuccess = await Task.Run(() =>
                     {
+                        string tempBaseToCleanup = null;
                         try
                         {
                             string formatArg = compressionFormat == "7Z" ? "-t7z" : "-tzip";
-                            // Add -bsp1 for progress to stdout
-                            // TrimEnd backslash to avoid double backslash issues
-                            string gamePath = game.Path.TrimEnd('\\', '/');
-                            string args = $"a {formatArg} -mx={compressionLevel} -bsp1 \"{archivePath}\" \"{gamePath}\\*\"";
+
+                            // Clean releases get the proper Steam structure (a named
+                            // build folder containing depotcache + steamapps/common/
+                            // InstallDir); cracked releases archive the game folder
+                            // contents directly.
+                            string zipSpec;
+                            string workingDir = null;
+                            string cleanStructure = string.IsNullOrEmpty(game.CrackMethod)
+                                ? CleanReleaseBuilder.PrepareStructure(game.AppId, game.Name, game.Path, game.BuildId)
+                                : null;
+                            if (!string.IsNullOrEmpty(cleanStructure))
+                            {
+                                tempBaseToCleanup = Path.GetDirectoryName(cleanStructure);
+                                workingDir = tempBaseToCleanup;
+                                zipSpec = $"\"{Path.GetFileName(cleanStructure)}\\\"";
+                            }
+                            else
+                            {
+                                zipSpec = $"\"{game.Path.TrimEnd('\\', '/')}\\*\"";
+                            }
+
+                            string args = $"a {formatArg} -mx={compressionLevel} -bsp1 \"{archivePath}\" {zipSpec}";
                             if (!string.IsNullOrEmpty(password))
                             {
                                 args += $" -p{password}";
@@ -5234,6 +5257,7 @@ oLink3.Save";
                                 RedirectStandardOutput = true,
                                 RedirectStandardError = true
                             };
+                            if (!string.IsNullOrEmpty(workingDir)) psi.WorkingDirectory = workingDir;
 
                             using (var proc = System.Diagnostics.Process.Start(psi))
                             {
@@ -5279,6 +5303,13 @@ oLink3.Save";
                         {
                             zipError = ex.Message;
                             return false;
+                        }
+                        finally
+                        {
+                            if (!string.IsNullOrEmpty(tempBaseToCleanup))
+                            {
+                                try { Directory.Delete(tempBaseToCleanup, true); } catch { }
+                            }
                         }
                     });
 
