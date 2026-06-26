@@ -543,6 +543,15 @@ namespace SteamAppIdIdentifier
                         if (manifest.ContainsKey("LastUpdated"))
                             long.TryParse(manifest["LastUpdated"], out lastUpdated);
 
+                        // Fallback for manifests with no/zero LastUpdated: Steam
+                        // rewrites the .acf on every update, so its modified time
+                        // is a reliable last-updated proxy.
+                        if (lastUpdated <= 0)
+                        {
+                            try { lastUpdated = ((DateTimeOffset)File.GetLastWriteTimeUtc(acfFile)).ToUnixTimeSeconds(); }
+                            catch { }
+                        }
+
                         var depots = ParseInstalledDepots(content);
 
                         // Parse game's own InstallScripts and cache depot names

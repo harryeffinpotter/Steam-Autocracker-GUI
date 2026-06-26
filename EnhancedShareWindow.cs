@@ -3594,6 +3594,15 @@ namespace SteamAppIdIdentifier
                     long.TryParse(lastUpdatedMatch.Groups[1].Value, out lastUpdated);
                 }
 
+                // Some manifests have no (or a zero) LastUpdated field. Steam
+                // rewrites the appmanifest file on every update, so its own
+                // modified time is a reliable fallback for the last-updated date.
+                if (lastUpdated <= 0)
+                {
+                    try { lastUpdated = ((DateTimeOffset)File.GetLastWriteTimeUtc(manifestPath)).ToUnixTimeSeconds(); }
+                    catch { }
+                }
+
                 return new SteamGame
                 {
                     AppId = appIdMatch.Groups[1].Value,
