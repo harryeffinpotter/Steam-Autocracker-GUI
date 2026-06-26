@@ -11,78 +11,10 @@ using SteamAppIdIdentifier;
 
 namespace SteamAutocrackGUI
 {
-    public class BatchGameItem
-    {
-        public string Path { get; set; }
-        public string Name { get; set; }
-        public string AppId { get; set; }
-        public bool Crack { get; set; } = true;
-        public bool Zip { get; set; } = false;
-        public bool Upload { get; set; } = false;
+    // BatchGameItem and NeonProgressBar moved to BatchGameModels.cs so the Form
+    // is the first class in this file.
 
-        // Crack method tracking (set after cracking): "Goldberg", "Ali", "Goldberg+Steamless", "Ali+Steamless", or empty for clean
-        public string CrackMethod { get; set; } = "";
-
-        // Manifest info for clean files sharing
-        public string BuildId { get; set; }
-        public long LastUpdated { get; set; } // Unix timestamp
-        public string Branch { get; set; } = "Public";
-        public string Platform { get; set; } // Win64, Win32, etc.
-        public Dictionary<string, (string manifest, long size)> InstalledDepots { get; set; } = new Dictionary<string, (string, long)>();
-    }
-
-    /// <summary>
-    /// Custom progress bar with neon blue gradient styling
-    /// </summary>
-    public class NeonProgressBar : ProgressBar
-    {
-        public NeonProgressBar()
-        {
-            this.SetStyle(ControlStyles.UserPaint | ControlStyles.AllPaintingInWmPaint | ControlStyles.OptimizedDoubleBuffer, true);
-        }
-
-        protected override void OnPaint(PaintEventArgs e)
-        {
-            var rect = this.ClientRectangle;
-
-            // Dark background
-            using (var bgBrush = new SolidBrush(Color.FromArgb(10, 12, 20)))
-            {
-                e.Graphics.FillRectangle(bgBrush, rect);
-            }
-
-            // Border
-            using (var borderPen = new Pen(Color.FromArgb(40, 50, 70)))
-            {
-                e.Graphics.DrawRectangle(borderPen, 0, 0, rect.Width - 1, rect.Height - 1);
-            }
-
-            // Progress fill with neon blue gradient
-            if (this.Value > 0)
-            {
-                int fillWidth = (int)((rect.Width - 4) * ((double)this.Value / this.Maximum));
-                if (fillWidth > 0)
-                {
-                    using (var brush = new LinearGradientBrush(
-                        new Rectangle(2, 2, fillWidth, rect.Height - 4),
-                        Color.FromArgb(0, 150, 255),   // Bright neon blue
-                        Color.FromArgb(0, 100, 200),   // Darker blue
-                        LinearGradientMode.Vertical))
-                    {
-                        e.Graphics.FillRectangle(brush, 2, 2, fillWidth, rect.Height - 4);
-                    }
-
-                    // Add glow effect on top
-                    using (var glowBrush = new SolidBrush(Color.FromArgb(40, 150, 220, 255)))
-                    {
-                        e.Graphics.FillRectangle(glowBrush, 2, 2, fillWidth, (rect.Height - 4) / 3);
-                    }
-                }
-            }
-        }
-    }
-
-    public class BatchGameSelectionForm : Form
+    public partial class BatchGameSelectionForm : Form
     {
         [DllImport("user32.dll")]
         private static extern bool ReleaseCapture();
@@ -159,7 +91,8 @@ namespace SteamAutocrackGUI
             }
             catch { }
 
-            InitializeForm();
+            InitializeComponent();
+            BuildUi();
 
             this.Load += (s, e) =>
             {
@@ -203,32 +136,12 @@ namespace SteamAutocrackGUI
             }
         }
 
-        private void InitializeForm()
+        // Builds the data-driven UI (grid, upload slots, buttons, etc.) that
+        // can't live in the designer-serialized InitializeComponent. The static
+        // form chrome (form properties + titleLabel) is set up in
+        // BatchGameSelectionForm.Designer.cs and runs before this.
+        private void BuildUi()
         {
-            this.Text = "Share Processor - Select Games";
-            this.Size = new Size(760, 580);
-            this.MinimumSize = new Size(760, 300);
-            this.StartPosition = FormStartPosition.Manual;
-            this.BackColor = Color.FromArgb(5, 8, 20);
-            this.ForeColor = Color.White;
-            this.FormBorderStyle = FormBorderStyle.None;
-            this.MaximizeBox = false;
-            this.MinimizeBox = false;
-            this.ShowInTaskbar = true;  // Show in taskbar since main form hides
-
-            // Title label
-            var titleLabel = new Label
-            {
-                Name = "titleLabel",
-                Text = "Share Processor",
-                Font = new Font("Segoe UI", 14, FontStyle.Bold),
-                ForeColor = Color.FromArgb(100, 200, 255),
-                Location = new Point(15, 15),
-                Size = new Size(200, 30),
-                BackColor = Color.Transparent
-            };
-            this.Controls.Add(titleLabel);
-
             // Close-style button that minimizes (custom, top right)
             var minimizeBtn = new Label
             {
@@ -594,25 +507,40 @@ namespace SteamAutocrackGUI
                         {
                             e.PaintBackground(e.ClipBounds, true);
 
-                            // Draw zipper icon on left - maintain actual aspect ratio
+                            // Calculate icon size - maintain aspect ratio
                             int maxHeight = e.CellBounds.Height - 6;
                             float aspectRatio = (float)zipperIcon.Width / zipperIcon.Height;
                             int iconHeight = maxHeight;
                             int iconWidth = (int)(iconHeight * aspectRatio);
-                            int iconX = e.CellBounds.X + 4;
-                            int iconY = e.CellBounds.Y + 3;
-                            e.Graphics.DrawImage(zipperIcon, iconX, iconY, iconWidth, iconHeight);
 
-                            // Draw percentage text next to icon
+                            // Get percentage text and measure it
                             string pctText = status.Replace("Zipping", "").Trim();
-                            if (!string.IsNullOrEmpty(pctText))
+                            int textWidth = 0;
+                            int spacing = 4;
+                            using (var font = new Font("Segoe UI", 8.5f, FontStyle.Bold))
                             {
-                                using (var textBrush = new SolidBrush(Color.Cyan))
-                                using (var font = new Font("Segoe UI", 8.5f, FontStyle.Bold))
+                                if (!string.IsNullOrEmpty(pctText))
                                 {
-                                    var textRect = new RectangleF(iconX + iconWidth + 4, e.CellBounds.Y, e.CellBounds.Width - iconWidth - 12, e.CellBounds.Height);
-                                    var sf = new StringFormat { Alignment = StringAlignment.Near, LineAlignment = StringAlignment.Center };
-                                    e.Graphics.DrawString(pctText, font, textBrush, textRect, sf);
+                                    textWidth = (int)e.Graphics.MeasureString(pctText, font).Width;
+                                }
+
+                                // Calculate total width and center it
+                                int totalWidth = iconWidth + (textWidth > 0 ? spacing + textWidth : 0);
+                                int startX = e.CellBounds.X + (e.CellBounds.Width - totalWidth) / 2;
+
+                                // Draw icon centered
+                                int iconY = e.CellBounds.Y + (e.CellBounds.Height - iconHeight) / 2;
+                                e.Graphics.DrawImage(zipperIcon, startX, iconY, iconWidth, iconHeight);
+
+                                // Draw percentage text next to icon
+                                if (!string.IsNullOrEmpty(pctText))
+                                {
+                                    using (var textBrush = new SolidBrush(Color.Cyan))
+                                    {
+                                        var textRect = new RectangleF(startX + iconWidth + spacing, e.CellBounds.Y, textWidth + 4, e.CellBounds.Height);
+                                        var sf = new StringFormat { Alignment = StringAlignment.Near, LineAlignment = StringAlignment.Center };
+                                        e.Graphics.DrawString(pctText, font, textBrush, textRect, sf);
+                                    }
                                 }
                             }
                             e.Handled = true;
@@ -1870,7 +1798,7 @@ namespace SteamAutocrackGUI
         /// <summary>
         /// Reset title to default or show completion message
         /// </summary>
-        public void ResetTitle(string text = "Share Processor")
+        public void ResetTitle(string text = "Batch Processor")
         {
             if (this.IsDisposed) return;
 

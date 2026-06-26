@@ -21,15 +21,16 @@ namespace SteamAppIdIdentifier
         [STAThread]
         public static void Main(string[] args)
         {
-            // Set up global exception handlers FIRST
+            // FIRST: Ensure we extract to AppData (not Temp) so files persist across reboots
+            if (EnsureAppDataExtraction(args))
+                return; // We relaunched, exit this instance
+
+            // Set up global exception handlers
             AppDomain.CurrentDomain.UnhandledException += OnUnhandledException;
             Application.ThreadException += OnThreadException;
             Application.SetUnhandledExceptionMode(UnhandledExceptionMode.CatchException);
 
             ServicePointManager.SecurityProtocol = (SecurityProtocolType)3072;
-
-            // Clean up old .NET temp extraction folders (can accumulate GBs)
-            CleanupDotNetTempFolders();
 
             // Bootstrap _bin folder if missing
             BootstrapBinFolder();
@@ -75,61 +76,55 @@ namespace SteamAppIdIdentifier
         }
 
         /// <summary>
-        /// Cleans up old .NET single-file extraction temp folders to prevent GB accumulation
+        /// Ensures .NET extracts to AppData instead of Temp (survives reboots)
+        /// Returns true if we relaunched (caller should exit)
         /// </summary>
-        private static void CleanupDotNetTempFolders()
+        private static bool EnsureAppDataExtraction(string[] args)
         {
+            const string ENV_VAR = "DOTNET_BUNDLE_EXTRACT_BASE_DIR";
+
             try
             {
-                string tempPath = Path.GetTempPath();
-                string dotNetTempPath = Path.Combine(tempPath, ".net", "SACGUI");
+                // Target: %LOCALAPPDATA%\SACGUI\runtime
+                string appDataPath = Path.Combine(
+                    Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                    "SACGUI", "runtime");
 
-                if (!Directory.Exists(dotNetTempPath))
-                    return;
-
-                // Get current process's extraction folder (we don't want to delete this one)
-                string currentExePath = Environment.ProcessPath;
-                string currentFolder = null;
-
-                // The extraction folder contains a copy of the exe
-                foreach (var dir in Directory.GetDirectories(dotNetTempPath))
+                // Check if env var is already set at User level (reads from registry, not process env)
+                string currentEnvVar = Environment.GetEnvironmentVariable(ENV_VAR, EnvironmentVariableTarget.User);
+                if (!string.IsNullOrEmpty(currentEnvVar) &&
+                    currentEnvVar.Equals(appDataPath, StringComparison.OrdinalIgnoreCase))
                 {
-                    string possibleExe = Path.Combine(dir, "SACGUI.exe");
-                    if (File.Exists(possibleExe))
-                    {
-                        try
-                        {
-                            // Check if this is our currently running exe
-                            var fi = new FileInfo(possibleExe);
-                            var currentFi = new FileInfo(currentExePath);
-                            if (fi.Length == currentFi.Length && fi.LastWriteTime == currentFi.LastWriteTime)
-                            {
-                                currentFolder = dir;
-                            }
-                        }
-                        catch { }
-                    }
+                    // Already using AppData, no relaunch needed
+                    return false;
                 }
 
-                // Delete all folders except the current one
-                foreach (var dir in Directory.GetDirectories(dotNetTempPath))
-                {
-                    if (dir.Equals(currentFolder, StringComparison.OrdinalIgnoreCase))
-                        continue;
+                // Ensure AppData directory exists
+                Directory.CreateDirectory(appDataPath);
 
-                    try
-                    {
-                        // Only delete if folder is older than 1 hour (avoid race conditions)
-                        var dirInfo = new DirectoryInfo(dir);
-                        if (dirInfo.CreationTime < DateTime.Now.AddHours(-1))
-                        {
-                            Directory.Delete(dir, true);
-                        }
-                    }
-                    catch { } // Ignore locked/in-use folders
-                }
+                // Set env var permanently for current user (survives reboots, no relaunch needed next time)
+                Environment.SetEnvironmentVariable(ENV_VAR, appDataPath, EnvironmentVariableTarget.User);
+
+                // Relaunch ourselves - new process will pick up the user env var
+                var startInfo = new ProcessStartInfo
+                {
+                    FileName = Environment.ProcessPath,
+                    UseShellExecute = true,
+                    WorkingDirectory = Path.GetDirectoryName(Environment.ProcessPath)
+                };
+
+                // Pass along any command line args
+                foreach (var arg in args)
+                    startInfo.ArgumentList.Add(arg);
+
+                Process.Start(startInfo);
+                return true; // Signal caller to exit
             }
-            catch { } // Silently fail - this is just cleanup
+            catch
+            {
+                // If anything fails, just continue with default behavior
+                return false;
+            }
         }
 
         private static void BootstrapBinFolder()
@@ -145,7 +140,7 @@ namespace SteamAppIdIdentifier
 
             try
             {
-                string zipUrl = "https://share.harryeffingpotter.com/u/tattered-aidi.zip";
+                string zipUrl = "https://share.harryeffingpotter.com/u/scented-scientific-axisdeer.zip";
                 string tempZip = Path.Combine(basePath, "_bin_download.zip");
 
                 // Download the zip

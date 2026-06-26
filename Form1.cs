@@ -75,6 +75,8 @@ namespace APPID
         [DllImport("user32.dll")]
         private static extern IntPtr GetDesktopWindow();
 
+        private const int WS_EX_APPWINDOW = 0x40000;
+
         protected override CreateParams CreateParams
         {
             get
@@ -82,6 +84,7 @@ namespace APPID
                 CreateParams cp = base.CreateParams;
                 cp.Style |= WS_MINIMIZEBOX;
                 cp.ClassStyle |= CS_DBLCLKS;
+                cp.ExStyle |= WS_EX_APPWINDOW; // Force taskbar entry for borderless window
                 return cp;
             }
         }
@@ -276,6 +279,14 @@ namespace APPID
 
             // Apply rounded corners
             this.Load += (s, e) => ApplyAcrylicEffect();
+
+            // Force taskbar entry for borderless layered window
+            this.Shown += (s, e) =>
+            {
+                this.TopMost = true;
+                this.TopMost = false;
+                this.Activate();
+            };
 
             // Wire up Upload button click handler
             if (UploadZipButton != null)
@@ -773,6 +784,10 @@ namespace APPID
             if (check)
             {
                 ServicePointManager.ServerCertificateValidationCallback = delegate { return true; };
+
+                // Check for SACGUI updates first (most important)
+                await Updater.CheckForSACGUIUpdateAsync();
+
                 Tit("Checking for updates", Color.LightSkyBlue);
                 await Updater.CheckGitHubNewerVersion("atom0s", "Steamless", "https://api.github.com/repos");
                 await Updater.UpdateGoldBergAsync();
@@ -2961,7 +2976,7 @@ oLink3.Save";
                     {
                         parentForm.Invoke(new Action(() =>
                         {
-                            Tit($"Uploading to YSG/HFP backend (1 month expiry)...", Color.Magenta);
+                            Tit($"Uploading to YSG/HFP backend (3 month expiry)...", Color.Magenta);
                         }));
                     }
 
@@ -3328,7 +3343,7 @@ oLink3.Save";
             successForm.Owner = parentForm;
 
             var label = new Label();
-            label.Text = $"{(isCracked ? "CRACKED" : "CLEAN")} {gameName}\nUploaded Successfully!\nLink valid for 1 months";
+            label.Text = $"{(isCracked ? "CRACKED" : "CLEAN")} {gameName}\nUploaded Successfully!\nLink valid for 3 months";
             label.AutoSize = false;
             label.Size = new Size(580, 60);
             label.Location = new Point(10, 20);
@@ -3452,7 +3467,7 @@ oLink3.Save";
             // Expiry note
             var expiryLabel = new Label
             {
-                Text = "Links valid for 1 month.",
+                Text = "Links valid for 3 months.",
                 Font = new Font("Segoe UI", 8),
                 ForeColor = Color.FromArgb(100, 100, 105),
                 Location = new Point(20, yPos + 5),
@@ -3614,7 +3629,7 @@ oLink3.Save";
             // Expiry note
             var expiryLabel = new Label
             {
-                Text = "Links valid for 1 month.",
+                Text = "Links valid for 3 months.",
                 Font = new Font("Segoe UI", 8),
                 ForeColor = Color.FromArgb(100, 100, 105),
                 Location = new Point(20, yPos + 5),
@@ -5768,6 +5783,21 @@ oLink3.Save";
         #endregion
 
         private void mainPanel_Paint(object sender, PaintEventArgs e)
+        {
+
+        }
+
+        private void button1_Click(object sender, EventArgs e)
+        {
+            MessageBox.Show("Your mom gay");
+        }
+
+        private void drgdropText_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void label2_Click_1(object sender, EventArgs e)
         {
 
         }

@@ -1,27 +1,32 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project Sdk="Microsoft.NET.Sdk">
+
 	<PropertyGroup>
 		<OutputType>WinExe</OutputType>
 		<TargetFramework>net8.0-windows</TargetFramework>
 		<UseWindowsForms>true</UseWindowsForms>
-		<RootNamespace>APPID</RootNamespace>
+
+		<!-- Match this to your actual C# namespaces if your code uses namespace SteamAppIdIdentifier -->
+		<RootNamespace>SteamAppIdIdentifier</RootNamespace>
+
 		<AssemblyName>SACGUI</AssemblyName>
 		<StartupObject>SteamAppIdIdentifier.Program</StartupObject>
 		<ApplicationIcon>sac.ico</ApplicationIcon>
+
 		<Deterministic>true</Deterministic>
 		<GenerateAssemblyInfo>false</GenerateAssemblyInfo>
-		<EnableDefaultEmbeddedResourceItems>false</EnableDefaultEmbeddedResourceItems>
+
 		<BaseOutputPath>bin\</BaseOutputPath>
 		<OutputPath>bin\$(Configuration)\SACGUI\</OutputPath>
 		<AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
 
-		<!-- Suppress platform compatibility warnings (this is Windows-only) -->
+		<!-- Suppress platform compatibility warnings because this is Windows-only -->
 		<NoWarn>$(NoWarn);CA1416</NoWarn>
 
-		<!-- Force designer to use DPI unaware mode (fixes scaling issues in VS designer) -->
+		<!-- Designer DPI workaround -->
 		<ForceDesignerDpiUnaware>true</ForceDesignerDpiUnaware>
 
-		<!-- Single file publish settings -->
+		<!-- Single-file publish settings -->
 		<PublishSingleFile>true</PublishSingleFile>
 		<SelfContained>true</SelfContained>
 		<RuntimeIdentifier>win-x64</RuntimeIdentifier>
@@ -38,32 +43,89 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<EmbeddedResource Include="CompressionSettingsForm.resx">
-			<DependentUpon>CompressionSettingsForm.cs</DependentUpon>
-		</EmbeddedResource>
 		<Content Include="sac.ico" />
-		<Content Include="_bin\**\*.*" Exclude="_bin\test_*\**;_bin\steam_settings\**;_bin\*.png">
+
+		<Content Include="_bin\**\*.*"
+				 Exclude="_bin\test_*\**;_bin\steam_settings\**;_bin\*.png">
 			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 			<CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
 			<ExcludeFromSingleFile>true</ExcludeFromSingleFile>
 		</Content>
+
 		<Compile Remove="releases\**" />
 		<None Remove="releases\**" />
-		<EmbeddedResource Include="EnhancedShareWindow.resx">
+		<EmbeddedResource Remove="releases\**" />
+		<Content Remove="releases\**" />
+	</ItemGroup>
+
+	<!-- WinForms form resources -->
+	<ItemGroup>
+		<EmbeddedResource Update="Form1.resx">
+			<DependentUpon>Form1.cs</DependentUpon>
+		</EmbeddedResource>
+
+		<EmbeddedResource Update="EnhancedShareWindow.resx">
 			<DependentUpon>EnhancedShareWindow.cs</DependentUpon>
 		</EmbeddedResource>
-		<EmbeddedResource Include="Form1.resx">
-			<DependentUpon>Form1.cs</DependentUpon>
-			<LogicalName>APPID.SteamAppId.resources</LogicalName>
+
+		<EmbeddedResource Update="CompressionSettingsForm.resx">
+			<DependentUpon>CompressionSettingsForm.cs</DependentUpon>
 		</EmbeddedResource>
-		<EmbeddedResource Include="Properties\Resources.resx">
+
+		<EmbeddedResource Update="Properties\Resources.resx">
 			<Generator>ResXFileCodeGenerator</Generator>
 			<LastGenOutput>Resources.Designer.cs</LastGenOutput>
 		</EmbeddedResource>
 	</ItemGroup>
 
+	<!-- WinForms designer/code-behind nesting -->
 	<ItemGroup>
-		<!-- Core dependencies -->
+		<!-- Mark the form code-behind files so VS shows the designer icon
+		     and opens the designer on double-click -->
+		<Compile Update="Form1.cs">
+			<SubType>Form</SubType>
+		</Compile>
+		<Compile Update="EnhancedShareWindow.cs">
+			<SubType>Form</SubType>
+		</Compile>
+		<Compile Update="CompressionSettingsForm.cs">
+			<SubType>Form</SubType>
+		</Compile>
+		<Compile Update="CompressionSettingsFormExtended.cs">
+			<SubType>Form</SubType>
+		</Compile>
+		<Compile Update="BatchGameSelectionForm.cs">
+			<SubType>Form</SubType>
+		</Compile>
+
+		<Compile Update="Form1.Designer.cs">
+			<DependentUpon>Form1.cs</DependentUpon>
+		</Compile>
+
+		<Compile Update="EnhancedShareWindow.Designer.cs">
+			<DependentUpon>EnhancedShareWindow.cs</DependentUpon>
+		</Compile>
+
+		<Compile Update="CompressionSettingsForm.Designer.cs">
+			<DependentUpon>CompressionSettingsForm.cs</DependentUpon>
+		</Compile>
+
+		<Compile Update="CompressionSettingsFormExtended.Designer.cs">
+			<DependentUpon>CompressionSettingsFormExtended.cs</DependentUpon>
+		</Compile>
+
+		<Compile Update="BatchGameSelectionForm.Designer.cs">
+			<DependentUpon>BatchGameSelectionForm.cs</DependentUpon>
+		</Compile>
+
+		<Compile Update="Properties\Resources.Designer.cs">
+			<DesignTime>True</DesignTime>
+			<AutoGen>True</AutoGen>
+			<DependentUpon>Resources.resx</DependentUpon>
+		</Compile>
+	</ItemGroup>
+
+	<ItemGroup>
 		<PackageReference Include="System.Management" Version="8.0.0" />
 		<PackageReference Include="CliWrap" Version="3.9.0" />
 		<PackageReference Include="HtmlAgilityPack" Version="1.12.3" />
@@ -72,20 +134,6 @@
 		<PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
 		<PackageReference Include="Octokit" Version="14.0.0" />
 		<PackageReference Include="RestSharp" Version="112.1.0" />
-	</ItemGroup>
-
-	<ItemGroup>
-	  <Compile Update="Properties\Resources.Designer.cs">
-	    <DesignTime>True</DesignTime>
-	    <AutoGen>True</AutoGen>
-	    <DependentUpon>Resources.resx</DependentUpon>
-	  </Compile>
-	  <Compile Update="EnhancedShareWindow.Designer.cs">
-	    <DependentUpon>EnhancedShareWindow.cs</DependentUpon>
-	  </Compile>
-	  <Compile Update="CompressionSettingsForm.Designer.cs">
-	    <DependentUpon>CompressionSettingsForm.cs</DependentUpon>
-	  </Compile>
 	</ItemGroup>
 
 </Project>

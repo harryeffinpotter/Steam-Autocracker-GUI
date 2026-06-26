@@ -32,6 +32,7 @@ namespace APPID
         public double LastZipRateLevel0 { get; set; } = 0;
         public double LastZipRateCompressed { get; set; } = 0;
         public double LastUploadRate { get; set; } = 0;
+        public string SkippedUpdateVersion { get; set; } = "";  // Version user chose to skip
 
         public static AppSettings Default
         {
