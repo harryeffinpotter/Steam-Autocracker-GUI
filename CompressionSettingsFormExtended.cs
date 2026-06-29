@@ -31,7 +31,7 @@ namespace SteamAutocrackGUI
         private void ApplyDynamicContent()
         {
             this.Text = $"Compression Settings - {gameName}";
-            titleLabel.Text = $"{(isCracked ? "🎮 CRACKED" : "📦 CLEAN")} - {gameName}";
+            titleLabel.Text = $"{(isCracked ? "CRACKED" : "CLEAN")} - {gameName}";
             titleLabel.ForeColor = isCracked ? Color.FromArgb(255, 200, 100) : Color.FromArgb(150, 255, 150);
         }
 

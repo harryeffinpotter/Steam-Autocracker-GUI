@@ -6,8 +6,12 @@
 		<TargetFramework>net8.0-windows</TargetFramework>
 		<UseWindowsForms>true</UseWindowsForms>
 
-		<!-- Match this to your actual C# namespaces if your code uses namespace SteamAppIdIdentifier -->
-		<RootNamespace>SteamAppIdIdentifier</RootNamespace>
+		<!-- Forms live in namespace APPID (e.g. APPID.SteamAppId); RootNamespace
+		     MUST match so resource manifest names resolve and the WinForms designer
+		     can load the forms. A mismatch here kills every designer with an opaque
+		     DesignToolsClientLoader NRE. -->
+		<RootNamespace>APPID</RootNamespace>
+		<EnableDefaultEmbeddedResourceItems>false</EnableDefaultEmbeddedResourceItems>
 
 		<AssemblyName>SACGUI</AssemblyName>
 		<StartupObject>SteamAppIdIdentifier.Program</StartupObject>
@@ -45,8 +49,7 @@
 	<ItemGroup>
 		<Content Include="sac.ico" />
 
-		<Content Include="_bin\**\*.*"
-				 Exclude="_bin\test_*\**;_bin\steam_settings\**;_bin\*.png">
+		<Content Include="_bin\**\*.*" Exclude="_bin\test_*\**;_bin\steam_settings\**;_bin\*.png">
 			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 			<CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
 			<ExcludeFromSingleFile>true</ExcludeFromSingleFile>
@@ -58,21 +61,27 @@
 		<Content Remove="releases\**" />
 	</ItemGroup>
 
-	<!-- WinForms form resources -->
+	<!-- WinForms form resources. EnableDefaultEmbeddedResourceItems is false, so
+	     every .resx is listed explicitly. Form1.resx needs an explicit LogicalName
+	     because its file name (Form1) differs from its form class (APPID.SteamAppId),
+	     which is what the designer/runtime resolve against. -->
 	<ItemGroup>
-		<EmbeddedResource Update="Form1.resx">
-			<DependentUpon>Form1.cs</DependentUpon>
+		<EmbeddedResource Include="BatchGameSelectionForm.resx" />
+		<EmbeddedResource Include="CompressionSettingsForm.resx">
+			<DependentUpon>CompressionSettingsForm.cs</DependentUpon>
 		</EmbeddedResource>
+		<EmbeddedResource Include="CompressionSettingsFormExtended.resx" />
 
-		<EmbeddedResource Update="EnhancedShareWindow.resx">
+		<EmbeddedResource Include="EnhancedShareWindow.resx">
 			<DependentUpon>EnhancedShareWindow.cs</DependentUpon>
 		</EmbeddedResource>
 
-		<EmbeddedResource Update="CompressionSettingsForm.resx">
-			<DependentUpon>CompressionSettingsForm.cs</DependentUpon>
+		<EmbeddedResource Include="Form1.resx">
+			<DependentUpon>Form1.cs</DependentUpon>
+			<LogicalName>APPID.SteamAppId.resources</LogicalName>
 		</EmbeddedResource>
 
-		<EmbeddedResource Update="Properties\Resources.resx">
+		<EmbeddedResource Include="Properties\Resources.resx">
 			<Generator>ResXFileCodeGenerator</Generator>
 			<LastGenOutput>Resources.Designer.cs</LastGenOutput>
 		</EmbeddedResource>
@@ -94,9 +103,7 @@
 		<Compile Update="CompressionSettingsFormExtended.cs">
 			<SubType>Form</SubType>
 		</Compile>
-		<Compile Update="BatchGameSelectionForm.cs">
-			<SubType>Form</SubType>
-		</Compile>
+		<Compile Update="BatchGameSelectionForm.cs" />
 
 		<Compile Update="Form1.Designer.cs">
 			<DependentUpon>Form1.cs</DependentUpon>

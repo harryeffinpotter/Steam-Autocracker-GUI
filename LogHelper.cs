@@ -43,7 +43,7 @@ namespace APPID
                     System.Diagnostics.Debug.WriteLine(logEntry);
                 }
             }
-            catch { }
+            catch (Exception ex) { Console.WriteLine(ex.Message); }
         }
 
         public static void LogError(string context, Exception ex)

@@ -52,7 +52,7 @@ namespace APPID
                     int preference = NativeMethods.DWMWCP_ROUND;
                     NativeMethods.DwmSetWindowAttribute(form.Handle, NativeMethods.DWMWA_WINDOW_CORNER_PREFERENCE, ref preference, sizeof(int));
                 }
-                catch { }
+                catch (Exception ex) { Console.WriteLine(ex.Message); }
             }
 
             // Disable shadow if requested
@@ -63,7 +63,7 @@ namespace APPID
                     int policy = NativeMethods.DWMNCRP_DISABLED;
                     NativeMethods.DwmSetWindowAttribute(form.Handle, NativeMethods.DWMWA_NCRENDERING_POLICY, ref policy, sizeof(int));
                 }
-                catch { }
+                catch (Exception ex) { Console.WriteLine(ex.Message); }
             }
 
             // Enable dark mode
@@ -72,7 +72,7 @@ namespace APPID
                 int darkMode = 1;
                 NativeMethods.DwmSetWindowAttribute(form.Handle, NativeMethods.DWMWA_USE_IMMERSIVE_DARK_MODE, ref darkMode, sizeof(int));
             }
-            catch { }
+            catch (Exception ex) { Console.WriteLine(ex.Message); }
 
             // Clear tinted glass
             form.Opacity = 0.95;

@@ -37,397 +37,387 @@ namespace SteamAppIdIdentifier
         /// </summary>
         private void InitializeComponent()
         {
-            this.components = new System.ComponentModel.Container();
+            components = new System.ComponentModel.Container();
             System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle1 = new System.Windows.Forms.DataGridViewCellStyle();
             System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle2 = new System.Windows.Forms.DataGridViewCellStyle();
             System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle3 = new System.Windows.Forms.DataGridViewCellStyle();
-            this.mainPanel = new System.Windows.Forms.Panel();
-            this.gamesGrid = new System.Windows.Forms.DataGridView();
-            this.SelectGame = new System.Windows.Forms.DataGridViewCheckBoxColumn();
-            this.GameName = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.InstallPath = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.GameSize = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.BuildID = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.AppID = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.LastUpdated = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.CrackOnly = new System.Windows.Forms.DataGridViewButtonColumn();
-            this.ShareClean = new System.Windows.Forms.DataGridViewButtonColumn();
-            this.ShareCracked = new System.Windows.Forms.DataGridViewButtonColumn();
-            this.lblSelectedPrefix = new System.Windows.Forms.Label();
-            this.lblSelectedCount = new System.Windows.Forms.Label();
-            this.lblSelectedSuffix = new System.Windows.Forms.Label();
-            this.btnSettings = new System.Windows.Forms.Button();
-            this.btnProcessSelected = new System.Windows.Forms.Button();
-            this.lblStatus = new System.Windows.Forms.Label();
-            this.progressBar = new System.Windows.Forms.ProgressBar();
-            this.titleBar = new System.Windows.Forms.Panel();
-            this.lblTitle = new System.Windows.Forms.Label();
-            this.btnMinimize = new System.Windows.Forms.Button();
-            this.btnClose = new System.Windows.Forms.Button();
-            this.toolTip = new System.Windows.Forms.ToolTip(this.components);
-            this.mainPanel.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.gamesGrid)).BeginInit();
-            this.titleBar.SuspendLayout();
-            this.SuspendLayout();
-            //
+            mainPanel = new System.Windows.Forms.Panel();
+            gamesGrid = new System.Windows.Forms.DataGridView();
+            SelectGame = new System.Windows.Forms.DataGridViewCheckBoxColumn();
+            GameName = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            InstallPath = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            GameSize = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            BuildID = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            AppID = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            LastUpdated = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            CrackOnly = new System.Windows.Forms.DataGridViewButtonColumn();
+            ShareClean = new System.Windows.Forms.DataGridViewButtonColumn();
+            ShareCracked = new System.Windows.Forms.DataGridViewButtonColumn();
+            lblStatus = new System.Windows.Forms.Label();
+            progressBar = new System.Windows.Forms.ProgressBar();
+            titleBar = new System.Windows.Forms.Panel();
+            lblTitle = new System.Windows.Forms.Label();
+            lblSelectedPrefix = new System.Windows.Forms.Label();
+            lblSelectedCount = new System.Windows.Forms.Label();
+            lblSelectedSuffix = new System.Windows.Forms.Label();
+            btnSettings = new System.Windows.Forms.Button();
+            btnProcessSelected = new System.Windows.Forms.Button();
+            btnMinimize = new System.Windows.Forms.Button();
+            btnClose = new System.Windows.Forms.Button();
+            toolTip = new System.Windows.Forms.ToolTip(components);
+            mainPanel.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)gamesGrid).BeginInit();
+            titleBar.SuspendLayout();
+            SuspendLayout();
+            // 
             // mainPanel
-            //
-            this.mainPanel.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(220)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
-            this.mainPanel.Controls.Add(this.gamesGrid);
-            this.mainPanel.Controls.Add(this.lblStatus);
-            this.mainPanel.Controls.Add(this.progressBar);
-            this.mainPanel.Controls.Add(this.titleBar);
-            this.mainPanel.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.mainPanel.Location = new System.Drawing.Point(0, 0);
-            this.mainPanel.Name = "mainPanel";
-            this.mainPanel.Padding = new System.Windows.Forms.Padding(0);
-            this.mainPanel.Size = new System.Drawing.Size(1200, 915);
-            this.mainPanel.TabIndex = 0;
-            //
+            // 
+            mainPanel.BackColor = System.Drawing.Color.FromArgb(220, 0, 0, 0);
+            mainPanel.Controls.Add(gamesGrid);
+            mainPanel.Controls.Add(lblStatus);
+            mainPanel.Controls.Add(progressBar);
+            mainPanel.Controls.Add(titleBar);
+            mainPanel.Dock = System.Windows.Forms.DockStyle.Fill;
+            mainPanel.Location = new System.Drawing.Point(0, 0);
+            mainPanel.Name = "mainPanel";
+            mainPanel.Size = new System.Drawing.Size(1200, 807);
+            mainPanel.TabIndex = 0;
+            // 
             // gamesGrid
             // 
-            this.gamesGrid.AllowUserToAddRows = false;
-            this.gamesGrid.AllowUserToDeleteRows = false;
-            this.gamesGrid.AllowUserToOrderColumns = true;
-            this.gamesGrid.AllowUserToResizeRows = false;
-            this.gamesGrid.AutoSizeColumnsMode = System.Windows.Forms.DataGridViewAutoSizeColumnsMode.Fill;
-            this.gamesGrid.BackgroundColor = System.Drawing.Color.FromArgb(((int)(((byte)(8)))), ((int)(((byte)(8)))), ((int)(((byte)(12)))));
-            this.gamesGrid.BorderStyle = System.Windows.Forms.BorderStyle.None;
-            this.gamesGrid.ColumnHeadersBorderStyle = System.Windows.Forms.DataGridViewHeaderBorderStyle.Single;
+            gamesGrid.AllowUserToAddRows = false;
+            gamesGrid.AllowUserToDeleteRows = false;
+            gamesGrid.AllowUserToOrderColumns = true;
+            gamesGrid.AllowUserToResizeRows = false;
+            gamesGrid.AutoSizeColumnsMode = System.Windows.Forms.DataGridViewAutoSizeColumnsMode.Fill;
+            gamesGrid.BackgroundColor = System.Drawing.Color.FromArgb(8, 8, 12);
+            gamesGrid.BorderStyle = System.Windows.Forms.BorderStyle.None;
+            gamesGrid.ColumnHeadersBorderStyle = System.Windows.Forms.DataGridViewHeaderBorderStyle.Single;
             dataGridViewCellStyle1.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
-            dataGridViewCellStyle1.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(10)))), ((int)(((byte)(12)))), ((int)(((byte)(18)))));
+            dataGridViewCellStyle1.BackColor = System.Drawing.Color.FromArgb(10, 12, 18);
             dataGridViewCellStyle1.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Bold);
-            dataGridViewCellStyle1.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(100)))), ((int)(((byte)(200)))), ((int)(((byte)(255)))));
-            dataGridViewCellStyle1.SelectionBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(15)))), ((int)(((byte)(18)))), ((int)(((byte)(25)))));
-            dataGridViewCellStyle1.SelectionForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(100)))), ((int)(((byte)(200)))), ((int)(((byte)(255)))));
+            dataGridViewCellStyle1.ForeColor = System.Drawing.Color.FromArgb(100, 200, 255);
+            dataGridViewCellStyle1.SelectionBackColor = System.Drawing.Color.FromArgb(15, 18, 25);
+            dataGridViewCellStyle1.SelectionForeColor = System.Drawing.Color.FromArgb(100, 200, 255);
             dataGridViewCellStyle1.WrapMode = System.Windows.Forms.DataGridViewTriState.True;
-            this.gamesGrid.ColumnHeadersDefaultCellStyle = dataGridViewCellStyle1;
-            this.gamesGrid.ColumnHeadersHeight = 35;
-            this.gamesGrid.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.DisableResizing;
-            this.gamesGrid.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
-            this.SelectGame,
-            this.GameName,
-            this.InstallPath,
-            this.GameSize,
-            this.BuildID,
-            this.AppID,
-            this.LastUpdated,
-            this.CrackOnly,
-            this.ShareClean,
-            this.ShareCracked});
+            gamesGrid.ColumnHeadersDefaultCellStyle = dataGridViewCellStyle1;
+            gamesGrid.ColumnHeadersHeight = 35;
+            gamesGrid.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.DisableResizing;
+            gamesGrid.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] { SelectGame, GameName, InstallPath, GameSize, BuildID, AppID, LastUpdated, CrackOnly, ShareClean, ShareCracked });
             dataGridViewCellStyle2.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
-            dataGridViewCellStyle2.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(8)))), ((int)(((byte)(8)))), ((int)(((byte)(12)))));
+            dataGridViewCellStyle2.BackColor = System.Drawing.Color.FromArgb(8, 8, 12);
             dataGridViewCellStyle2.Font = new System.Drawing.Font("Segoe UI", 9F);
             dataGridViewCellStyle2.ForeColor = System.Drawing.Color.White;
-            dataGridViewCellStyle2.SelectionBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(20)))), ((int)(((byte)(25)))), ((int)(((byte)(35)))));
+            dataGridViewCellStyle2.SelectionBackColor = System.Drawing.Color.FromArgb(20, 25, 35);
             dataGridViewCellStyle2.SelectionForeColor = System.Drawing.Color.White;
             dataGridViewCellStyle2.WrapMode = System.Windows.Forms.DataGridViewTriState.False;
-            this.gamesGrid.DefaultCellStyle = dataGridViewCellStyle2;
-            this.gamesGrid.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.gamesGrid.EnableHeadersVisualStyles = false;
-            this.gamesGrid.GridColor = System.Drawing.Color.FromArgb(((int)(((byte)(40)))), ((int)(((byte)(40)))), ((int)(((byte)(45)))));
-            this.gamesGrid.Location = new System.Drawing.Point(1, 47);
-            this.gamesGrid.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
-            this.gamesGrid.MultiSelect = false;
-            this.gamesGrid.Name = "gamesGrid";
-            this.gamesGrid.ReadOnly = true;
-            this.gamesGrid.RowHeadersBorderStyle = System.Windows.Forms.DataGridViewHeaderBorderStyle.None;
+            gamesGrid.DefaultCellStyle = dataGridViewCellStyle2;
+            gamesGrid.Dock = System.Windows.Forms.DockStyle.Fill;
+            gamesGrid.EnableHeadersVisualStyles = false;
+            gamesGrid.GridColor = System.Drawing.Color.FromArgb(40, 40, 45);
+            gamesGrid.Location = new System.Drawing.Point(0, 41);
+            gamesGrid.Margin = new System.Windows.Forms.Padding(4);
+            gamesGrid.MultiSelect = false;
+            gamesGrid.Name = "gamesGrid";
+            gamesGrid.ReadOnly = true;
+            gamesGrid.RowHeadersBorderStyle = System.Windows.Forms.DataGridViewHeaderBorderStyle.None;
             dataGridViewCellStyle3.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
-            dataGridViewCellStyle3.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(8)))), ((int)(((byte)(8)))), ((int)(((byte)(12)))));
+            dataGridViewCellStyle3.BackColor = System.Drawing.Color.FromArgb(8, 8, 12);
             dataGridViewCellStyle3.Font = new System.Drawing.Font("Segoe UI", 9F);
             dataGridViewCellStyle3.ForeColor = System.Drawing.Color.White;
-            dataGridViewCellStyle3.SelectionBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(20)))), ((int)(((byte)(25)))), ((int)(((byte)(35)))));
+            dataGridViewCellStyle3.SelectionBackColor = System.Drawing.Color.FromArgb(20, 25, 35);
             dataGridViewCellStyle3.SelectionForeColor = System.Drawing.Color.White;
             dataGridViewCellStyle3.WrapMode = System.Windows.Forms.DataGridViewTriState.True;
-            this.gamesGrid.RowHeadersDefaultCellStyle = dataGridViewCellStyle3;
-            this.gamesGrid.RowHeadersVisible = false;
-            this.gamesGrid.RowHeadersWidth = 62;
-            this.gamesGrid.RowTemplate.Height = 30;
-            this.gamesGrid.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
-            this.gamesGrid.Size = new System.Drawing.Size(1165, 802);
-            this.gamesGrid.TabIndex = 1;
-            this.toolTip.SetToolTip(this.gamesGrid, "Click on game rows to perform actions. Click column headers to sort.");
-            this.gamesGrid.CellClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.GamesGrid_CellClick);
-            this.gamesGrid.CellContentClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.gamesGrid_CellContentClick);
-            this.gamesGrid.CellFormatting += new System.Windows.Forms.DataGridViewCellFormattingEventHandler(this.GamesGrid_CellFormatting);
-            this.gamesGrid.CellMouseEnter += new System.Windows.Forms.DataGridViewCellEventHandler(this.GamesGrid_CellMouseEnter);
-            this.gamesGrid.CellMouseLeave += new System.Windows.Forms.DataGridViewCellEventHandler(this.GamesGrid_CellMouseLeave);
-            //
+            gamesGrid.RowHeadersDefaultCellStyle = dataGridViewCellStyle3;
+            gamesGrid.RowHeadersVisible = false;
+            gamesGrid.RowHeadersWidth = 62;
+            gamesGrid.RowTemplate.Height = 30;
+            gamesGrid.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
+            gamesGrid.Size = new System.Drawing.Size(1200, 709);
+            gamesGrid.TabIndex = 1;
+            toolTip.SetToolTip(gamesGrid, "Click on game rows to perform actions. Click column headers to sort.");
+            gamesGrid.CellClick += GamesGrid_CellClick;
+            gamesGrid.CellContentClick += gamesGrid_CellContentClick;
+            gamesGrid.CellFormatting += GamesGrid_CellFormatting;
+            gamesGrid.CellMouseEnter += GamesGrid_CellMouseEnter;
+            gamesGrid.CellMouseLeave += GamesGrid_CellMouseLeave;
+            // 
             // SelectGame
-            //
-            this.SelectGame.HeaderText = "☑";
-            this.SelectGame.MinimumWidth = 30;
-            this.SelectGame.Name = "SelectGame";
-            this.SelectGame.Width = 35;
-            this.SelectGame.FillWeight = 20;
-            //
+            // 
+            SelectGame.FillWeight = 20F;
+            SelectGame.HeaderText = "☑";
+            SelectGame.MinimumWidth = 30;
+            SelectGame.Name = "SelectGame";
+            SelectGame.ReadOnly = true;
+            // 
             // GameName
-            //
-            this.GameName.HeaderText = "Game";
-            this.GameName.MinimumWidth = 8;
-            this.GameName.Name = "GameName";
-            this.GameName.ReadOnly = true;
+            // 
+            GameName.HeaderText = "Game";
+            GameName.MinimumWidth = 8;
+            GameName.Name = "GameName";
+            GameName.ReadOnly = true;
             // 
             // InstallPath
             // 
-            this.InstallPath.HeaderText = "Install Path";
-            this.InstallPath.MinimumWidth = 8;
-            this.InstallPath.Name = "InstallPath";
-            this.InstallPath.ReadOnly = true;
+            InstallPath.HeaderText = "Install Path";
+            InstallPath.MinimumWidth = 8;
+            InstallPath.Name = "InstallPath";
+            InstallPath.ReadOnly = true;
             // 
             // GameSize
             // 
-            this.GameSize.HeaderText = "Size";
-            this.GameSize.MinimumWidth = 8;
-            this.GameSize.Name = "GameSize";
-            this.GameSize.ReadOnly = true;
+            GameSize.HeaderText = "Size";
+            GameSize.MinimumWidth = 8;
+            GameSize.Name = "GameSize";
+            GameSize.ReadOnly = true;
             // 
             // BuildID
             // 
-            this.BuildID.HeaderText = "Build";
-            this.BuildID.MinimumWidth = 8;
-            this.BuildID.Name = "BuildID";
-            this.BuildID.ReadOnly = true;
+            BuildID.HeaderText = "Build";
+            BuildID.MinimumWidth = 8;
+            BuildID.Name = "BuildID";
+            BuildID.ReadOnly = true;
             // 
             // AppID
             // 
-            this.AppID.HeaderText = "AppID";
-            this.AppID.MinimumWidth = 8;
-            this.AppID.Name = "AppID";
-            this.AppID.ReadOnly = true;
-            //
+            AppID.HeaderText = "AppID";
+            AppID.MinimumWidth = 8;
+            AppID.Name = "AppID";
+            AppID.ReadOnly = true;
+            // 
             // LastUpdated
-            //
-            this.LastUpdated.HeaderText = "Last Updated";
-            this.LastUpdated.MinimumWidth = 8;
-            this.LastUpdated.Name = "LastUpdated";
-            this.LastUpdated.ReadOnly = true;
-            //
+            // 
+            LastUpdated.HeaderText = "Last Updated";
+            LastUpdated.MinimumWidth = 8;
+            LastUpdated.Name = "LastUpdated";
+            LastUpdated.ReadOnly = true;
+            // 
             // CrackOnly
-            //
-            this.CrackOnly.HeaderText = "Crack";
-            this.CrackOnly.MinimumWidth = 70;
-            this.CrackOnly.Name = "CrackOnly";
-            this.CrackOnly.Text = "⚡ Crack";
-            this.CrackOnly.UseColumnTextForButtonValue = false;
-            this.CrackOnly.FillWeight = 45;
-            this.CrackOnly.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            //
+            // 
+            CrackOnly.FillWeight = 45F;
+            CrackOnly.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            CrackOnly.HeaderText = "Crack";
+            CrackOnly.MinimumWidth = 70;
+            CrackOnly.Name = "CrackOnly";
+            CrackOnly.ReadOnly = true;
+            CrackOnly.Text = "Crack";
+            // 
             // ShareClean
-            //
-            this.ShareClean.HeaderText = "Clean";
-            this.ShareClean.MinimumWidth = 70;
-            this.ShareClean.Name = "ShareClean";
-            this.ShareClean.Text = "📦 Clean";
-            this.ShareClean.UseColumnTextForButtonValue = false;
-            this.ShareClean.FillWeight = 45;
-            this.ShareClean.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            //
+            // 
+            ShareClean.FillWeight = 45F;
+            ShareClean.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            ShareClean.HeaderText = "Clean";
+            ShareClean.MinimumWidth = 70;
+            ShareClean.Name = "ShareClean";
+            ShareClean.ReadOnly = true;
+            ShareClean.Text = "Clean";
+            // 
             // ShareCracked
-            //
-            this.ShareCracked.HeaderText = "Cracked";
-            this.ShareCracked.MinimumWidth = 80;
-            this.ShareCracked.Name = "ShareCracked";
-            this.ShareCracked.Text = "🎮 Cracked";
-            this.ShareCracked.UseColumnTextForButtonValue = false;
-            this.ShareCracked.FillWeight = 50;
-            this.ShareCracked.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            //
+            // 
+            ShareCracked.FillWeight = 50F;
+            ShareCracked.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            ShareCracked.HeaderText = "Cracked";
+            ShareCracked.MinimumWidth = 80;
+            ShareCracked.Name = "ShareCracked";
+            ShareCracked.ReadOnly = true;
+            ShareCracked.Text = "Crack + Share";
+            // 
             // lblStatus
             // 
-            this.lblStatus.BackColor = System.Drawing.Color.Transparent;
-            this.lblStatus.Dock = System.Windows.Forms.DockStyle.Bottom;
-            this.lblStatus.Font = new System.Drawing.Font("Segoe UI", 9F);
-            this.lblStatus.ForeColor = System.Drawing.Color.Cyan;
-            this.lblStatus.Location = new System.Drawing.Point(1, 849);
-            this.lblStatus.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
-            this.lblStatus.Name = "lblStatus";
-            this.lblStatus.Size = new System.Drawing.Size(1165, 26);
-            this.lblStatus.TabIndex = 2;
-            this.lblStatus.Text = "Ready";
-            this.lblStatus.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
-            this.lblStatus.Visible = false;
+            lblStatus.BackColor = System.Drawing.Color.Transparent;
+            lblStatus.Dock = System.Windows.Forms.DockStyle.Bottom;
+            lblStatus.Font = new System.Drawing.Font("Segoe UI", 9F);
+            lblStatus.ForeColor = System.Drawing.Color.Cyan;
+            lblStatus.Location = new System.Drawing.Point(0, 750);
+            lblStatus.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            lblStatus.Name = "lblStatus";
+            lblStatus.Size = new System.Drawing.Size(1200, 23);
+            lblStatus.TabIndex = 2;
+            lblStatus.Text = "Ready";
+            lblStatus.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            lblStatus.Visible = false;
             // 
             // progressBar
             // 
-            this.progressBar.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(15)))), ((int)(((byte)(15)))), ((int)(((byte)(15)))));
-            this.progressBar.Dock = System.Windows.Forms.DockStyle.Bottom;
-            this.progressBar.Location = new System.Drawing.Point(1, 875);
-            this.progressBar.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
-            this.progressBar.Name = "progressBar";
-            this.progressBar.Size = new System.Drawing.Size(1165, 39);
-            this.progressBar.TabIndex = 3;
-            this.progressBar.Visible = false;
+            progressBar.BackColor = System.Drawing.Color.FromArgb(15, 15, 15);
+            progressBar.Dock = System.Windows.Forms.DockStyle.Bottom;
+            progressBar.Location = new System.Drawing.Point(0, 773);
+            progressBar.Margin = new System.Windows.Forms.Padding(4);
+            progressBar.Name = "progressBar";
+            progressBar.Size = new System.Drawing.Size(1200, 34);
+            progressBar.TabIndex = 3;
+            progressBar.Visible = false;
             // 
             // titleBar
             // 
-            this.titleBar.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(60)))), ((int)(((byte)(50)))), ((int)(((byte)(60)))), ((int)(((byte)(80)))));
-            this.titleBar.Controls.Add(this.lblTitle);
-            this.titleBar.Controls.Add(this.lblSelectedPrefix);
-            this.titleBar.Controls.Add(this.lblSelectedCount);
-            this.titleBar.Controls.Add(this.lblSelectedSuffix);
-            this.titleBar.Controls.Add(this.btnSettings);
-            this.titleBar.Controls.Add(this.btnProcessSelected);
-            this.titleBar.Controls.Add(this.btnMinimize);
-            this.titleBar.Controls.Add(this.btnClose);
-            this.titleBar.Dock = System.Windows.Forms.DockStyle.Top;
-            this.titleBar.Location = new System.Drawing.Point(1, 1);
-            this.titleBar.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
-            this.titleBar.Name = "titleBar";
-            this.titleBar.Size = new System.Drawing.Size(1165, 46);
-            this.titleBar.TabIndex = 4;
-            this.titleBar.MouseDown += new System.Windows.Forms.MouseEventHandler(this.TitleBar_MouseDown);
+            titleBar.BackColor = System.Drawing.Color.FromArgb(60, 50, 60, 80);
+            titleBar.Controls.Add(lblTitle);
+            titleBar.Controls.Add(lblSelectedPrefix);
+            titleBar.Controls.Add(lblSelectedCount);
+            titleBar.Controls.Add(lblSelectedSuffix);
+            titleBar.Controls.Add(btnSettings);
+            titleBar.Controls.Add(btnProcessSelected);
+            titleBar.Controls.Add(btnMinimize);
+            titleBar.Controls.Add(btnClose);
+            titleBar.Dock = System.Windows.Forms.DockStyle.Top;
+            titleBar.Location = new System.Drawing.Point(0, 0);
+            titleBar.Margin = new System.Windows.Forms.Padding(4);
+            titleBar.Name = "titleBar";
+            titleBar.Size = new System.Drawing.Size(1200, 41);
+            titleBar.TabIndex = 4;
+            titleBar.MouseDown += TitleBar_MouseDown;
             // 
             // lblTitle
             // 
-            this.lblTitle.AutoSize = true;
-            this.lblTitle.BackColor = System.Drawing.Color.Transparent;
-            this.lblTitle.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Bold);
-            this.lblTitle.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(200)))), ((int)(((byte)(200)))), ((int)(((byte)(210)))));
-            this.lblTitle.Location = new System.Drawing.Point(24, 14);
-            this.lblTitle.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
-            this.lblTitle.Name = "lblTitle";
-            this.lblTitle.Size = new System.Drawing.Size(155, 19);
-            this.lblTitle.TabIndex = 0;
-            this.lblTitle.Text = "Crack | Zip | Share";
-            this.lblTitle.MouseDown += new System.Windows.Forms.MouseEventHandler(this.TitleBar_MouseDown);
-            //
+            lblTitle.AutoSize = true;
+            lblTitle.BackColor = System.Drawing.Color.Transparent;
+            lblTitle.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Bold);
+            lblTitle.ForeColor = System.Drawing.Color.FromArgb(200, 200, 210);
+            lblTitle.Location = new System.Drawing.Point(13, 9);
+            lblTitle.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            lblTitle.Name = "lblTitle";
+            lblTitle.Size = new System.Drawing.Size(133, 19);
+            lblTitle.TabIndex = 0;
+            lblTitle.Text = "Crack | Zip | Share";
+            lblTitle.MouseDown += TitleBar_MouseDown;
+            // 
             // lblSelectedPrefix
-            //
-            this.lblSelectedPrefix.AutoSize = true;
-            this.lblSelectedPrefix.BackColor = System.Drawing.Color.Transparent;
-            this.lblSelectedPrefix.Font = new System.Drawing.Font("Segoe UI", 9F);
-            this.lblSelectedPrefix.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(150)))), ((int)(((byte)(150)))), ((int)(((byte)(160)))));
-            this.lblSelectedPrefix.Location = new System.Drawing.Point(185, 16);
-            this.lblSelectedPrefix.Name = "lblSelectedPrefix";
-            this.lblSelectedPrefix.Size = new System.Drawing.Size(52, 15);
-            this.lblSelectedPrefix.Text = "Selected ";
-            this.lblSelectedPrefix.Visible = false;
-            //
+            // 
+            lblSelectedPrefix.AutoSize = true;
+            lblSelectedPrefix.BackColor = System.Drawing.Color.Transparent;
+            lblSelectedPrefix.Font = new System.Drawing.Font("Segoe UI", 9F);
+            lblSelectedPrefix.ForeColor = System.Drawing.Color.FromArgb(150, 150, 160);
+            lblSelectedPrefix.Location = new System.Drawing.Point(185, 13);
+            lblSelectedPrefix.Name = "lblSelectedPrefix";
+            lblSelectedPrefix.Size = new System.Drawing.Size(54, 15);
+            lblSelectedPrefix.TabIndex = 1;
+            lblSelectedPrefix.Text = "Selected ";
+            lblSelectedPrefix.Visible = false;
+            // 
             // lblSelectedCount
-            //
-            this.lblSelectedCount.AutoSize = true;
-            this.lblSelectedCount.BackColor = System.Drawing.Color.Transparent;
-            this.lblSelectedCount.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
-            this.lblSelectedCount.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(100)))), ((int)(((byte)(255)))), ((int)(((byte)(150)))));
-            this.lblSelectedCount.Location = new System.Drawing.Point(185, 16);
-            this.lblSelectedCount.Name = "lblSelectedCount";
-            this.lblSelectedCount.Size = new System.Drawing.Size(14, 15);
-            this.lblSelectedCount.Text = "0";
-            this.lblSelectedCount.Visible = false;
-            //
+            // 
+            lblSelectedCount.AutoSize = true;
+            lblSelectedCount.BackColor = System.Drawing.Color.Transparent;
+            lblSelectedCount.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
+            lblSelectedCount.ForeColor = System.Drawing.Color.FromArgb(100, 255, 150);
+            lblSelectedCount.Location = new System.Drawing.Point(185, 14);
+            lblSelectedCount.Name = "lblSelectedCount";
+            lblSelectedCount.Size = new System.Drawing.Size(14, 15);
+            lblSelectedCount.TabIndex = 2;
+            lblSelectedCount.Text = "0";
+            lblSelectedCount.Visible = false;
+            // 
             // lblSelectedSuffix
-            //
-            this.lblSelectedSuffix.AutoSize = true;
-            this.lblSelectedSuffix.BackColor = System.Drawing.Color.Transparent;
-            this.lblSelectedSuffix.Font = new System.Drawing.Font("Segoe UI", 9F);
-            this.lblSelectedSuffix.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(150)))), ((int)(((byte)(150)))), ((int)(((byte)(160)))));
-            this.lblSelectedSuffix.Location = new System.Drawing.Point(257, 16);
-            this.lblSelectedSuffix.Name = "lblSelectedSuffix";
-            this.lblSelectedSuffix.Size = new System.Drawing.Size(18, 15);
-            this.lblSelectedSuffix.Text = " to";
-            this.lblSelectedSuffix.Visible = false;
-            //
+            // 
+            lblSelectedSuffix.AutoSize = true;
+            lblSelectedSuffix.BackColor = System.Drawing.Color.Transparent;
+            lblSelectedSuffix.Font = new System.Drawing.Font("Segoe UI", 9F);
+            lblSelectedSuffix.ForeColor = System.Drawing.Color.FromArgb(150, 150, 160);
+            lblSelectedSuffix.Location = new System.Drawing.Point(257, 13);
+            lblSelectedSuffix.Name = "lblSelectedSuffix";
+            lblSelectedSuffix.Size = new System.Drawing.Size(21, 15);
+            lblSelectedSuffix.TabIndex = 3;
+            lblSelectedSuffix.Text = " to";
+            lblSelectedSuffix.Visible = false;
+            // 
             // btnSettings
-            //
-            this.btnSettings.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(20)))), ((int)(((byte)(22)))), ((int)(((byte)(28)))));
-            this.btnSettings.FlatAppearance.BorderColor = System.Drawing.Color.FromArgb(((int)(((byte)(60)))), ((int)(((byte)(65)))), ((int)(((byte)(75)))));
-            this.btnSettings.FlatAppearance.MouseOverBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(20)))), ((int)(((byte)(22)))), ((int)(((byte)(28)))));
-            this.btnSettings.FlatAppearance.MouseDownBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(15)))), ((int)(((byte)(18)))), ((int)(((byte)(22)))));
-            this.btnSettings.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.btnSettings.Font = new System.Drawing.Font("Segoe UI", 11F);
-            this.btnSettings.ForeColor = System.Drawing.Color.White;
-            this.btnSettings.Location = new System.Drawing.Point(388, 7);
-            this.btnSettings.Name = "btnSettings";
-            this.btnSettings.Size = new System.Drawing.Size(40, 33);
-            this.btnSettings.TabIndex = 14;
-            this.btnSettings.Text = "";
-            this.toolTip.SetToolTip(this.btnSettings, "Compression settings");
-            this.btnSettings.UseVisualStyleBackColor = false;
-            this.btnSettings.Click += new System.EventHandler(this.BtnSettings_Click);
-            //
+            // 
+            btnSettings.BackColor = System.Drawing.Color.FromArgb(20, 22, 28);
+            btnSettings.FlatAppearance.BorderColor = System.Drawing.Color.FromArgb(60, 65, 75);
+            btnSettings.FlatAppearance.MouseDownBackColor = System.Drawing.Color.FromArgb(15, 18, 22);
+            btnSettings.FlatAppearance.MouseOverBackColor = System.Drawing.Color.FromArgb(20, 22, 28);
+            btnSettings.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            btnSettings.Font = new System.Drawing.Font("Segoe UI", 11F);
+            btnSettings.ForeColor = System.Drawing.Color.White;
+            btnSettings.Location = new System.Drawing.Point(388, 6);
+            btnSettings.Name = "btnSettings";
+            btnSettings.Size = new System.Drawing.Size(40, 29);
+            btnSettings.TabIndex = 14;
+            toolTip.SetToolTip(btnSettings, "Compression settings");
+            btnSettings.UseVisualStyleBackColor = false;
+            btnSettings.Click += BtnSettings_Click;
+            // 
             // btnProcessSelected
-            //
-            this.btnProcessSelected.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(30)))), ((int)(((byte)(80)))), ((int)(((byte)(30)))));
-            this.btnProcessSelected.FlatAppearance.BorderColor = System.Drawing.Color.FromArgb(((int)(((byte)(60)))), ((int)(((byte)(140)))), ((int)(((byte)(60)))));
-            this.btnProcessSelected.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.btnProcessSelected.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
-            this.btnProcessSelected.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(150)))), ((int)(((byte)(255)))), ((int)(((byte)(150)))));
-            this.btnProcessSelected.Location = new System.Drawing.Point(290, 7);
-            this.btnProcessSelected.Name = "btnProcessSelected";
-            this.btnProcessSelected.Size = new System.Drawing.Size(90, 33);
-            this.btnProcessSelected.TabIndex = 13;
-            this.btnProcessSelected.Text = "Process";
-            this.toolTip.SetToolTip(this.btnProcessSelected, "Process selected games with chosen actions");
-            this.btnProcessSelected.UseVisualStyleBackColor = false;
-            this.btnProcessSelected.Click += new System.EventHandler(this.BtnProcessSelected_Click);
-            //
+            // 
+            btnProcessSelected.BackColor = System.Drawing.Color.FromArgb(30, 80, 30);
+            btnProcessSelected.FlatAppearance.BorderColor = System.Drawing.Color.FromArgb(60, 140, 60);
+            btnProcessSelected.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            btnProcessSelected.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
+            btnProcessSelected.ForeColor = System.Drawing.Color.FromArgb(150, 255, 150);
+            btnProcessSelected.Location = new System.Drawing.Point(290, 6);
+            btnProcessSelected.Name = "btnProcessSelected";
+            btnProcessSelected.Size = new System.Drawing.Size(90, 29);
+            btnProcessSelected.TabIndex = 13;
+            btnProcessSelected.Text = "Process";
+            toolTip.SetToolTip(btnProcessSelected, "Process selected games with chosen actions");
+            btnProcessSelected.UseVisualStyleBackColor = false;
+            btnProcessSelected.Click += BtnProcessSelected_Click;
+            // 
             // btnMinimize
             // 
-            this.btnMinimize.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.btnMinimize.BackColor = System.Drawing.Color.Transparent;
-            this.btnMinimize.FlatAppearance.BorderSize = 0;
-            this.btnMinimize.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Transparent;
-            this.btnMinimize.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.btnMinimize.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Bold);
-            this.btnMinimize.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(150)))), ((int)(((byte)(200)))), ((int)(((byte)(255)))));
-            this.btnMinimize.Location = new System.Drawing.Point(1078, 0);
-            this.btnMinimize.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
-            this.btnMinimize.Name = "btnMinimize";
-            this.btnMinimize.Size = new System.Drawing.Size(41, 46);
-            this.btnMinimize.TabIndex = 2;
-            this.btnMinimize.Text = "−";
-            this.toolTip.SetToolTip(this.btnMinimize, "Minimize this window");
-            this.btnMinimize.UseVisualStyleBackColor = false;
-            this.btnMinimize.Click += new System.EventHandler(this.BtnMinimize_Click);
+            btnMinimize.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
+            btnMinimize.BackColor = System.Drawing.Color.Transparent;
+            btnMinimize.FlatAppearance.BorderSize = 0;
+            btnMinimize.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Transparent;
+            btnMinimize.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            btnMinimize.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Bold);
+            btnMinimize.ForeColor = System.Drawing.Color.FromArgb(150, 200, 255);
+            btnMinimize.Location = new System.Drawing.Point(1118, -1);
+            btnMinimize.Margin = new System.Windows.Forms.Padding(4);
+            btnMinimize.Name = "btnMinimize";
+            btnMinimize.Size = new System.Drawing.Size(41, 41);
+            btnMinimize.TabIndex = 2;
+            btnMinimize.Text = "−";
+            toolTip.SetToolTip(btnMinimize, "Minimize this window");
+            btnMinimize.UseVisualStyleBackColor = false;
+            btnMinimize.Click += BtnMinimize_Click;
             // 
             // btnClose
             // 
-            this.btnClose.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.btnClose.BackColor = System.Drawing.Color.Transparent;
-            this.btnClose.FlatAppearance.BorderSize = 0;
-            this.btnClose.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Transparent;
-            this.btnClose.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.btnClose.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Bold);
-            this.btnClose.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(150)))), ((int)(((byte)(200)))), ((int)(((byte)(255)))));
-            this.btnClose.Location = new System.Drawing.Point(1125, -3);
-            this.btnClose.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
-            this.btnClose.Name = "btnClose";
-            this.btnClose.Size = new System.Drawing.Size(41, 46);
-            this.btnClose.TabIndex = 1;
-            this.btnClose.Text = "✕";
-            this.toolTip.SetToolTip(this.btnClose, "Close this window");
-            this.btnClose.UseVisualStyleBackColor = false;
-            this.btnClose.Click += new System.EventHandler(this.BtnClose_Click);
+            btnClose.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
+            btnClose.BackColor = System.Drawing.Color.Transparent;
+            btnClose.FlatAppearance.BorderSize = 0;
+            btnClose.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Transparent;
+            btnClose.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            btnClose.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Bold);
+            btnClose.ForeColor = System.Drawing.Color.FromArgb(150, 200, 255);
+            btnClose.Location = new System.Drawing.Point(1160, -3);
+            btnClose.Margin = new System.Windows.Forms.Padding(4);
+            btnClose.Name = "btnClose";
+            btnClose.Size = new System.Drawing.Size(41, 41);
+            btnClose.TabIndex = 1;
+            btnClose.Text = "✕";
+            toolTip.SetToolTip(btnClose, "Close this window");
+            btnClose.UseVisualStyleBackColor = false;
+            btnClose.Click += BtnClose_Click;
             // 
             // toolTip
             // 
-            this.toolTip.AutoPopDelay = 5000;
-            this.toolTip.InitialDelay = 500;
-            this.toolTip.ReshowDelay = 100;
+            toolTip.AutoPopDelay = 5000;
+            toolTip.InitialDelay = 500;
+            toolTip.ReshowDelay = 100;
             // 
             // EnhancedShareWindow
             // 
-            this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 17F);
-            this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(5)))), ((int)(((byte)(8)))), ((int)(((byte)(20)))));
-            this.ClientSize = new System.Drawing.Size(1200, 915);
-            this.Controls.Add(this.mainPanel);
-            this.ForeColor = System.Drawing.Color.White;
-            this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.None;
-            this.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
-            this.Name = "EnhancedShareWindow";
-            this.Opacity = 0.95D;
-            this.ShowInTaskbar = true;  // Show in taskbar since main form hides
-            this.StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
-            this.Text = "Game Manager - Crack, Share & Export";
-            this.FormClosed += new System.Windows.Forms.FormClosedEventHandler(this.EnhancedShareWindow_FormClosed);
-            this.Load += new System.EventHandler(this.EnhancedShareWindow_Load);
-            this.mainPanel.ResumeLayout(false);
-            ((System.ComponentModel.ISupportInitialize)(this.gamesGrid)).EndInit();
-            this.titleBar.ResumeLayout(false);
-            this.titleBar.PerformLayout();
-            this.ResumeLayout(false);
+            AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
+            AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+            BackColor = System.Drawing.Color.FromArgb(5, 8, 20);
+            ClientSize = new System.Drawing.Size(1200, 807);
+            Controls.Add(mainPanel);
+            ForeColor = System.Drawing.Color.White;
+            FormBorderStyle = System.Windows.Forms.FormBorderStyle.None;
+            Margin = new System.Windows.Forms.Padding(4);
+            Name = "EnhancedShareWindow";
+            Opacity = 0.95D;
+            StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
+            Text = "Game Manager - Crack, Share & Export";
+            FormClosed += EnhancedShareWindow_FormClosed;
+            Load += EnhancedShareWindow_Load;
+            mainPanel.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)gamesGrid).EndInit();
+            titleBar.ResumeLayout(false);
+            titleBar.PerformLayout();
+            ResumeLayout(false);
 
         }
 

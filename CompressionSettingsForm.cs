@@ -26,11 +26,9 @@ namespace SteamAutocrackGUI
         public bool RememberChoice { get; set; }
         public bool UseRinPassword { get; set; }
         public static long UploadBandwidthLimitBytesPerSecond { get; private set; } = 0; // 0 = unlimited
-        private Panel sliderPanel;
         private int sliderValue = 0;
-        private TextBox bandwidthTextBox;
-        private ComboBox bandwidthUnitCombo;
-        private TextBox zipOutputFolderTextBox;
+        // Shared tooltip host for the designer-placed controls below.
+        private readonly ToolTip settingsToolTip = new ToolTip();
         private static string _zipOutputFolder = null;
         private static bool? _deleteZipsAfterUpload = null;
         public static bool DeleteZipsAfterUpload
@@ -67,7 +65,7 @@ namespace SteamAutocrackGUI
             {
                 this.Icon = APPID.Properties.Resources.sac_icon;
             }
-            catch { }
+            catch (Exception ex) { Console.WriteLine(ex.Message); }
 
             // Load saved format
             string savedFormat = APPID.AppSettings.Default.CompressionFormat ?? "ZIP";
@@ -78,139 +76,41 @@ namespace SteamAutocrackGUI
             UseRinPassword = APPID.AppSettings.Default.UseRinPassword;
             rinPasswordCheckBox.Checked = UseRinPassword;
 
-            // Add Convert to DDL checkbox
-            var convertToDdlCheckBox = new CheckBox
-            {
-                Location = new Point(102, 92),
-                Size = new Size(265, 21),
-                Text = "Convert to DDL (debrid backend)",
-                ForeColor = Color.FromArgb(150, 150, 155),
-                BackColor = Color.Transparent,
-                Font = new Font("Segoe UI", 9),
-                Checked = !APPID.AppSettings.Default.SkipPyDriveConversion
-            };
+            // Convert to DDL checkbox (placed in the designer; wire behavior here)
+            convertToDdlCheckBox.Checked = !APPID.AppSettings.Default.SkipPyDriveConversion;
             convertToDdlCheckBox.CheckedChanged += (s, e) =>
             {
                 APPID.AppSettings.Default.SkipPyDriveConversion = !convertToDdlCheckBox.Checked;
                 APPID.AppSettings.Default.Save();
             };
-            var tooltip = new ToolTip();
-            tooltip.SetToolTip(convertToDdlCheckBox, "Convert 1fichier links to direct download links via debrid proxy");
-            this.Controls.Add(convertToDdlCheckBox);
+            settingsToolTip.SetToolTip(convertToDdlCheckBox, "Convert 1fichier links to direct download links via debrid proxy");
 
-            // Add Delete zips after upload checkbox
-            var deleteZipsCheckBox = new CheckBox
-            {
-                Location = new Point(102, 113),
-                Size = new Size(200, 21),
-                Text = "Delete zips after upload",
-                ForeColor = Color.FromArgb(150, 150, 155),
-                BackColor = Color.Transparent,
-                Font = new Font("Segoe UI", 9),
-                Checked = APPID.AppSettings.Default.DeleteZipsAfterUpload
-            };
+            // Delete zips after upload checkbox
+            deleteZipsCheckBox.Checked = APPID.AppSettings.Default.DeleteZipsAfterUpload;
             deleteZipsCheckBox.CheckedChanged += (s, e) =>
             {
                 APPID.AppSettings.Default.DeleteZipsAfterUpload = deleteZipsCheckBox.Checked;
                 APPID.AppSettings.Default.Save();
                 DeleteZipsAfterUpload = deleteZipsCheckBox.Checked;
             };
-            var deleteZipTooltip = new ToolTip();
-            deleteZipTooltip.SetToolTip(deleteZipsCheckBox, "Automatically delete local zip files after successful upload");
-            this.Controls.Add(deleteZipsCheckBox);
+            settingsToolTip.SetToolTip(deleteZipsCheckBox, "Automatically delete local zip files after successful upload");
 
-            // Hide the default trackbar and create custom slider
-            levelTrackBar.Visible = false;
-
-            // Load saved compression level
+            // Load saved compression level (custom slider is the visible control;
+            // levelTrackBar is kept hidden via the designer)
             sliderValue = APPID.AppSettings.Default.CompressionLevel;
             if (sliderValue < 0) sliderValue = 0;
             if (sliderValue > 10) sliderValue = 10;
-
-            CreateCustomSlider();
             UpdateLevelDescription();
 
-            // Add bandwidth limiter UI - below checkboxes, above slider
-            var bandwidthLabel = new Label
-            {
-                Location = new Point(102, 143),
-                Size = new Size(82, 21),
-                Text = "Upload Limit:",
-                ForeColor = Color.FromArgb(150, 150, 155),
-                BackColor = Color.Transparent,
-                Font = new Font("Segoe UI", 9)
-            };
-            this.Controls.Add(bandwidthLabel);
-
-            bandwidthTextBox = new TextBox
-            {
-                Location = new Point(189, 140),
-                Size = new Size(55, 23),
-                BackColor = Color.FromArgb(20, 22, 28),
-                ForeColor = Color.FromArgb(220, 255, 255),
-                BorderStyle = BorderStyle.FixedSingle,
-                Font = new Font("Segoe UI", 9),
-                Text = ""
-            };
-            var bwTooltip = new ToolTip();
-            bwTooltip.SetToolTip(bandwidthTextBox, "Enter number or leave empty for unlimited");
-            this.Controls.Add(bandwidthTextBox);
-
-            bandwidthUnitCombo = new ComboBox
-            {
-                Location = new Point(249, 139),
-                Size = new Size(70, 23),
-                BackColor = Color.FromArgb(20, 22, 28),
-                ForeColor = Color.FromArgb(220, 255, 255),
-                FlatStyle = FlatStyle.Flat,
-                Font = new Font("Segoe UI", 9),
-                DropDownStyle = ComboBoxStyle.DropDownList
-            };
-            bandwidthUnitCombo.Items.AddRange(new[] { "Kbps", "Mbps", "Gbps" });
+            // Bandwidth limiter
+            settingsToolTip.SetToolTip(bandwidthTextBox, "Enter number or leave empty for unlimited");
             bandwidthUnitCombo.SelectedIndex = 1; // Default to Mbps
-            this.Controls.Add(bandwidthUnitCombo);
-
-            // Load saved bandwidth setting
             LoadBandwidthSetting();
 
-            // Add zip output folder UI
-            var zipFolderLabel = new Label
-            {
-                Location = new Point(54, 170),
-                Size = new Size(47, 21),
-                Text = "Zip Dir:",
-                ForeColor = Color.FromArgb(150, 150, 155),
-                BackColor = Color.Transparent,
-                Font = new Font("Segoe UI", 9)
-            };
-            this.Controls.Add(zipFolderLabel);
+            // Zip output folder
+            zipOutputFolderTextBox.Text = string.IsNullOrEmpty(APPID.AppSettings.Default.ZipOutputFolder) ? "(Same as game folder)" : APPID.AppSettings.Default.ZipOutputFolder;
+            settingsToolTip.SetToolTip(zipOutputFolderTextBox, "Folder where zip archives will be saved");
 
-            zipOutputFolderTextBox = new TextBox
-            {
-                Location = new Point(103, 167),
-                Size = new Size(226, 23),
-                BackColor = Color.FromArgb(20, 22, 28),
-                ForeColor = Color.FromArgb(180, 180, 185),
-                BorderStyle = BorderStyle.FixedSingle,
-                Font = new Font("Segoe UI", 8),
-                ReadOnly = true,
-                Text = string.IsNullOrEmpty(APPID.AppSettings.Default.ZipOutputFolder) ? "(Same as game folder)" : APPID.AppSettings.Default.ZipOutputFolder
-            };
-            var zipFolderTooltip = new ToolTip();
-            zipFolderTooltip.SetToolTip(zipOutputFolderTextBox, "Folder where zip archives will be saved");
-            this.Controls.Add(zipOutputFolderTextBox);
-
-            var browseBtn = new Button
-            {
-                Location = new Point(335, 166),
-                Size = new Size(30, 25),
-                Text = "...",
-                FlatStyle = FlatStyle.Flat,
-                BackColor = Color.FromArgb(38, 38, 42),
-                ForeColor = Color.FromArgb(200, 200, 205),
-                Font = new Font("Segoe UI", 8)
-            };
-            browseBtn.FlatAppearance.BorderColor = Color.FromArgb(55, 55, 60);
             browseBtn.Click += (s, e) =>
             {
                 using (var fbd = new FolderBrowserDialog())
@@ -243,20 +143,7 @@ namespace SteamAutocrackGUI
                     }
                 }
             };
-            this.Controls.Add(browseBtn);
 
-            // Add reset button to clear the folder
-            var resetBtn = new Button
-            {
-                Location = new Point(368, 166),
-                Size = new Size(20, 25),
-                Text = "×",
-                FlatStyle = FlatStyle.Flat,
-                BackColor = Color.FromArgb(38, 38, 42),
-                ForeColor = Color.FromArgb(200, 100, 100),
-                Font = new Font("Segoe UI", 9, FontStyle.Bold)
-            };
-            resetBtn.FlatAppearance.BorderColor = Color.FromArgb(55, 55, 60);
             resetBtn.Click += (s, e) =>
             {
                 zipOutputFolderTextBox.Text = "(Same as game folder)";
@@ -264,15 +151,10 @@ namespace SteamAutocrackGUI
                 APPID.AppSettings.Default.Save();
                 ZipOutputFolder = "";
             };
-            var resetTooltip = new ToolTip();
-            resetTooltip.SetToolTip(resetBtn, "Reset to default (same folder as game)");
-            this.Controls.Add(resetBtn);
+            settingsToolTip.SetToolTip(resetBtn, "Reset to default (same folder as game)");
 
             // Load saved zip output folder
             ZipOutputFolder = APPID.AppSettings.Default.ZipOutputFolder ?? "";
-
-            // Move description label to proper position
-            levelDescriptionLabel.Location = new Point(levelDescriptionLabel.Location.X, 225);
 
             // Apply rounded corners to buttons
             ApplyRoundedCornersToButton(okButton);
@@ -397,21 +279,6 @@ namespace SteamAutocrackGUI
             btn.MouseLeave += (s, e) => btn.Invalidate();
         }
 
-        private void CreateCustomSlider()
-        {
-            sliderPanel = new Panel
-            {
-                Location = new Point(46, 190),
-                Size = new Size(350, 40),
-                BackColor = Color.Transparent
-            };
-
-            sliderPanel.Paint += SliderPanel_Paint;
-            sliderPanel.MouseDown += SliderPanel_MouseDown;
-            sliderPanel.MouseMove += SliderPanel_MouseMove;
-            this.Controls.Add(sliderPanel);
-        }
-
         private void SliderPanel_Paint(object sender, PaintEventArgs e)
         {
             var g = e.Graphics;
@@ -510,7 +377,7 @@ namespace SteamAutocrackGUI
             {
                 using (var glowBrush = new SolidBrush(Color.FromArgb(2, 192, 255, 255)))
                 {
-                    g.FillEllipse(glowBrush, handleX - i/2, trackY - i/2, i, i);
+                    g.FillEllipse(glowBrush, handleX - i / 2, trackY - i / 2, i, i);
                 }
             }
 
@@ -686,7 +553,7 @@ namespace SteamAutocrackGUI
                 APPID.AppSettings.Default.Save();
                 ParseBandwidthLimit(value);
             }
-            catch { }
+            catch (Exception ex) { Console.WriteLine(ex.Message); }
         }
 
         /// <summary>

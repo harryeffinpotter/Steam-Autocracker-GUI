@@ -79,7 +79,7 @@ namespace APPID
                 string json = JsonConvert.SerializeObject(this, Formatting.Indented);
                 File.WriteAllText(SettingsPath, json);
             }
-            catch { }
+            catch (Exception ex) { Console.WriteLine(ex.Message); }
         }
     }
 }

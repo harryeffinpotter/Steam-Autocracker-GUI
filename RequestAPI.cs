@@ -142,7 +142,7 @@ namespace SteamAppIdIdentifier
                     return JsonConvert.DeserializeObject<UserStatus>(responseJson);
                 }
             }
-            catch { }
+            catch (Exception ex) { Console.WriteLine(ex.Message); }
 
             return new UserStatus();
         }
@@ -184,7 +184,7 @@ namespace SteamAppIdIdentifier
                     return JsonConvert.DeserializeObject<List<TopRequestedGame>>(json);
                 }
             }
-            catch { }
+            catch (Exception ex) { Console.WriteLine(ex.Message); }
 
             return new List<TopRequestedGame>();
         }
@@ -201,7 +201,7 @@ namespace SteamAppIdIdentifier
                     return JsonConvert.DeserializeObject<List<RequestedGame>>(json);
                 }
             }
-            catch { }
+            catch (Exception ex) { Console.WriteLine(ex.Message); }
             return new List<RequestedGame>();
         }
 
@@ -249,7 +249,7 @@ namespace SteamAppIdIdentifier
                     return JsonConvert.DeserializeObject<GlobalStats>(json);
                 }
             }
-            catch { }
+            catch (Exception ex) { Console.WriteLine(ex.Message); }
 
             return new GlobalStats();
         }
@@ -266,7 +266,7 @@ namespace SteamAppIdIdentifier
                     return JsonConvert.DeserializeObject<DetailedUserStats>(json);
                 }
             }
-            catch { }
+            catch (Exception ex) { Console.WriteLine(ex.Message); }
             return new DetailedUserStats();
         }
 
@@ -330,7 +330,7 @@ namespace SteamAppIdIdentifier
                 if (ratio >= 2.0) return "🌟 Hero";
                 if (ratio >= 1.5) return "💚 Contributor";
                 if (ratio >= 1.0) return "⚖️ Balanced";
-                if (ratio >= 0.5) return "📥 Receiver";
+                if (ratio >= 0.5) return "Receiver";
                 return "🆕 New User";
             }
         }
@@ -347,7 +347,7 @@ namespace SteamAppIdIdentifier
                     return JsonConvert.DeserializeObject<UserActivity>(json);
                 }
             }
-            catch { }
+            catch (Exception ex) { Console.WriteLine(ex.Message); }
 
             return new UserActivity
             {
@@ -446,7 +446,7 @@ namespace SteamAppIdIdentifier
                 {
                     // Show subtle notification
                     var message = new StringBuilder();
-                    message.AppendLine("🔥 YOUR GAMES ARE NEEDED:");
+                    message.AppendLine("YOUR GAMES ARE NEEDED:");
                     message.AppendLine();
 
                     foreach (var game in status.NeededGames.Take(5))
@@ -500,7 +500,7 @@ namespace SteamAppIdIdentifier
                     closeTimer.Start();
                 }
             }
-            catch { }
+            catch (Exception ex) { Console.WriteLine(ex.Message); }
         }
 
         public static async Task VoteOnRequest(string userId, string appId, bool upvote)

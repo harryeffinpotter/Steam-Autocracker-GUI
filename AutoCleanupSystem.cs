@@ -258,7 +258,7 @@ namespace SteamAppIdIdentifier
                             File.Delete(steamAppIdFile);
                             result.DeletedFiles.Add("steam_appid.txt");
                         }
-                        catch { }
+                        catch (Exception ex) { Console.WriteLine(ex.Message); }
                     }
                 }
 
@@ -282,7 +282,7 @@ namespace SteamAppIdIdentifier
                             File.Delete(file);
                             result.DeletedFiles.Add(Path.GetFileName(file));
                         }
-                        catch { }
+                        catch (Exception ex) { Console.WriteLine(ex.Message); }
                     }
                 }
 
@@ -335,7 +335,7 @@ namespace SteamAppIdIdentifier
 
             var lblTitle = new Label
             {
-                Text = $"✅ {gameName} Cleaned Successfully!",
+                Text = $"✓ {gameName} Cleaned Successfully!",
                 Font = new Font("Segoe UI", 14, FontStyle.Bold),
                 ForeColor = Color.Lime,
                 Location = new Point(20, 20),
@@ -419,7 +419,7 @@ namespace SteamAppIdIdentifier
 
             var lblTitle = new Label
             {
-                Text = "❌ Cleanup Failed",
+                Text = "Cleanup Failed",
                 Font = new Font("Segoe UI", 14, FontStyle.Bold),
                 ForeColor = Color.Red,
                 Location = new Point(20, 20),

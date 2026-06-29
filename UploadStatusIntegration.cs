@@ -37,7 +37,7 @@ namespace SteamAppIdIdentifier
                 var cell = row.Cells["UploadStatus"] as DataGridViewButtonCell;
                 if (cell != null)
                 {
-                    cell.Value = "✅ Uploaded! 📋";
+                    cell.Value = "✓ Uploaded!";
                     cell.Style.BackColor = Color.FromArgb(0, 100, 0);
                     cell.Style.ForeColor = Color.White;
                     cell.Style.Font = new Font("Segoe UI", 9, FontStyle.Bold);
@@ -75,14 +75,14 @@ namespace SteamAppIdIdentifier
                     Clipboard.SetText(uploadUrl);
 
                     // Visual feedback
-                    cell.Value = "📋 Copied!";
+                    cell.Value = "Copied!";
 
                     // Reset after 2 seconds
                     Task.Delay(2000).ContinueWith(_ =>
                     {
                         grid.Invoke(new Action(() =>
                         {
-                            cell.Value = "✅ Uploaded! 📋";
+                            cell.Value = "✓ Uploaded!";
                         }));
                     });
 
@@ -142,7 +142,7 @@ namespace SteamAppIdIdentifier
 
             var iconLabel = new Label
             {
-                Text = "✅",
+                Text = "✓",
                 Font = new Font("Segoe UI", 20),
                 Location = new Point(10, 20),
                 Size = new Size(40, 40)

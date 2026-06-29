@@ -14,7 +14,6 @@ namespace SteamAutocrackGUI
         private Label formatLabel;
         private RadioButton zipRadioButton;
         private RadioButton sevenZipRadioButton;
-        private Label levelLabel;
         private TrackBar levelTrackBar;
         private Label levelDescriptionLabel;
         private Panel separator;
@@ -45,180 +44,183 @@ namespace SteamAutocrackGUI
         /// </summary>
         private void InitializeComponent()
         {
-            this.titleLabel = new Label();
-            this.formatLabel = new Label();
-            this.zipRadioButton = new RadioButton();
-            this.sevenZipRadioButton = new RadioButton();
-            this.levelLabel = new Label();
-            this.levelTrackBar = new TrackBar();
-            this.levelDescriptionLabel = new Label();
-            this.separator = new Panel();
-            this.sliderPanel = new Panel();
-            this.uploadCheckBox = new CheckBox();
-            this.rinCheckBox = new CheckBox();
-            this.infoLabel = new Label();
-            this.okButton = new Button();
-            this.cancelButton = new Button();
-            ((System.ComponentModel.ISupportInitialize)(this.levelTrackBar)).BeginInit();
-            this.SuspendLayout();
-            //
+            titleLabel = new Label();
+            formatLabel = new Label();
+            zipRadioButton = new RadioButton();
+            sevenZipRadioButton = new RadioButton();
+            levelTrackBar = new TrackBar();
+            levelDescriptionLabel = new Label();
+            separator = new Panel();
+            sliderPanel = new Panel();
+            uploadCheckBox = new CheckBox();
+            rinCheckBox = new CheckBox();
+            infoLabel = new Label();
+            okButton = new Button();
+            cancelButton = new Button();
+            ((System.ComponentModel.ISupportInitialize)levelTrackBar).BeginInit();
+            SuspendLayout();
+            // 
             // titleLabel
-            //
-            this.titleLabel.Location = new Point(20, 15);
-            this.titleLabel.Name = "titleLabel";
-            this.titleLabel.Size = new Size(360, 25);
-            this.titleLabel.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
-            this.titleLabel.TextAlign = ContentAlignment.MiddleCenter;
-            //
+            // 
+            titleLabel.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
+            titleLabel.Location = new Point(13, 15);
+            titleLabel.Name = "titleLabel";
+            titleLabel.Size = new Size(360, 25);
+            titleLabel.TabIndex = 0;
+            titleLabel.TextAlign = ContentAlignment.MiddleCenter;
+            // 
             // formatLabel
-            //
-            this.formatLabel.Text = "Format:";
-            this.formatLabel.Location = new Point(20, 50);
-            this.formatLabel.Name = "formatLabel";
-            this.formatLabel.Size = new Size(60, 25);
-            this.formatLabel.ForeColor = Color.FromArgb(192, 255, 255);
-            //
+            // 
+            formatLabel.ForeColor = Color.FromArgb(192, 255, 255);
+            formatLabel.Location = new Point(38, 50);
+            formatLabel.Name = "formatLabel";
+            formatLabel.Size = new Size(60, 25);
+            formatLabel.TabIndex = 1;
+            formatLabel.Text = "Format:";
+            // 
             // zipRadioButton
-            //
-            this.zipRadioButton.Text = "ZIP (Universal)";
-            this.zipRadioButton.Location = new Point(85, 48);
-            this.zipRadioButton.Name = "zipRadioButton";
-            this.zipRadioButton.Size = new Size(120, 20);
-            this.zipRadioButton.ForeColor = Color.FromArgb(220, 255, 255);
-            this.zipRadioButton.Checked = true;
-            //
+            // 
+            zipRadioButton.Checked = true;
+            zipRadioButton.ForeColor = Color.FromArgb(220, 255, 255);
+            zipRadioButton.Location = new Point(103, 48);
+            zipRadioButton.Name = "zipRadioButton";
+            zipRadioButton.Size = new Size(120, 20);
+            zipRadioButton.TabIndex = 2;
+            zipRadioButton.TabStop = true;
+            zipRadioButton.Text = "ZIP (Universal)";
+            // 
             // sevenZipRadioButton
-            //
-            this.sevenZipRadioButton.Text = "7Z (Smaller)";
-            this.sevenZipRadioButton.Location = new Point(210, 48);
-            this.sevenZipRadioButton.Name = "sevenZipRadioButton";
-            this.sevenZipRadioButton.Size = new Size(120, 20);
-            this.sevenZipRadioButton.ForeColor = Color.FromArgb(220, 255, 255);
-            //
-            // levelLabel
-            //
-            this.levelLabel.Text = "Level:";
-            this.levelLabel.Location = new Point(20, 85);
-            this.levelLabel.Name = "levelLabel";
-            this.levelLabel.Size = new Size(60, 25);
-            this.levelLabel.ForeColor = Color.FromArgb(192, 255, 255);
-            //
+            // 
+            sevenZipRadioButton.ForeColor = Color.FromArgb(220, 255, 255);
+            sevenZipRadioButton.Location = new Point(228, 48);
+            sevenZipRadioButton.Name = "sevenZipRadioButton";
+            sevenZipRadioButton.Size = new Size(120, 20);
+            sevenZipRadioButton.TabIndex = 3;
+            sevenZipRadioButton.Text = "7Z (Smaller)";
+            // 
             // levelTrackBar
-            //
-            this.levelTrackBar.Location = new Point(85, 83);
-            this.levelTrackBar.Name = "levelTrackBar";
-            this.levelTrackBar.Size = new Size(270, 45);
-            this.levelTrackBar.Maximum = 10;
-            this.levelTrackBar.Value = 0;
-            this.levelTrackBar.TickStyle = TickStyle.Both;
-            this.levelTrackBar.Visible = false;
-            //
-            // sliderPanel
-            //
-            this.sliderPanel.Location = new Point(85, 83);
-            this.sliderPanel.Name = "sliderPanel";
-            this.sliderPanel.Size = new Size(270, 40);
-            this.sliderPanel.BackColor = Color.Transparent;
-            this.sliderPanel.Paint += this.SliderPanel_Paint;
-            this.sliderPanel.MouseDown += this.SliderPanel_MouseDown;
-            this.sliderPanel.MouseMove += this.SliderPanel_MouseMove;
-            //
+            // 
+            levelTrackBar.Location = new Point(58, 83);
+            levelTrackBar.Name = "levelTrackBar";
+            levelTrackBar.Size = new Size(270, 45);
+            levelTrackBar.TabIndex = 5;
+            levelTrackBar.TickStyle = TickStyle.Both;
+            levelTrackBar.Visible = false;
+            // 
             // levelDescriptionLabel
-            //
-            this.levelDescriptionLabel.Location = new Point(85, 125);
-            this.levelDescriptionLabel.Name = "levelDescriptionLabel";
-            this.levelDescriptionLabel.Size = new Size(270, 20);
-            this.levelDescriptionLabel.ForeColor = Color.FromArgb(192, 255, 255);
-            this.levelDescriptionLabel.Text = "0 - No Compression (Instant)";
-            this.levelDescriptionLabel.TextAlign = ContentAlignment.TopCenter;
-            //
+            // 
+            levelDescriptionLabel.ForeColor = Color.FromArgb(192, 255, 255);
+            levelDescriptionLabel.Location = new Point(58, 125);
+            levelDescriptionLabel.Name = "levelDescriptionLabel";
+            levelDescriptionLabel.Size = new Size(270, 20);
+            levelDescriptionLabel.TabIndex = 7;
+            levelDescriptionLabel.Text = "0 - No Compression (Instant)";
+            levelDescriptionLabel.TextAlign = ContentAlignment.TopCenter;
+            // 
             // separator
-            //
-            this.separator.Location = new Point(20, 160);
-            this.separator.Name = "separator";
-            this.separator.Size = new Size(350, 2);
-            this.separator.BackColor = Color.FromArgb(50, 100, 150);
-            //
+            // 
+            separator.BackColor = Color.FromArgb(50, 100, 150);
+            separator.Location = new Point(18, 160);
+            separator.Name = "separator";
+            separator.Size = new Size(350, 2);
+            separator.TabIndex = 8;
+            // 
+            // sliderPanel
+            // 
+            sliderPanel.BackColor = Color.Transparent;
+            sliderPanel.Location = new Point(58, 83);
+            sliderPanel.Name = "sliderPanel";
+            sliderPanel.Size = new Size(270, 40);
+            sliderPanel.TabIndex = 6;
+            sliderPanel.Paint += SliderPanel_Paint;
+            sliderPanel.MouseDown += SliderPanel_MouseDown;
+            sliderPanel.MouseMove += SliderPanel_MouseMove;
+            // 
             // uploadCheckBox
-            //
-            this.uploadCheckBox.Text = "📤 Upload to YSG/HFP Backend (3 month expiry)";
-            this.uploadCheckBox.Location = new Point(20, 175);
-            this.uploadCheckBox.Name = "uploadCheckBox";
-            this.uploadCheckBox.Size = new Size(350, 25);
-            this.uploadCheckBox.ForeColor = Color.FromArgb(255, 200, 100);
-            this.uploadCheckBox.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
-            //
+            // 
+            uploadCheckBox.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+            uploadCheckBox.ForeColor = Color.FromArgb(255, 200, 100);
+            uploadCheckBox.Location = new Point(50, 175);
+            uploadCheckBox.Name = "uploadCheckBox";
+            uploadCheckBox.Size = new Size(314, 25);
+            uploadCheckBox.TabIndex = 9;
+            uploadCheckBox.Text = "Upload to YSG/HFP Backend (3 month expiry)";
+            // 
             // rinCheckBox
-            //
-            this.rinCheckBox.Text = "🔒 This release is for RIN (encrypt with cs.rin.ru)";
-            this.rinCheckBox.Location = new Point(20, 210);
-            this.rinCheckBox.Name = "rinCheckBox";
-            this.rinCheckBox.Size = new Size(350, 25);
-            this.rinCheckBox.ForeColor = Color.FromArgb(100, 200, 255);
-            this.rinCheckBox.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
-            //
+            // 
+            rinCheckBox.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+            rinCheckBox.ForeColor = Color.FromArgb(100, 200, 255);
+            rinCheckBox.Location = new Point(50, 200);
+            rinCheckBox.Name = "rinCheckBox";
+            rinCheckBox.Size = new Size(294, 25);
+            rinCheckBox.TabIndex = 10;
+            rinCheckBox.Text = "This release is for RIN (encrypt with cs.rin.ru)";
+            // 
             // infoLabel
-            //
-            this.infoLabel.Text = "Upload creates shareable link • RIN encryption adds password";
-            this.infoLabel.Location = new Point(20, 245);
-            this.infoLabel.Name = "infoLabel";
-            this.infoLabel.Size = new Size(350, 20);
-            this.infoLabel.ForeColor = Color.Gray;
-            this.infoLabel.Font = new Font("Segoe UI", 8F);
-            this.infoLabel.TextAlign = ContentAlignment.TopCenter;
-            //
+            // 
+            infoLabel.Font = new Font("Segoe UI", 8F);
+            infoLabel.ForeColor = Color.Gray;
+            infoLabel.Location = new Point(18, 233);
+            infoLabel.Name = "infoLabel";
+            infoLabel.Size = new Size(350, 20);
+            infoLabel.TabIndex = 11;
+            infoLabel.Text = "Upload creates shareable link • RIN encryption adds password";
+            infoLabel.TextAlign = ContentAlignment.TopCenter;
+            // 
             // okButton
-            //
-            this.okButton.Text = "✅ Process";
-            this.okButton.Location = new Point(100, 280);
-            this.okButton.Name = "okButton";
-            this.okButton.Size = new Size(90, 30);
-            this.okButton.DialogResult = DialogResult.OK;
-            this.okButton.FlatStyle = FlatStyle.Flat;
-            this.okButton.FlatAppearance.BorderColor = Color.FromArgb(100, 200, 100);
-            this.okButton.BackColor = Color.FromArgb(0, 2, 10);
-            this.okButton.ForeColor = Color.FromArgb(192, 255, 255);
-            //
+            // 
+            okButton.BackColor = Color.FromArgb(0, 2, 10);
+            okButton.DialogResult = DialogResult.OK;
+            okButton.FlatAppearance.BorderColor = Color.FromArgb(100, 200, 100);
+            okButton.FlatStyle = FlatStyle.Flat;
+            okButton.ForeColor = Color.FromArgb(192, 255, 255);
+            okButton.Location = new Point(93, 280);
+            okButton.Name = "okButton";
+            okButton.Size = new Size(90, 30);
+            okButton.TabIndex = 12;
+            okButton.Text = "✓ Process";
+            okButton.UseVisualStyleBackColor = false;
+            // 
             // cancelButton
-            //
-            this.cancelButton.Text = "Cancel";
-            this.cancelButton.Location = new Point(210, 280);
-            this.cancelButton.Name = "cancelButton";
-            this.cancelButton.Size = new Size(90, 30);
-            this.cancelButton.DialogResult = DialogResult.Cancel;
-            this.cancelButton.FlatStyle = FlatStyle.Flat;
-            this.cancelButton.FlatAppearance.BorderColor = Color.FromArgb(200, 100, 100);
-            this.cancelButton.BackColor = Color.FromArgb(0, 2, 10);
-            this.cancelButton.ForeColor = Color.FromArgb(192, 255, 255);
-            //
+            // 
+            cancelButton.BackColor = Color.FromArgb(0, 2, 10);
+            cancelButton.DialogResult = DialogResult.Cancel;
+            cancelButton.FlatAppearance.BorderColor = Color.FromArgb(200, 100, 100);
+            cancelButton.FlatStyle = FlatStyle.Flat;
+            cancelButton.ForeColor = Color.FromArgb(192, 255, 255);
+            cancelButton.Location = new Point(203, 280);
+            cancelButton.Name = "cancelButton";
+            cancelButton.Size = new Size(90, 30);
+            cancelButton.TabIndex = 13;
+            cancelButton.Text = "Cancel";
+            cancelButton.UseVisualStyleBackColor = false;
+            // 
             // CompressionSettingsFormExtended
-            //
-            this.Text = "Compression Settings";
-            // Original used this.Size = 400x350 on a FixedDialog; the controls were
-            // laid out against the resulting ~384x311 client area.
-            this.ClientSize = new Size(384, 311);
-            this.StartPosition = FormStartPosition.CenterParent;
-            this.FormBorderStyle = FormBorderStyle.FixedDialog;
-            this.MaximizeBox = false;
-            this.MinimizeBox = false;
-            this.BackColor = Color.FromArgb(0, 20, 50);
-            this.Controls.Add(this.titleLabel);
-            this.Controls.Add(this.formatLabel);
-            this.Controls.Add(this.zipRadioButton);
-            this.Controls.Add(this.sevenZipRadioButton);
-            this.Controls.Add(this.levelLabel);
-            this.Controls.Add(this.levelTrackBar);
-            this.Controls.Add(this.sliderPanel);
-            this.Controls.Add(this.levelDescriptionLabel);
-            this.Controls.Add(this.separator);
-            this.Controls.Add(this.uploadCheckBox);
-            this.Controls.Add(this.rinCheckBox);
-            this.Controls.Add(this.infoLabel);
-            this.Controls.Add(this.okButton);
-            this.Controls.Add(this.cancelButton);
-            ((System.ComponentModel.ISupportInitialize)(this.levelTrackBar)).EndInit();
-            this.ResumeLayout(false);
-            this.PerformLayout();
+            // 
+            BackColor = Color.FromArgb(0, 20, 50);
+            ClientSize = new Size(386, 322);
+            Controls.Add(titleLabel);
+            Controls.Add(formatLabel);
+            Controls.Add(zipRadioButton);
+            Controls.Add(sevenZipRadioButton);
+            Controls.Add(levelTrackBar);
+            Controls.Add(sliderPanel);
+            Controls.Add(levelDescriptionLabel);
+            Controls.Add(separator);
+            Controls.Add(uploadCheckBox);
+            Controls.Add(rinCheckBox);
+            Controls.Add(infoLabel);
+            Controls.Add(okButton);
+            Controls.Add(cancelButton);
+            FormBorderStyle = FormBorderStyle.FixedDialog;
+            MaximizeBox = false;
+            MinimizeBox = false;
+            Name = "CompressionSettingsFormExtended";
+            StartPosition = FormStartPosition.CenterParent;
+            Text = "Compression Settings";
+            ((System.ComponentModel.ISupportInitialize)levelTrackBar).EndInit();
+            ResumeLayout(false);
+            PerformLayout();
         }
 
         #endregion

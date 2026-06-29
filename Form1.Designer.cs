@@ -35,11 +35,11 @@ namespace APPID
         {
             components = new System.ComponentModel.Container();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(SteamAppId));
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle1 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle2 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle3 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle4 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle5 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle6 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle7 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle8 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle9 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle10 = new System.Windows.Forms.DataGridViewCellStyle();
             searchTextBox = new System.Windows.Forms.TextBox();
             dataGridView1 = new System.Windows.Forms.DataGridView();
             btnSearch = new System.Windows.Forms.Button();
@@ -51,6 +51,7 @@ namespace APPID
             batchProgressLabel = new System.Windows.Forms.Label();
             batchProgressIcon = new System.Windows.Forms.PictureBox();
             UploadZipButton = new System.Windows.Forms.Button();
+            settingsButton = new System.Windows.Forms.PictureBox();
             pin = new System.Windows.Forms.PictureBox();
             unPin = new System.Windows.Forms.PictureBox();
             gitHub = new System.Windows.Forms.PictureBox();
@@ -68,7 +69,7 @@ namespace APPID
             startCrackPic = new System.Windows.Forms.PictureBox();
             selectDirMini = new System.Windows.Forms.PictureBox();
             selectDir = new System.Windows.Forms.PictureBox();
-            label1 = new System.Windows.Forms.Label();
+            autoCrackLabel = new System.Windows.Forms.Label();
             label2 = new System.Windows.Forms.Label();
             selectDirLabel = new System.Windows.Forms.Label();
             drgdropText = new System.Windows.Forms.Label();
@@ -82,12 +83,10 @@ namespace APPID
             lblTitle = new System.Windows.Forms.Label();
             btnMinimize = new System.Windows.Forms.Button();
             btnClose = new System.Windows.Forms.Button();
-            dataGridView2 = new System.Windows.Forms.DataGridView();
-            YourMom = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            asdasd = new System.Windows.Forms.DataGridViewTextBoxColumn();
             ((System.ComponentModel.ISupportInitialize)dataGridView1).BeginInit();
             mainPanel.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)batchProgressIcon).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)settingsButton).BeginInit();
             ((System.ComponentModel.ISupportInitialize)pin).BeginInit();
             ((System.ComponentModel.ISupportInitialize)unPin).BeginInit();
             ((System.ComponentModel.ISupportInitialize)gitHub).BeginInit();
@@ -100,7 +99,6 @@ namespace APPID
             ((System.ComponentModel.ISupportInitialize)selectDir).BeginInit();
             ManAppPanel.SuspendLayout();
             titleBar.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)dataGridView2).BeginInit();
             SuspendLayout();
             // 
             // searchTextBox
@@ -119,51 +117,51 @@ namespace APPID
             dataGridView1.AllowUserToAddRows = false;
             dataGridView1.AllowUserToDeleteRows = false;
             dataGridView1.AllowUserToResizeRows = false;
-            dataGridViewCellStyle1.BackColor = System.Drawing.Color.FromArgb(0, 5, 25);
-            dataGridViewCellStyle1.ForeColor = System.Drawing.Color.White;
-            dataGridViewCellStyle1.SelectionBackColor = System.Drawing.Color.SpringGreen;
-            dataGridViewCellStyle1.SelectionForeColor = System.Drawing.Color.Black;
-            dataGridView1.AlternatingRowsDefaultCellStyle = dataGridViewCellStyle1;
+            dataGridViewCellStyle6.BackColor = System.Drawing.Color.FromArgb(0, 5, 25);
+            dataGridViewCellStyle6.ForeColor = System.Drawing.Color.White;
+            dataGridViewCellStyle6.SelectionBackColor = System.Drawing.Color.SpringGreen;
+            dataGridViewCellStyle6.SelectionForeColor = System.Drawing.Color.Black;
+            dataGridView1.AlternatingRowsDefaultCellStyle = dataGridViewCellStyle6;
             dataGridView1.AutoSizeColumnsMode = System.Windows.Forms.DataGridViewAutoSizeColumnsMode.Fill;
             dataGridView1.BackgroundColor = System.Drawing.Color.FromArgb(5, 10, 30);
             dataGridView1.BorderStyle = System.Windows.Forms.BorderStyle.None;
-            dataGridViewCellStyle2.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
-            dataGridViewCellStyle2.BackColor = System.Drawing.Color.FromArgb(0, 25, 75);
-            dataGridViewCellStyle2.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
-            dataGridViewCellStyle2.ForeColor = System.Drawing.Color.Ivory;
-            dataGridViewCellStyle2.SelectionBackColor = System.Drawing.Color.FromArgb(0, 25, 75);
-            dataGridViewCellStyle2.SelectionForeColor = System.Drawing.Color.Ivory;
-            dataGridViewCellStyle2.WrapMode = System.Windows.Forms.DataGridViewTriState.True;
-            dataGridView1.ColumnHeadersDefaultCellStyle = dataGridViewCellStyle2;
+            dataGridViewCellStyle7.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
+            dataGridViewCellStyle7.BackColor = System.Drawing.Color.FromArgb(0, 25, 75);
+            dataGridViewCellStyle7.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
+            dataGridViewCellStyle7.ForeColor = System.Drawing.Color.Ivory;
+            dataGridViewCellStyle7.SelectionBackColor = System.Drawing.Color.FromArgb(0, 25, 75);
+            dataGridViewCellStyle7.SelectionForeColor = System.Drawing.Color.Ivory;
+            dataGridViewCellStyle7.WrapMode = System.Windows.Forms.DataGridViewTriState.True;
+            dataGridView1.ColumnHeadersDefaultCellStyle = dataGridViewCellStyle7;
             resources.ApplyResources(dataGridView1, "dataGridView1");
             dataGridView1.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.DisableResizing;
-            dataGridViewCellStyle3.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
-            dataGridViewCellStyle3.BackColor = System.Drawing.Color.FromArgb(0, 2, 10);
-            dataGridViewCellStyle3.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
-            dataGridViewCellStyle3.ForeColor = System.Drawing.SystemColors.ActiveCaptionText;
-            dataGridViewCellStyle3.SelectionBackColor = System.Drawing.Color.SpringGreen;
-            dataGridViewCellStyle3.SelectionForeColor = System.Drawing.Color.Black;
-            dataGridViewCellStyle3.WrapMode = System.Windows.Forms.DataGridViewTriState.False;
-            dataGridView1.DefaultCellStyle = dataGridViewCellStyle3;
+            dataGridViewCellStyle8.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
+            dataGridViewCellStyle8.BackColor = System.Drawing.Color.FromArgb(0, 2, 10);
+            dataGridViewCellStyle8.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
+            dataGridViewCellStyle8.ForeColor = System.Drawing.SystemColors.ActiveCaptionText;
+            dataGridViewCellStyle8.SelectionBackColor = System.Drawing.Color.SpringGreen;
+            dataGridViewCellStyle8.SelectionForeColor = System.Drawing.Color.Black;
+            dataGridViewCellStyle8.WrapMode = System.Windows.Forms.DataGridViewTriState.False;
+            dataGridView1.DefaultCellStyle = dataGridViewCellStyle8;
             dataGridView1.EditMode = System.Windows.Forms.DataGridViewEditMode.EditProgrammatically;
             dataGridView1.GridColor = System.Drawing.Color.White;
             dataGridView1.MultiSelect = false;
             dataGridView1.Name = "dataGridView1";
             dataGridView1.ReadOnly = true;
-            dataGridViewCellStyle4.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
-            dataGridViewCellStyle4.BackColor = System.Drawing.Color.FromArgb(0, 5, 25);
-            dataGridViewCellStyle4.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
-            dataGridViewCellStyle4.ForeColor = System.Drawing.Color.White;
-            dataGridViewCellStyle4.SelectionBackColor = System.Drawing.Color.SteelBlue;
-            dataGridViewCellStyle4.SelectionForeColor = System.Drawing.Color.Black;
-            dataGridViewCellStyle4.WrapMode = System.Windows.Forms.DataGridViewTriState.True;
-            dataGridView1.RowHeadersDefaultCellStyle = dataGridViewCellStyle4;
+            dataGridViewCellStyle9.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
+            dataGridViewCellStyle9.BackColor = System.Drawing.Color.FromArgb(0, 5, 25);
+            dataGridViewCellStyle9.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
+            dataGridViewCellStyle9.ForeColor = System.Drawing.Color.White;
+            dataGridViewCellStyle9.SelectionBackColor = System.Drawing.Color.SteelBlue;
+            dataGridViewCellStyle9.SelectionForeColor = System.Drawing.Color.Black;
+            dataGridViewCellStyle9.WrapMode = System.Windows.Forms.DataGridViewTriState.True;
+            dataGridView1.RowHeadersDefaultCellStyle = dataGridViewCellStyle9;
             dataGridView1.RowHeadersWidthSizeMode = System.Windows.Forms.DataGridViewRowHeadersWidthSizeMode.DisableResizing;
-            dataGridViewCellStyle5.BackColor = System.Drawing.Color.FromArgb(0, 10, 35);
-            dataGridViewCellStyle5.ForeColor = System.Drawing.Color.White;
-            dataGridViewCellStyle5.SelectionBackColor = System.Drawing.Color.FromArgb(20, 111, 65);
-            dataGridViewCellStyle5.SelectionForeColor = System.Drawing.Color.Black;
-            dataGridView1.RowsDefaultCellStyle = dataGridViewCellStyle5;
+            dataGridViewCellStyle10.BackColor = System.Drawing.Color.FromArgb(0, 10, 35);
+            dataGridViewCellStyle10.ForeColor = System.Drawing.Color.White;
+            dataGridViewCellStyle10.SelectionBackColor = System.Drawing.Color.FromArgb(20, 111, 65);
+            dataGridViewCellStyle10.SelectionForeColor = System.Drawing.Color.Black;
+            dataGridView1.RowsDefaultCellStyle = dataGridViewCellStyle10;
             dataGridView1.RowTemplate.DefaultCellStyle.BackColor = System.Drawing.Color.FromArgb(0, 5, 25);
             dataGridView1.RowTemplate.DefaultCellStyle.ForeColor = System.Drawing.Color.White;
             dataGridView1.RowTemplate.DefaultCellStyle.SelectionBackColor = System.Drawing.Color.FromArgb(30, 70, 100);
@@ -203,12 +201,12 @@ namespace APPID
             // 
             // mainPanel
             // 
-            mainPanel.Controls.Add(dataGridView2);
             mainPanel.Controls.Add(button1);
             mainPanel.Controls.Add(arrowBatchConversionLabel);
             mainPanel.Controls.Add(batchProgressLabel);
             mainPanel.Controls.Add(batchProgressIcon);
             mainPanel.Controls.Add(UploadZipButton);
+            mainPanel.Controls.Add(settingsButton);
             mainPanel.Controls.Add(pin);
             mainPanel.Controls.Add(unPin);
             mainPanel.Controls.Add(gitHub);
@@ -227,7 +225,7 @@ namespace APPID
             mainPanel.Controls.Add(startCrackPic);
             mainPanel.Controls.Add(selectDirMini);
             mainPanel.Controls.Add(selectDir);
-            mainPanel.Controls.Add(label1);
+            mainPanel.Controls.Add(autoCrackLabel);
             mainPanel.Controls.Add(label2);
             mainPanel.Controls.Add(selectDirLabel);
             mainPanel.Controls.Add(drgdropText);
@@ -237,7 +235,6 @@ namespace APPID
             mainPanel.DragDrop += mainPanel_DragDrop;
             mainPanel.DragEnter += mainPanel_DragEnter;
             mainPanel.DragLeave += mainPanel_DragLeave;
-            mainPanel.Paint += mainPanel_Paint;
             // 
             // button1
             // 
@@ -278,6 +275,16 @@ namespace APPID
             UploadZipButton.ForeColor = System.Drawing.Color.FromArgb(220, 220, 225);
             UploadZipButton.Name = "UploadZipButton";
             UploadZipButton.UseVisualStyleBackColor = false;
+            // 
+            // settingsButton
+            // 
+            settingsButton.BackColor = System.Drawing.Color.Transparent;
+            settingsButton.Cursor = System.Windows.Forms.Cursors.Hand;
+            resources.ApplyResources(settingsButton, "settingsButton");
+            settingsButton.Name = "settingsButton";
+            settingsButton.TabStop = false;
+            lanMultiplayerToolTip.SetToolTip(settingsButton, resources.GetString("settingsButton.ToolTip"));
+            settingsButton.Click += settingsButton_Click;
             // 
             // pin
             // 
@@ -468,18 +475,19 @@ namespace APPID
             selectDir.MouseLeave += selectDir_MouseLeave;
             selectDir.MouseHover += selectDir_MouseHover;
             // 
-            // label1
+            // autoCrackLabel
             // 
-            label1.AllowDrop = true;
-            resources.ApplyResources(label1, "label1");
-            label1.BackColor = System.Drawing.Color.Transparent;
-            label1.Cursor = System.Windows.Forms.Cursors.Hand;
-            label1.ForeColor = System.Drawing.Color.White;
-            label1.Name = "label1";
-            lanMultiplayerToolTip.SetToolTip(label1, resources.GetString("label1.ToolTip"));
-            label1.DragDrop += mainPanel_DragDrop;
-            label1.DragEnter += mainPanel_DragEnter;
-            label1.DragLeave += mainPanel_DragLeave;
+            autoCrackLabel.AllowDrop = true;
+            resources.ApplyResources(autoCrackLabel, "autoCrackLabel");
+            autoCrackLabel.BackColor = System.Drawing.Color.Transparent;
+            autoCrackLabel.Cursor = System.Windows.Forms.Cursors.Hand;
+            autoCrackLabel.ForeColor = System.Drawing.Color.White;
+            autoCrackLabel.Name = "autoCrackLabel";
+            lanMultiplayerToolTip.SetToolTip(autoCrackLabel, resources.GetString("autoCrackLabel.ToolTip"));
+            autoCrackLabel.Click += autoCrackLabel_Click;
+            autoCrackLabel.DragDrop += mainPanel_DragDrop;
+            autoCrackLabel.DragEnter += mainPanel_DragEnter;
+            autoCrackLabel.DragLeave += mainPanel_DragLeave;
             // 
             // label2
             // 
@@ -488,7 +496,6 @@ namespace APPID
             label2.BackColor = System.Drawing.Color.Transparent;
             label2.ForeColor = System.Drawing.Color.White;
             label2.Name = "label2";
-            label2.Click += label2_Click_1;
             label2.DragDrop += mainPanel_DragDrop;
             label2.DragEnter += mainPanel_DragEnter;
             label2.DragLeave += mainPanel_DragLeave;
@@ -511,7 +518,6 @@ namespace APPID
             resources.ApplyResources(drgdropText, "drgdropText");
             drgdropText.ForeColor = System.Drawing.SystemColors.Control;
             drgdropText.Name = "drgdropText";
-            drgdropText.Click += drgdropText_Click;
             drgdropText.DragDrop += mainPanel_DragDrop;
             drgdropText.DragEnter += mainPanel_DragEnter;
             drgdropText.DragLeave += mainPanel_DragLeave;
@@ -580,7 +586,7 @@ namespace APPID
             // 
             // titleBar
             // 
-            titleBar.BackColor = System.Drawing.Color.FromArgb(23, 0, 0, 0);
+            titleBar.BackColor = System.Drawing.Color.FromArgb(30, 20, 50, 255);
             titleBar.Controls.Add(lblTitle);
             titleBar.Controls.Add(btnMinimize);
             titleBar.Controls.Add(btnClose);
@@ -618,23 +624,6 @@ namespace APPID
             btnClose.UseVisualStyleBackColor = false;
             btnClose.Click += BtnClose_Click;
             // 
-            // dataGridView2
-            // 
-            dataGridView2.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            dataGridView2.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] { YourMom, asdasd });
-            resources.ApplyResources(dataGridView2, "dataGridView2");
-            dataGridView2.Name = "dataGridView2";
-            // 
-            // YourMom
-            // 
-            resources.ApplyResources(YourMom, "YourMom");
-            YourMom.Name = "YourMom";
-            // 
-            // asdasd
-            // 
-            resources.ApplyResources(asdasd, "asdasd");
-            asdasd.Name = "asdasd";
-            // 
             // SteamAppId
             // 
             AllowDrop = true;
@@ -662,6 +651,7 @@ namespace APPID
             mainPanel.ResumeLayout(false);
             mainPanel.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)batchProgressIcon).EndInit();
+            ((System.ComponentModel.ISupportInitialize)settingsButton).EndInit();
             ((System.ComponentModel.ISupportInitialize)pin).EndInit();
             ((System.ComponentModel.ISupportInitialize)unPin).EndInit();
             ((System.ComponentModel.ISupportInitialize)gitHub).EndInit();
@@ -676,7 +666,6 @@ namespace APPID
             ManAppPanel.PerformLayout();
             titleBar.ResumeLayout(false);
             titleBar.PerformLayout();
-            ((System.ComponentModel.ISupportInitialize)dataGridView2).EndInit();
             ResumeLayout(false);
             PerformLayout();
 
@@ -714,7 +703,7 @@ namespace APPID
         public System.Windows.Forms.Button btnManualEntry;
         private System.Windows.Forms.PictureBox autoCrackOff;
         private System.Windows.Forms.PictureBox autoCrackOn;
-        private System.Windows.Forms.Label label1;
+        private System.Windows.Forms.Label autoCrackLabel;
         public System.Windows.Forms.PictureBox batchProgressIcon;
         public System.Windows.Forms.Label batchProgressLabel;
         public System.Windows.Forms.Label arrowBatchConversionLabel;
@@ -722,9 +711,7 @@ namespace APPID
         private System.Windows.Forms.Label label5;
         private System.Windows.Forms.Button button1;
         private System.Windows.Forms.PictureBox selectDirMini;
-        private System.Windows.Forms.DataGridView dataGridView2;
-        private System.Windows.Forms.DataGridViewTextBoxColumn YourMom;
-        private System.Windows.Forms.DataGridViewTextBoxColumn asdasd;
+        private System.Windows.Forms.PictureBox settingsButton;
     }
 }
 

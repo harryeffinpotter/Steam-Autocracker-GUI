@@ -92,7 +92,7 @@ namespace SteamAppIdIdentifier
             this.BackColor = Color.FromArgb(255, 20, 147); // Deep Pink
             this.ForeColor = Color.White;
             this.FlatAppearance.BorderColor = Color.FromArgb(255, 105, 180); // Hot Pink
-            this.Text = $"🔥 Share ({count} needed)";
+            this.Text = $"Share ({count} needed)";
 
             // Subtle pulse effect
             StartPulse(false);
@@ -210,7 +210,7 @@ namespace SteamAppIdIdentifier
                     if (shareButton.Text.Contains("needed"))
                     {
                         tooltip.SetToolTip(shareButton,
-                            "🔥 You have games that the community needs!\n" +
+                            "You have games that the community needs!\n" +
                             "Click to see which games and share them.");
                     }
                     else
@@ -343,7 +343,7 @@ namespace SteamAppIdIdentifier
                     }
                 }));
             }
-            catch { }
+            catch (Exception ex) { Console.WriteLine(ex.Message); }
         }
     }
 }

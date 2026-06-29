@@ -62,7 +62,7 @@ namespace SteamAppIdIdentifier
                     string bwLimit = APPID.AppSettings.Default.UploadBandwidthLimit ?? "";
                     SteamAutocrackGUI.CompressionSettingsForm.ParseBandwidthLimit(bwLimit);
                 }
-                catch { }
+                catch (Exception ex) { Console.WriteLine(ex.Message); }
 
                 form = new SteamAppId();
                 args2 = args;
@@ -167,7 +167,7 @@ namespace SteamAppIdIdentifier
                     string logPath = Path.Combine(basePath, "bootstrap_error.log");
                     File.WriteAllText(logPath, $"Bootstrap failed: {ex}");
                 }
-                catch { }
+                catch (Exception exx) { Console.WriteLine(exx.Message); }
             }
         }
 
@@ -205,7 +205,7 @@ namespace SteamAppIdIdentifier
                 {
                     LogHelper.Log($"[FATAL CRASH] {ex?.Message ?? "Unknown exception"}");
                 }
-                catch { }
+                catch (Exception exx) { Console.WriteLine(exx.Message); }
 
                 MessageBox.Show($"SACGUI has crashed!{Environment.NewLine}{Environment.NewLine}" +
                               $"A crash report has been saved to:{Environment.NewLine}{crashFile}{Environment.NewLine}{Environment.NewLine}" +

@@ -266,7 +266,7 @@ namespace APPID
                     CompressionSettingsForm.ParseBandwidthLimit(savedBandwidth);
                 }
             }
-            catch { }
+            catch (Exception ex) { Console.WriteLine(ex.Message); }
 
             // Make form background draggable (click empty space to drag)
             this.MouseDown += TitleBar_MouseDown;
@@ -463,7 +463,7 @@ namespace APPID
                 int preference = DWMWCP_ROUND;
                 DwmSetWindowAttribute(this.Handle, DWMWA_WINDOW_CORNER_PREFERENCE, ref preference, sizeof(int));
             }
-            catch { }
+            catch (Exception ex) { Console.WriteLine(ex.Message); }
 
             // 2.3 style - just opacity
             this.Opacity = 0.95;
@@ -865,7 +865,7 @@ namespace APPID
                         }
                     }
                 }
-                catch { }
+                catch (Exception ex) { Console.WriteLine(ex.Message); }
                 searchTextBox.Text = "";
 
             }
@@ -899,7 +899,7 @@ namespace APPID
                     CurrentCell = e.RowIndex;
                 }
             }
-            catch { }
+            catch (Exception ex) { Console.WriteLine(ex.Message); }
 
 
         }
@@ -936,7 +936,7 @@ namespace APPID
                     startCrackPic_Click(null, null);
                 }
             }
-            catch { }
+            catch (Exception ex) { Console.WriteLine(ex.Message); }
 
         }
 
@@ -1039,7 +1039,7 @@ namespace APPID
 
                 }
             }
-            catch { }
+            catch (Exception ex) { Console.WriteLine(ex.Message); }
 
         }
 
@@ -1133,7 +1133,7 @@ namespace APPID
                 }
 
             }
-            catch { }
+            catch (Exception ex) { Console.WriteLine(ex.Message); }
         }
         public static bool SearchPause = false;
         public static bool BackPressed = false;
@@ -1440,7 +1440,7 @@ namespace APPID
 
                 textChanged = false;
             }
-            catch { }
+            catch (Exception ex) { Console.WriteLine(ex.Message); }
             // Remove duplicate auto-selection code that was causing issues
         }
         private void dataGridView1_RowHeaderMouseClick(object sender, DataGridViewCellMouseEventArgs e)
@@ -2131,7 +2131,7 @@ oLink3.Save";
                                         Process vbsProcess = Process.Start("wscript.exe", $"\"{tempVbs}\"");
                                         await Task.Run(() => vbsProcess.WaitForExit());
 
-                                        try { File.Delete(tempVbs); } catch { }
+                                        try { File.Delete(tempVbs); } catch (Exception ex) { Console.WriteLine(ex.Message); }
 
                                         // Check if at least the main shortcuts were created
                                         if (File.Exists(joinShortcutPath) || File.Exists(hostShortcutPath))
@@ -2212,7 +2212,7 @@ oLink3.Save";
                                     File.Move($"{parentdir}\\steam_interfaces.txt", $"{parentdir}\\steam_settings\\steam_interfaces.txt");
                                 }
                             }
-                            catch { }
+                            catch (Exception ex) { Console.WriteLine(ex.Message); }
                         }
 
                         // Get achievements data using achievements_parser
@@ -2434,7 +2434,7 @@ oLink3.Save";
                         AppSettings.Default.Save();
                     }
                 }
-                catch { }
+                catch (Exception ex) { Console.WriteLine(ex.Message); }
 
                 // Check if this is a folder containing multiple games (batch mode)
                 var gamesInFolder = DetectGamesInFolder(gameDir);
@@ -2477,7 +2477,7 @@ oLink3.Save";
                             }
                         }
                     }
-                    catch { }
+                    catch (Exception ex) { Console.WriteLine(ex.Message); }
                 }
 
                 // Hide OpenDir and ZipToShare when new directory selected
@@ -2518,14 +2518,14 @@ oLink3.Save";
                     if (autoCrackEnabled && !string.IsNullOrEmpty(gameDir))
                     {
                         System.Diagnostics.Debug.WriteLine("[MANIFEST] Auto-crack enabled, starting crack...");
-                        Tit($"✅ Auto-detected: {manifestGameName} (AppID: {CurrentAppId}) - Auto-cracking...", Color.Yellow);
+                        Tit($"✓ Auto-detected: {manifestGameName} (AppID: {CurrentAppId}) - Auto-cracking...", Color.Yellow);
                         // Trigger crack just like clicking the button
                         startCrackPic_Click(null, null);
                     }
                     else
                     {
                         // Update the title with game info
-                        Tit($"✅ Auto-detected: {manifestGameName} (AppID: {CurrentAppId}) - Ready to crack!", Color.LightGreen);
+                        Tit($"✓ Auto-detected: {manifestGameName} (AppID: {CurrentAppId}) - Ready to crack!", Color.LightGreen);
                     }
                 }
                 else
@@ -2756,14 +2756,14 @@ oLink3.Save";
                         if (autoCrackEnabled && !string.IsNullOrEmpty(gameDir))
                         {
                             System.Diagnostics.Debug.WriteLine("[MANIFEST] Auto-crack enabled, starting crack...");
-                            Tit($"✅ Auto-detected: {manifestGameName} (AppID: {CurrentAppId}) - Auto-cracking...", Color.Yellow);
+                            Tit($"✓ Auto-detected: {manifestGameName} (AppID: {CurrentAppId}) - Auto-cracking...", Color.Yellow);
                             // Trigger crack just like clicking the button
                             startCrackPic_Click(null, null);
                         }
                         else
                         {
                             // Update the title with game info
-                            Tit($"✅ Auto-detected: {manifestGameName} (AppID: {CurrentAppId}) - Ready to crack!", Color.LightGreen);
+                            Tit($"✓ Auto-detected: {manifestGameName} (AppID: {CurrentAppId}) - Ready to crack!", Color.LightGreen);
                         }
                     }
                     else
@@ -3099,7 +3099,7 @@ oLink3.Save";
                                         Tit($"Compressing... {percentage}%", Color.Cyan);
                                     }));
                                 }
-                                catch { }
+                                catch (Exception ex) { Console.WriteLine(ex.Message); }
                             }
                         }
                     };
@@ -3171,7 +3171,7 @@ oLink3.Save";
 
                             // Add required form fields for SACGUI
                             content.Add(new StringContent("anonymous"), "hwid"); // Anonymous sharing
-                            content.Add(new StringContent("SACGUI-2.4"), "version");
+                            content.Add(new StringContent("SACGUI-2.5"), "version");
 
                             // Extract game name from filename (remove prefix and extension)
                             string fileName = Path.GetFileNameWithoutExtension(filePath);
@@ -3190,9 +3190,9 @@ oLink3.Save";
                                         clientIp = ipResponse.Trim();
                                 }
                             }
-                            catch { }
+                            catch (Exception ex) { Console.WriteLine(ex.Message); }
                             content.Add(new StringContent(clientIp), "client_ip");
-                            System.Diagnostics.Debug.WriteLine($"[UPLOAD] Added Version: SACGUI-2.4");
+                            System.Diagnostics.Debug.WriteLine($"[UPLOAD] Added Version: SACGUI-2.5");
                             System.Diagnostics.Debug.WriteLine($"[UPLOAD] Added Game Name: {gameName}");
                             System.Diagnostics.Debug.WriteLine($"[UPLOAD] Added Client IP: {clientIp}");
 
@@ -3214,7 +3214,7 @@ oLink3.Save";
                             {
                                 // Set timeout and user agent
                                 progressClient.Timeout = TimeSpan.FromHours(2);
-                                progressClient.DefaultRequestHeaders.Add("User-Agent", "SACGUI-Uploader/2.4");
+                                progressClient.DefaultRequestHeaders.Add("User-Agent", "SACGUI-Uploader/2.5 ");
 
                                 // Use 1fichier upload
                                 System.Diagnostics.Debug.WriteLine("[UPLOAD] Using 1fichier for file upload");
@@ -3362,7 +3362,7 @@ oLink3.Save";
             urlTextBox.ForeColor = Color.White;
 
             var copyButton = new Button();
-            copyButton.Text = "📋 Copy";
+            copyButton.Text = "Copy";
             copyButton.Size = new Size(100, 25);
             copyButton.Location = new Point(460, 90);
             copyButton.FlatStyle = FlatStyle.Flat;
@@ -3375,7 +3375,7 @@ oLink3.Save";
                 {
                     if (copyButton.IsHandleCreated)
                     {
-                        copyButton.Invoke(new Action(() => copyButton.Text = "📋 Copy"));
+                        copyButton.Invoke(new Action(() => copyButton.Text = "Copy"));
                     }
                 });
             };
@@ -3398,7 +3398,7 @@ oLink3.Save";
             successForm.Size = new Size(500, 280);
             successForm.KeyPreview = true;
             successForm.Opacity = 0.95;
-            try { successForm.Icon = APPID.Properties.Resources.sac_icon; } catch { }
+            try { successForm.Icon = APPID.Properties.Resources.sac_icon; } catch (Exception ex) { Console.WriteLine(ex.Message); }
 
             // Position centered on parent
             successForm.StartPosition = FormStartPosition.Manual;
@@ -3555,7 +3555,7 @@ oLink3.Save";
             successForm.Size = new Size(500, pydriveUrl != null ? 280 : 200);
             successForm.KeyPreview = true;
             successForm.Opacity = 0.95;
-            try { successForm.Icon = APPID.Properties.Resources.sac_icon; } catch { }
+            try { successForm.Icon = APPID.Properties.Resources.sac_icon; } catch (Exception ex) { Console.WriteLine(ex.Message); }
 
             // Position centered on parent
             successForm.StartPosition = FormStartPosition.Manual;
@@ -3798,7 +3798,7 @@ oLink3.Save";
                     if (manifestInfo.HasValue)
                         buildId = manifestInfo.Value.buildId;
                 }
-                catch { }
+                catch (Exception ex) { Console.WriteLine(ex.Message); }
 
                 // Determine crack method (Clean, Goldberg, Ali, +Steamless if applicable)
                 string crackMethod = "Clean";
@@ -4119,7 +4119,7 @@ oLink3.Save";
                     // Delete partial zip file if it exists
                     if (!string.IsNullOrEmpty(zipPath) && File.Exists(zipPath))
                     {
-                        try { File.Delete(zipPath); } catch { }
+                        try { File.Delete(zipPath); } catch (Exception ex) { Console.WriteLine(ex.Message); }
                     }
                 }
                 // Only change to "Show Zip" if the file actually exists
@@ -4564,7 +4564,7 @@ oLink3.Save";
                     if (result != null) return result;
                 }
             }
-            catch { }
+            catch (Exception ex) { Console.WriteLine(ex.Message); }
 
             return null;
         }
@@ -4609,7 +4609,7 @@ oLink3.Save";
                     steamApiFiles.AddRange(Directory.GetFiles(path, "steam_api64.dll", SearchOption.AllDirectories)
                         .Where(f => !f.EndsWith(".bak", StringComparison.OrdinalIgnoreCase)));
                 }
-                catch { }
+                catch (Exception ex) { Console.WriteLine(ex.Message); }
 
                 // Group DLLs by their top-level subfolder
                 var topLevelFolders = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
@@ -4641,7 +4641,7 @@ oLink3.Save";
                 // If only 1 top-level folder has steam_api, it's a single game (maybe with Engine subfolder)
                 // Return empty list so caller treats the selected path as the game itself
             }
-            catch { }
+            catch (Exception ex) { Console.WriteLine(ex.Message); }
 
             return games.Distinct().ToList();
         }
@@ -4652,7 +4652,7 @@ oLink3.Save";
         /// </summary>
         private void InitializeBatchIndicator()
         {
-            try { batchIconBase = Properties.Resources.batch_icon; } catch { }
+            try { batchIconBase = Properties.Resources.batch_icon; } catch (Exception ex) { Console.WriteLine(ex.Message); }
 
             batchIndicator = new PictureBox
             {
@@ -4691,7 +4691,7 @@ oLink3.Save";
         {
             if (this.InvokeRequired)
             {
-                try { this.BeginInvoke(new Action(() => UpdateBatchIndicator(percent))); } catch { }
+                try { this.BeginInvoke(new Action(() => UpdateBatchIndicator(percent))); } catch (Exception ex) { Console.WriteLine(ex.Message); }
                 return;
             }
 
@@ -4747,7 +4747,7 @@ oLink3.Save";
         {
             if (this.InvokeRequired)
             {
-                try { this.BeginInvoke(new Action(() => ShowBatchIndicator())); } catch { }
+                try { this.BeginInvoke(new Action(() => ShowBatchIndicator())); } catch (Exception ex) { Console.WriteLine(ex.Message); }
                 return;
             }
             // Show user's designed controls
@@ -4772,7 +4772,7 @@ oLink3.Save";
         {
             if (this.InvokeRequired)
             {
-                try { this.BeginInvoke(new Action(() => HideBatchIndicator())); } catch { }
+                try { this.BeginInvoke(new Action(() => HideBatchIndicator())); } catch (Exception ex) { Console.WriteLine(ex.Message); }
                 return;
             }
             if (batchProgressIcon != null) batchProgressIcon.Visible = false;
@@ -4787,7 +4787,7 @@ oLink3.Save";
         {
             if (this.InvokeRequired)
             {
-                try { this.BeginInvoke(new Action(() => ShowCrackButtons(showZip))); } catch { }
+                try { this.BeginInvoke(new Action(() => ShowCrackButtons(showZip))); } catch (Exception ex) { Console.WriteLine(ex.Message); }
                 return;
             }
 
@@ -4827,7 +4827,7 @@ oLink3.Save";
         {
             if (this.InvokeRequired)
             {
-                try { this.BeginInvoke(new Action(() => HideCrackButtons())); } catch { }
+                try { this.BeginInvoke(new Action(() => HideCrackButtons())); } catch (Exception ex) { Console.WriteLine(ex.Message); }
                 return;
             }
 
@@ -4851,7 +4851,7 @@ oLink3.Save";
         {
             if (this.InvokeRequired)
             {
-                try { this.BeginInvoke(new Action(() => ShowUploadButton())); } catch { }
+                try { this.BeginInvoke(new Action(() => ShowUploadButton())); } catch (Exception ex) { Console.WriteLine(ex.Message); }
                 return;
             }
 
@@ -4957,7 +4957,7 @@ oLink3.Save";
                             if (File.Exists(orig)) File.Delete(orig);
                             File.Move(bakFile, orig);
                         }
-                        catch { }
+                        catch (Exception ex) { Console.WriteLine(ex.Message); }
                     }
                     foreach (var bakFile in Directory.GetFiles(installPath, "*.exe.bak", SearchOption.AllDirectories))
                     {
@@ -4967,29 +4967,29 @@ oLink3.Save";
                             if (File.Exists(orig)) File.Delete(orig);
                             File.Move(bakFile, orig);
                         }
-                        catch { }
+                        catch (Exception ex) { Console.WriteLine(ex.Message); }
                     }
 
                     // Delete steam_settings directories
                     foreach (var dir in Directory.GetDirectories(installPath, "steam_settings", SearchOption.AllDirectories))
                     {
-                        try { Directory.Delete(dir, true); } catch { }
+                        try { Directory.Delete(dir, true); } catch (Exception ex) { Console.WriteLine(ex.Message); }
                     }
 
                     // Delete _[ prefixed files (LAN shortcuts), lobby_connect files, shortcuts - ALL directories
-                    foreach (var f in Directory.GetFiles(installPath, "_[*", SearchOption.AllDirectories)) { try { File.Delete(f); } catch { } }
-                    foreach (var f in Directory.GetFiles(installPath, "_lobby_connect*", SearchOption.AllDirectories)) { try { File.Delete(f); } catch { } }
-                    foreach (var f in Directory.GetFiles(installPath, "lobby_connect*", SearchOption.AllDirectories)) { try { File.Delete(f); } catch { } }
-                    foreach (var f in Directory.GetFiles(installPath, "*.lnk", SearchOption.AllDirectories)) { try { File.Delete(f); } catch { } }
+                    foreach (var f in Directory.GetFiles(installPath, "_[*", SearchOption.AllDirectories)) { try { File.Delete(f); } catch (Exception ex) { Console.WriteLine(ex.Message); } }
+                    foreach (var f in Directory.GetFiles(installPath, "_lobby_connect*", SearchOption.AllDirectories)) { try { File.Delete(f); } catch (Exception ex) { Console.WriteLine(ex.Message); } }
+                    foreach (var f in Directory.GetFiles(installPath, "lobby_connect*", SearchOption.AllDirectories)) { try { File.Delete(f); } catch (Exception ex) { Console.WriteLine(ex.Message); } }
+                    foreach (var f in Directory.GetFiles(installPath, "*.lnk", SearchOption.AllDirectories)) { try { File.Delete(f); } catch (Exception ex) { Console.WriteLine(ex.Message); } }
 
                     // Delete common crack artifacts
                     string[] artifacts = { "CreamAPI.dll", "cream_api.ini", "CreamLinux", "steam_api_o.dll", "steam_api64_o.dll", "local_save.txt" };
                     foreach (var artifact in artifacts)
                     {
-                        foreach (var f in Directory.GetFiles(installPath, artifact, SearchOption.AllDirectories)) { try { File.Delete(f); } catch { } }
+                        foreach (var f in Directory.GetFiles(installPath, artifact, SearchOption.AllDirectories)) { try { File.Delete(f); } catch (Exception ex) { Console.WriteLine(ex.Message); } }
                     }
                 }
-                catch { }
+                catch (Exception ex) { Console.WriteLine(ex.Message); }
             }
 
             int success = 0;
@@ -5208,7 +5208,7 @@ oLink3.Save";
                     archivePaths[game.Path] = archivePath;
 
                     // Delete existing archive if it exists
-                    try { if (File.Exists(archivePath)) File.Delete(archivePath); } catch { }
+                    try { if (File.Exists(archivePath)) File.Delete(archivePath); } catch (Exception ex) { Console.WriteLine(ex.Message); }
 
                     string zipError = null;
                     bool zipSuccess = await Task.Run(() =>
@@ -5276,7 +5276,7 @@ oLink3.Save";
                                         if (match.Success)
                                         {
                                             string pct = match.Groups[1].Value;
-                                            try { batchForm.BeginInvoke(new Action(() => batchForm.UpdateStatus(game.Path, $"Zipping {pct}%", Color.Cyan))); } catch { }
+                                            try { batchForm.BeginInvoke(new Action(() => batchForm.UpdateStatus(game.Path, $"Zipping {pct}%", Color.Cyan))); } catch (Exception ex) { Console.WriteLine(ex.Message); }
                                         }
                                     }
                                 };
@@ -5308,7 +5308,7 @@ oLink3.Save";
                         {
                             if (!string.IsNullOrEmpty(tempBaseToCleanup))
                             {
-                                try { Directory.Delete(tempBaseToCleanup, true); } catch { }
+                                try { Directory.Delete(tempBaseToCleanup, true); } catch (Exception ex) { Console.WriteLine(ex.Message); }
                             }
                         }
                     });
@@ -5442,7 +5442,7 @@ oLink3.Save";
                                         string oneFichierUrl = result.DownloadUrl;
                                         uploadSuccess = true;
                                         batchForm.UpdateUploadStatus(game.Path, true, oneFichierUrl, null, attempt - 1);
-                                        try { this.BeginInvoke(new Action(() => { try { Clipboard.SetText(oneFichierUrl); } catch { } })); } catch { }
+                                        try { this.BeginInvoke(new Action(() => { try { Clipboard.SetText(oneFichierUrl); } catch (Exception ex) { Console.WriteLine(ex.Message); } })); } catch (Exception ex) { Console.WriteLine(ex.Message); }
 
                                         // Check if PyDrive conversion is disabled
                                         if (APPID.AppSettings.Default.SkipPyDriveConversion)
@@ -5456,7 +5456,7 @@ oLink3.Save";
                                             // Delete zip after successful upload if enabled
                                             if (deleteZipsAfterUpload && archivePaths.ContainsKey(game.Path))
                                             {
-                                                try { File.Delete(archivePaths[game.Path]); } catch { }
+                                                try { File.Delete(archivePaths[game.Path]); } catch (Exception ex) { Console.WriteLine(ex.Message); }
                                             }
                                         }
                                         else
@@ -5481,7 +5481,7 @@ oLink3.Save";
                                                     // Delete zip after successful upload if enabled
                                                     if (deleteZipsAfterUpload && archivePaths.ContainsKey(game.Path))
                                                     {
-                                                        try { File.Delete(archivePaths[game.Path]); } catch { }
+                                                        try { File.Delete(archivePaths[game.Path]); } catch (Exception ex) { Console.WriteLine(ex.Message); }
                                                     }
                                                 }
                                                 else
@@ -5494,7 +5494,7 @@ oLink3.Save";
                                                     // Delete zip after successful upload if enabled
                                                     if (deleteZipsAfterUpload && archivePaths.ContainsKey(game.Path))
                                                     {
-                                                        try { File.Delete(archivePaths[game.Path]); } catch { }
+                                                        try { File.Delete(archivePaths[game.Path]); } catch (Exception ex) { Console.WriteLine(ex.Message); }
                                                     }
                                                 }
                                             });
@@ -5589,7 +5589,7 @@ oLink3.Save";
                         else APPID.AppSettings.Default.LastZipRateCompressed = measuredZipRate;
                         APPID.AppSettings.Default.Save();
                     }
-                    catch { }
+                    catch (Exception ex) { Console.WriteLine(ex.Message); }
                 }
 
                 // Wait for all uploads to complete and count results
@@ -5610,7 +5610,7 @@ oLink3.Save";
                         APPID.AppSettings.Default.LastUploadRate = actualUploadRate;
                         APPID.AppSettings.Default.Save();
                     }
-                    catch { }
+                    catch (Exception ex) { Console.WriteLine(ex.Message); }
                 }
 
                 // Wait for all conversions to complete
@@ -5658,18 +5658,19 @@ oLink3.Save";
             string allLinksText = "";
             if (uploadResults.Count > 0)
             {
+                // Pre-fetch the real build-date version label (from steamcmd by
+                // buildid) for each game before building the text below.
+                var versionLabels = new Dictionary<string, string>();
+                foreach (var r in uploadResults)
+                    if (!versionLabels.ContainsKey(r.game.Path))
+                        versionLabels[r.game.Path] = await APPID.SteamUpdateInfo.GetBuildVersionLabelAsync(r.game.AppId, r.game.BuildId);
+
                 allLinksText = string.Join("\n\n", uploadResults.Select(r =>
                 {
                     string url = string.IsNullOrEmpty(r.pydriveUrl) ? r.oneFichierUrl : r.pydriveUrl;
                     var game = r.game;
 
-                    // Format version date from Unix timestamp
-                    string versionDate = "Unknown";
-                    if (game.LastUpdated > 0)
-                    {
-                        var dt = DateTimeOffset.FromUnixTimeSeconds(game.LastUpdated).UtcDateTime;
-                        versionDate = $"{dt:MMM dd, yyyy - HH:mm:ss} UTC [Build {game.BuildId}]";
-                    }
+                    string versionDate = versionLabels.TryGetValue(game.Path, out var vLabel) ? vLabel : $"Unknown [Build {game.BuildId}]";
 
                     // Build depot list with names
                     var depotLines = new List<string>();
@@ -5687,7 +5688,7 @@ oLink3.Save";
                     string oneFichierLine = "";
                     if (!string.IsNullOrEmpty(r.pydriveUrl) && !string.IsNullOrEmpty(r.oneFichierUrl))
                     {
-                        oneFichierLine = $"\n[size=75][url={r.oneFichierUrl}][color=#888888]1fichier mirror (for premium/debrid users)[/color][/url][/size]";
+                        oneFichierLine = $"\n[size=75][url={r.oneFichierUrl}][color=#888888]1fichier mirror[/color][/url][/size]";
                     }
 
                     string platform = !string.IsNullOrEmpty(game.Platform) ? game.Platform : "Win64";
@@ -5704,8 +5705,7 @@ oLink3.Save";
                         // Full phpBB format with depot/manifest info for CLEAN files only
                         return $"[url={url}][color=white][b]{game.Name} [{platform}] [Branch: {game.Branch}] ({crackMethod})[/b][/color][/url]\n" +
                                $"[size=85][color=white][b]Version:[/b] [i]{versionDate}[/i][/color][/size]{oneFichierLine}\n\n" +
-                               $"[spoiler=\"[color=white]Depots & Manifests[/color]\"][code=text]{depotsText}[/code][/spoiler]" +
-                               $"[color=white][b]Uploaded version:[/b] [i]{versionDate}[/i][/color]";
+                               $"[spoiler=\"[color=white]Depots & Manifests[/color]\"][code=text]{depotsText}[/code][/spoiler]";
                     }
                 }));
             }
@@ -5813,24 +5813,38 @@ oLink3.Save";
 
         #endregion
 
-        private void mainPanel_Paint(object sender, PaintEventArgs e)
+        private void settingsButton_Click(object sender, EventArgs e)
         {
-
+            using (var compressionForm = new CompressionSettingsForm())
+            {
+                compressionForm.Owner = this;
+                compressionForm.StartPosition = FormStartPosition.CenterParent;
+                compressionForm.TopMost = true;
+                compressionForm.BringToFront();
+                this.Hide();
+                compressionForm.ShowDialog(this);
+                this.Show();
+            }
         }
 
-        private void button1_Click(object sender, EventArgs e)
+        private void autoCrackLabel_Click(object sender, EventArgs e)
         {
-            MessageBox.Show("Your mom gay");
-        }
-
-        private void drgdropText_Click(object sender, EventArgs e)
-        {
-
-        }
-
-        private void label2_Click_1(object sender, EventArgs e)
-        {
-
+            if (!autoCrackEnabled)
+            {
+                autoCrackEnabled = true;
+                autoCrackOn.BringToFront();
+                AppSettings.Default.AutoCrack = true;
+                AppSettings.Default.Save();
+                return;
+            }
+            if (autoCrackEnabled)
+            {
+                autoCrackEnabled = false;
+                autoCrackOff.BringToFront();
+                AppSettings.Default.AutoCrack = false;
+                AppSettings.Default.Save();
+                return;
+            }
         }
     }
 }

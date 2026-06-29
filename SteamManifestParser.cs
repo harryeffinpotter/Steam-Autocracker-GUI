@@ -70,7 +70,7 @@ namespace SteamAppIdIdentifier
                             long.TryParse(manifest["SizeOnDisk"], out sizeOnDisk);
                         }
 
-                        System.Diagnostics.Debug.WriteLine($"[MANIFEST] ✅ Found match!");
+                        System.Diagnostics.Debug.WriteLine($"[MANIFEST] ✓ Found match!");
                         System.Diagnostics.Debug.WriteLine($"[MANIFEST] AppID: {appId}");
                         System.Diagnostics.Debug.WriteLine($"[MANIFEST] Name: {gameName}");
                         System.Diagnostics.Debug.WriteLine($"[MANIFEST] Size: {sizeOnDisk / (1024 * 1024)} MB");
@@ -542,15 +542,8 @@ namespace SteamAppIdIdentifier
                         long lastUpdated = 0;
                         if (manifest.ContainsKey("LastUpdated"))
                             long.TryParse(manifest["LastUpdated"], out lastUpdated);
-
-                        // Fallback for manifests with no/zero LastUpdated: Steam
-                        // rewrites the .acf on every update, so its modified time
-                        // is a reliable last-updated proxy.
-                        if (lastUpdated <= 0)
-                        {
-                            try { lastUpdated = ((DateTimeOffset)File.GetLastWriteTimeUtc(acfFile)).ToUnixTimeSeconds(); }
-                            catch { }
-                        }
+                        // No file-modified-time fallback: that reflects install time,
+                        // not the build's real date.
 
                         var depots = ParseInstalledDepots(content);
 
@@ -570,7 +563,7 @@ namespace SteamAppIdIdentifier
                         return (appId, gameName, buildId, lastUpdated, depots);
                     }
                 }
-                catch { }
+                catch (Exception ex) { Console.WriteLine(ex.Message); }
             }
 
             return null;
@@ -623,7 +616,7 @@ namespace SteamAppIdIdentifier
                             }
                         }
                     }
-                    catch { }
+                    catch (Exception ex) { Console.WriteLine(ex.Message); }
                 }
             }
 
@@ -679,7 +672,7 @@ namespace SteamAppIdIdentifier
                             }
                         }
                     }
-                    catch { }
+                    catch (Exception ex) { Console.WriteLine(ex.Message); }
                 }
             }
 
