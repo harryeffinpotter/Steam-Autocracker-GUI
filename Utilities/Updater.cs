@@ -433,6 +433,13 @@ del ""%~f0""
                     return;
                 }
 
+                // No tag_name usually means GitHub rate limiting - skip quietly and try next launch
+                if (obj.tag_name == null)
+                {
+                    LogHelper.LogNetwork("GoldBerg update check skipped: no tag_name in GitHub response (probably rate limited)");
+                    return;
+                }
+
                 string latestVersion = obj.tag_name.ToString().Replace("release-", "");
                 string versionFile = Path.Combine(BinPath, "Goldberg", "version.txt");
 
@@ -446,16 +453,34 @@ del ""%~f0""
                 {
                     LogHelper.LogUpdate($"GoldBerg (gbe_fork)", $"{localVersion} -> {latestVersion}");
 
-                    // Find the Windows release asset
+                    // Find the Windows release asset.
+                    // Since 2026-09 gbe_fork ships per-compiler builds (emu-win-release-vs22.7z / -vs26.7z)
+                    // instead of emu-win-release.7z. Prefer vs22, then the old name, then any other win release.
                     string downloadUrl = "";
-                    foreach (var asset in obj.assets)
+                    string fallbackUrl = "";
+                    string[] preferredNames = { "emu-win-release-vs22.7z", "emu-win-release.7z" };
+                    foreach (string preferred in preferredNames)
                     {
-                        if (asset.name.ToString() == "emu-win-release.7z")
+                        foreach (var asset in obj.assets)
                         {
-                            downloadUrl = asset.browser_download_url.ToString();
-                            break;
+                            string name = asset.name.ToString();
+                            if (name == preferred)
+                            {
+                                downloadUrl = asset.browser_download_url.ToString();
+                                break;
+                            }
+                            if (string.IsNullOrEmpty(fallbackUrl) &&
+                                name.StartsWith("emu-win-release", StringComparison.OrdinalIgnoreCase) &&
+                                name.EndsWith(".7z", StringComparison.OrdinalIgnoreCase))
+                            {
+                                fallbackUrl = asset.browser_download_url.ToString();
+                            }
                         }
+                        if (!string.IsNullOrEmpty(downloadUrl))
+                            break;
                     }
+                    if (string.IsNullOrEmpty(downloadUrl))
+                        downloadUrl = fallbackUrl;
 
                     if (!string.IsNullOrEmpty(downloadUrl))
                     {
@@ -464,7 +489,7 @@ del ""%~f0""
                         {
                             string tempFile = "gbe_fork.7z";
                             var response = await client.GetAsync(downloadUrl);
-                            using (var fs = new FileStream(tempFile, System.IO.FileMode.CreateNew))
+                            using (var fs = new FileStream(tempFile, System.IO.FileMode.Create))
                             {
                                 await response.Content.CopyToAsync(fs);
                             }
@@ -488,7 +513,20 @@ del ""%~f0""
                         // Copy the specific DLL files from known paths
                         // Note: The archive extracts with 'release' as the root folder
                         string steam64Path = Path.Combine(tempDir, "release", "regular", "x64", "steam_api64.dll");
-                        string steam32Path = Path.Combine(tempDir, "release", "regular", "x32", "steam_api.dll");
+                        // Newer releases use "x86", older ones used "x32"
+                        string steam32Path = Path.Combine(tempDir, "release", "regular", "x86", "steam_api.dll");
+                        if (!File.Exists(steam32Path))
+                            steam32Path = Path.Combine(tempDir, "release", "regular", "x32", "steam_api.dll");
+
+                        // If the archive layout changed again, don't mark this version as installed -
+                        // keep the current Goldberg files and tell the user
+                        if (!File.Exists(steam64Path) || !File.Exists(steam32Path))
+                        {
+                            File.Delete("gbe_fork.7z");
+                            Directory.Delete(tempDir, true);
+                            ShowGoldbergUpdateProblem($"steam_api DLLs not found in the {latestVersion} archive (layout changed?)");
+                            return;
+                        }
 
                         if (File.Exists(steam64Path))
                         {
@@ -505,6 +543,7 @@ del ""%~f0""
                         string[] possibleToolPaths = new string[] {
                             Path.Combine(tempDir, "release", "tools", "generate_interfaces", "generate_interfaces_x64.exe"),
                             Path.Combine(tempDir, "release", "tools", "generate_interfaces", "generate_interfaces_x32.exe"),
+                            Path.Combine(tempDir, "release", "tools", "generate_interfaces", "generate_interfaces_x86.exe"),
                             Path.Combine(tempDir, "tools", "generate_interfaces", "generate_interfaces_x64.exe"),
                             Path.Combine(tempDir, "tools", "generate_interfaces", "generate_interfaces_x32.exe"),
                             Path.Combine(tempDir, "generate_interfaces_x64.exe"),
@@ -526,6 +565,7 @@ del ""%~f0""
                         string[] lobbyConnectPaths = new string[] {
                             Path.Combine(tempDir, "release", "tools", "lobby_connect", "lobby_connect_x64.exe"),
                             Path.Combine(tempDir, "release", "tools", "lobby_connect", "lobby_connect_x32.exe"),
+                            Path.Combine(tempDir, "release", "tools", "lobby_connect", "lobby_connect_x86.exe"),
                             Path.Combine(tempDir, "tools", "lobby_connect", "lobby_connect_x64.exe"),
                             Path.Combine(tempDir, "tools", "lobby_connect", "lobby_connect_x32.exe")
                         };
@@ -551,15 +591,29 @@ del ""%~f0""
                     }
                     else
                     {
-                        APPID.TopMostHelper.ShowMessage("Windows release asset not found for GoldBerg fork.");
+                        ShowGoldbergUpdateProblem($"no Windows release download found in gbe_fork {latestVersion}");
                     }
                 }
             }
             catch (Exception ex)
             {
-                // Silently ignore - not critical, probably rate limited
                 LogHelper.LogError("UpdateGoldBerg failed", ex);
+                ShowGoldbergUpdateProblem(ex.Message);
             }
+        }
+
+        /// <summary>
+        /// Non-fatal notice when the Goldberg (gbe_fork) update fails. The app keeps using the Goldberg files it already has.
+        /// </summary>
+        private static void ShowGoldbergUpdateProblem(string reason)
+        {
+            Console.WriteLine($"[UpdateGoldBerg] Update failed: {reason}");
+            APPID.TopMostHelper.ShowMessage(
+                "Couldn't update Goldberg (gbe_fork) to the latest version.\n\n" +
+                "SACGUI will keep working with the Goldberg version you already have.\n\n" +
+                "Please let the dev know so it can be fixed.\n\n" +
+                $"Details: {reason}",
+                "Goldberg update problem");
         }
         public static async System.Threading.Tasks.Task ExtractFileAsync(string sourceArchive, string destination)
         {
